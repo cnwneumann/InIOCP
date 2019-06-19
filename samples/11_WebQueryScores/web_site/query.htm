@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<script>
+var xmlhttp;
+
+function loadXMLDoc(url,cfunc)
+{
+if (window.XMLHttpRequest)
+  {// IE7+, Firefox, Chrome, Opera, Safari 代码
+  xmlhttp=new XMLHttpRequest();
+  }
+else
+  {// IE6, IE5 代码
+  xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+  }
+xmlhttp.onreadystatechange=cfunc;
+xmlhttp.open("GET",url,true);
+xmlhttp.send();
+}
+
+// 查询分数
+function QueryScores()
+{
+	if (document.getElementById("exam_no").value=='') 
+	{
+		alert("请输入准考证号!");
+	}
+	else {
+	loadXMLDoc("/queryScores.do?exam_no="+document.getElementById("exam_no").value, function()
+	{
+		if (xmlhttp.readyState==4 && xmlhttp.status==200)	
+			if (xmlhttp.responseText=="NOT_EXISTS")
+			{
+				document.getElementById("examNo").innerText="无此准考证号";
+				document.getElementById("name").innerText="";
+				document.getElementById("chinese").innerText="";
+				document.getElementById("maths").innerText="";
+				document.getElementById("total").innerText="";
+				document.getElementById("level").innerText="";
+			}
+			else
+			{
+				var jsonObject= eval(xmlhttp.responseText);
+				document.getElementById("examNo").innerText=jsonObject[0].examNo;
+				document.getElementById("name").innerText=jsonObject[0].name;
+				document.getElementById("chinese").innerText=jsonObject[0].chinese;
+				document.getElementById("maths").innerText=jsonObject[0].maths;
+				document.getElementById("total").innerText=jsonObject[0].total;
+				document.getElementById("level").innerText=jsonObject[0].level;
+			}
+	});
+	}
+}
+
+// 返回首页
+function Return()
+{
+  window.location.href="/";
+}
+
+</script>
+
+</head>
+<body>
+
+<h2>InIOCP HTTP 服务，成绩查询</h2>
+<br>
+
+准考证号：
+<input type="text" id="exam_no" maxlength="10" size="18" value="">
+<button type="button" id="btn_query" onclick="QueryScores()">查询</button>
+<button type="button" id="btn_exit" onclick="Return()">返回</button>
+
+<br><br>
+<table id="tbl_scores" border="1">
+  <tr>
+  <th>准考证号</th>
+  <th>姓名</th>
+  <th>语文</th>
+  <th>数学</th>
+  <th>总分</th>
+  <th>等级</th>
+  </tr>
+  <tr>
+  <td id="examNo"  width="100">-</td>
+  <td id="name"    width="80"></td>
+  <td id="chinese" width="50"></td>
+  <td id="maths"   width="50"></td>
+  <td id="total"   width="50"></td>
+  <td id="level"   width="80"></td>
+  </tr>
+</table>
+
+</body>
+</html>

@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2018-06-22 16:33:05.401.bdsproj,D:\Administrator\Documents\RAD Studio\Projects\Project1.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Package\InIOCPWebSocketChar.bdsproj</Transaction>
+    <Transaction>2018-06-22 16:42:44.739.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Form\frmInIOCPHttpServer.pas=</Transaction>
+    <Transaction>2018-06-22 16:42:44.739.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Form\frmInIOCPHttpServer.dfm=</Transaction>
+    <Transaction>2018-06-22 16:44:32.450.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Package\Unit1.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Form\frmInIOCPWebSocketChar.pas</Transaction>
+    <Transaction>2018-06-22 16:44:32.450.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Package\Unit1.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Form\frmInIOCPWebSocketChar.dfm</Transaction>
+    <Transaction>2018-06-22 16:44:59.107.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Package\InIOCPWebSocketChar.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Package\InIOCPWebSocketChat.bdsproj</Transaction>
+    <Transaction>2018-06-22 16:45:15.457.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Form\frmInIOCPWebSocketChar.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Form\frmInIOCPWebSocketChat.pas</Transaction>
+    <Transaction>2018-06-22 16:45:15.457.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Form\frmInIOCPWebSocketChar.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Form\frmInIOCPWebSocketChat.dfm</Transaction>
+  </Transactions>
+</BorlandProject>

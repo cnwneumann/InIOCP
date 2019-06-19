@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Form\frmInIOCPFileMgrClient.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\DbMgr\Form\frmInIOCPDbMgrClient.pas</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Form\frmInIOCPFileMgrClient.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\DbMgr\Form\frmInIOCPDbMgrClient.dfm</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.pas,D:\My Documents\RAD Studio\Projects\Unit6.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Form\frmInIOCPFileMgrClient.pas</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\04_DatabaseServer\Form\frmInIOCPDbMgrClient.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\04_DatabaseServer\Form\frmInIOCPDbSvrClient.pas</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\04_DatabaseServer\Package\inIOCPDbMgrClient.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\04_DatabaseServer\Package\inIOCPDbSvrClient.bdsproj</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\04_DatabaseServer\Form\frmInIOCPDbMgrClient.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\04_DatabaseServer\Form\frmInIOCPDbSvrClient.dfm</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Package\inIOCPFileMgrCLient.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Package\inIOCPFileMgrClient.bdsproj</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Package\inIOCPFileMgrClient.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\DbMgr\Package\inIOCPDbMgrClient.bdsproj</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.bdsproj,D:\My Documents\RAD Studio\Projects\Project1.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Package\inIOCPFileMgrCLient.bdsproj</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.dfm,D:\My Documents\RAD Studio\Projects\Unit6.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Form\frmInIOCPFileMgrClient.dfm</Transaction>
+  </Transactions>
+</BorlandProject>

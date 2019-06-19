@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>1899-12-30 00:00:00.000.dfm,D:\My Documents\RAD Studio\Projects\Unit6.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Form\frmInIOCPFileMgrClient.dfm</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.pas,D:\My Documents\RAD Studio\Projects\Unit6.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Form\frmInIOCPFileMgrClient.pas</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\03_FileServer\Form\frmInIOCPFileMgrClient.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\03_FileServer\Form\frmInIOCPFileSvrClient.pas</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\03_FileServer\Form\frmInIOCPFileMgrClient.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\03_FileServer\Form\frmInIOCPFileSvrClient.dfm</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\03_FileServer\Package\inIOCPFileMgrClient.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\03_FileServer\Package\inIOCPFileSvrClient.bdsproj</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.bdsproj,D:\My Documents\RAD Studio\Projects\Project1.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Package\inIOCPFileMgrCLient.bdsproj</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Package\inIOCPFileMgrCLient.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Package\inIOCPFileMgrClient.bdsproj</Transaction>
+  </Transactions>
+</BorlandProject>

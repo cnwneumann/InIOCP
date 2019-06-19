@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\23_ProxyServer\Form\frmIOCPProxyServer.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\23_ProxyServer\Form\frmIOCPBroker.pas</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\v2.0\Package\InIOCPBroker.bdsproj=D:\My Documents\RAD Studio\Projects\Project1.bdsproj</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\23_ProxyServer\Form\frmIOCPProxyServer.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\23_ProxyServer\Form\frmIOCPBroker.dfm</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\v2.0\Form\frmIOCPBroker.dfm=D:\My Documents\RAD Studio\Projects\Unit8.dfm</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\v2.0\Form\frmIOCPBroker.pas=D:\My Documents\RAD Studio\Projects\Unit8.pas</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\23_ProxyServer\Package\InIOCPProxyServer.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\23_ProxyServer\Package\InIOCPBroker.bdsproj</Transaction>
+  </Transactions>
+</BorlandProject>

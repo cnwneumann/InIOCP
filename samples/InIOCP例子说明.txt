@@ -1,0 +1,40 @@
+
+编号   目录                     说明
+==============================================================
+ 0     00_data			全部例子共用的数据库
+ 0     00_测试工具		测试工具、命令
+
+ 1     01_CertifyServer		认证服务、客户端/用户管理
+ 2     02_MessageServer		消息服务、消息推送
+ 3     03_FileServer		文件服务
+ 4     04_DatabaseServer	数据库服务
+ 5     05_CustomServer		自定义服务、远程函数服务
+ 6     06_StreamServer		原始数据流服务
+ 7     07_ShortConnection	短连接应用
+ 8     08_NewFeatures		2.0新特性应用
+ 9     09_HttpServer		HTTP基本服务
+10     10_HttpServiceApp	HTTP服务程序
+11     11_WebQueryScores        考试成绩查询
+12     12_DoubleServer          同一应用使用双服务
+13     13_InLog			InIOCP的快速日志
+
+20     20_WebSocketChat		WebSocekt服务
+21     21_WebSocketJSON		WebSocekt 的 InIOCP-JSON 消息封装
+22     22_WebSocketMsgPush	WebSocekt消息推送
+
+23     23_ProxyServer	        代理服务
+24     24_ReverseProxy	        反向代理服务
+25     25_LANClientMgr          局域网客户端管理（重点）
+
+99     99_All-In-One		集成除代理外的其他功能的使用
+
+
+说明：
+
+    一、InIOCP 服务套件支持双字节、32/64位 Windows 操作系统，使用例子前请先安装组件，
+用 64 位系统时，可以编译安装成 32 位组件供设计时使用。
+
+    二、以上例子在 Delphi 7、Delphi 2007、Delphi XE 和 Delphi XE10 下编译通过，正常运行。
+
+    三、为方便编译，新版例子用 access 数据库，用 ADO 连接，请建一个 ODBC 数据源，名称为 acc_db，
+数据库为例子目录下的 00_data\acc_db.mdb。

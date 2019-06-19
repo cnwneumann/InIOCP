@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>1899-12-30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\HttpServer\Form\frmInIOCPHttpServer.dfm=D:\Administrator\Documents\RAD Studio\Projects\Unit3.dfm</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\HttpServer\Package\InIOCPHttpServer.bdsproj=D:\Administrator\Documents\RAD Studio\Projects\Project1.bdsproj</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\11_WebQueryScores\Package\InIOCPWebQueryScores.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\11_WebQueryScores\Package\InIOCPHttpServer.bdsproj</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\09_HttpServer\Package\InIOCPHttpServer2.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\09_HttpServer\Package\InIOCPHttpServer.bdsproj</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\HttpServer\Module\mdTestDatabase.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\HttpServer\Package\Unit1.pas</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\09_HttpServer\Package\InIOCPHttpServer.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\09_HttpServer\Package\InIOCPHttpServer2.bdsproj</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\HttpServer\Module\mdTestDatabase.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\HttpServer\Package\Unit1.dfm</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\InIOCP\source\iocp_receivers.pas=</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\11_WebQueryScores\Module\dm_iniocp_test.dfm=</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\HttpServer\Form\frmInIOCPHttpServer.pas=D:\Administrator\Documents\RAD Studio\Projects\Unit3.pas</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\11_WebQueryScores\Module\dm_iniocp_test.pas=</Transaction>
+  </Transactions>
+</BorlandProject>

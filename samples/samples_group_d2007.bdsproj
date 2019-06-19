@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<PersonalityInfo>
+		<Option>
+			<Option Name="Personality">Default.Personality</Option>
+			<Option Name="ProjectType"></Option>
+			<Option Name="Version">1.0</Option>
+			<Option Name="GUID">{4CF0A902-5340-4F94-BDD8-C32CCB606C57}</Option>
+		</Option>
+	</PersonalityInfo>
+	<Default.Personality>  <Projects>
+      <Projects Name="dclInIOCP.bpl">..\InIOCP\package\dclInIOCP.bdsproj</Projects>
+      <Projects Name="InIOCP_all_in_one.exe">99_All-In-One\Package\InIOCP_all_in_one.bdsproj</Projects>
+      <Projects Name="InIOCPCertifyServer.exe">01_CertifyServer\Package\InIOCPCertifyServer.bdsproj</Projects>
+      <Projects Name="InIOCPMessageServer.exe">02_MessageServer\Package\InIOCPMessageServer.bdsproj</Projects>
+      <Projects Name="InIOCPPushMessage.exe">02_MessageServer\Package\InIOCPPushMessage.bdsproj</Projects>
+      <Projects Name="InIOCPFileServer.exe">03_FileServer\Package\InIOCPFileServer.bdsproj</Projects>
+      <Projects Name="inIOCPFileSvrClient.exe">03_FileServer\Package\inIOCPFileSvrClient.bdsproj</Projects>
+      <Projects Name="InIOCPDBServer.exe">04_DatabaseServer\Package\InIOCPDBServer.bdsproj</Projects>
+      <Projects Name="inIOCPDbSvrClient.exe">04_DatabaseServer\Package\inIOCPDbSvrClient.bdsproj</Projects>
+      <Projects Name="InIOCPCustomServer.exe">05_CustomServer\Package\InIOCPCustomServer.bdsproj</Projects>
+      <Projects Name="InIOCPStreamServer.exe">06_StreamServer\Package\InIOCPStreamServer.bdsproj</Projects>
+      <Projects Name="InIOCPShortConnection.exe">07_ShortConnection\Package\InIOCPShortConnection.bdsproj</Projects>
+      <Projects Name="InIOCPNewFeatures.exe">08_NewFeatures\Package\InIOCPNewFeatures.bdsproj</Projects>
+      <Projects Name="InIOCPHttpServer.exe">09_HttpServer\Package\InIOCPHttpServer.bdsproj</Projects>
+      <Projects Name="InIOCPHTTPService.exe">10_HttpServiceApp\Package\InIOCPHTTPService.bdsproj</Projects>
+      <Projects Name="InIOCPWebQueryScores.exe">11_WebQueryScores\Package\InIOCPWebQueryScores.bdsproj</Projects>
+      <Projects Name="InIOCPWebSocketChat.exe">20_WebSocketChat\Package\InIOCPWebSocketChat.bdsproj</Projects>
+      <Projects Name="InIOCPWebSocketJSON.exe">21_WebSocketJSON\Package\InIOCPWebSocketJSON.bdsproj</Projects>
+      <Projects Name="InIOCPWebSocketDBClient.exe">21_WebSocketJSON\Package\InIOCPWebSocketDBClient.bdsproj</Projects>
+      <Projects Name="InIOCPWebSocketMsgServer.exe">22_WebSocketMsgPush\Package\InIOCPWebSocketMsgServer.bdsproj</Projects>
+      <Projects Name="InIOCPWebSocketMsgClient.exe">22_WebSocketMsgPush\Package\InIOCPWebSocketMsgClient.bdsproj</Projects>
+      <Projects Name="InIOCPProxyServer.exe">23_ProxyServer\Package\InIOCPProxyServer.bdsproj</Projects>
+      <Projects Name="InIOCPReverseProxy.exe">24_ReverseProxy\package\InIOCPReverseProxy.bdsproj</Projects>
+      <Projects Name="InIOCPOutProxyServer.exe">24_ReverseProxy\package\InIOCPOutProxyServer.bdsproj</Projects>
+      <Projects Name="InIOCPDoubleServer.exe">12_DoubleServer\Package\InIOCPDoubleServer.bdsproj</Projects>
+      <Projects Name="InIOCPInLog.exe">13_InLog\Package\InIOCPInLog.bdsproj</Projects>
+      <Projects Name="InIOCP_LAN_MgrServer.exe">25_LANClientMgr\Package\InIOCP_LAN_MgrServer.bdsproj</Projects>
+      <Projects Name="InIOCP_LAN_Admin.exe">25_LANClientMgr\Package\InIOCP_LAN_Admin.bdsproj</Projects>
+      <Projects Name="InIOCP_LAN_Client.exe">25_LANClientMgr\Package\InIOCP_LAN_Client.bdsproj</Projects>
+      <Projects Name="Targets">dclInIOCP.bpl InIOCP_all_in_one.exe InIOCPCertifyServer.exe InIOCPMessageServer.exe InIOCPPushMessage.exe InIOCPFileServer.exe inIOCPFileSvrClient.exe InIOCPDBServer.exe inIOCPDbSvrClient.exe InIOCPCustomServer.exe InIOCPStreamServer.exe InIOCPShortConnection.exe InIOCPNewFeatures.exe InIOCPHttpServer.exe InIOCPHTTPService.exe InIOCPWebQueryScores.exe InIOCPWebSocketChat.exe InIOCPWebSocketJSON.exe InIOCPWebSocketDBClient.exe InIOCPWebSocketMsgServer.exe InIOCPWebSocketMsgClient.exe InIOCPProxyServer.exe InIOCPReverseProxy.exe InIOCPOutProxyServer.exe InIOCPDoubleServer.exe InIOCPInLog.exe InIOCP_LAN_MgrServer.exe InIOCP_LAN_Admin.exe InIOCP_LAN_Client.exe</Projects>
+    </Projects>
+    <Dependencies/>
+  </Default.Personality>
+</BorlandProject>

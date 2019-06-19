@@ -1,0 +1,13 @@
+内含数据表：
+CREATE TABLE tbl_users (
+      user_code CHAR(6) NOT NULL PRIMARY KEY,
+      user_name VARCHAR(20) NOT NULL,
+      user_password CHAR(10) NOT NULL,
+      user_level INTEGER NOT NULL,
+
+      user_real_name VARCHAR(30),
+      user_telephone VARCHAR(30),
+
+      user_login_time TIMESTAMP,
+      user_logout_time TIMESTAMP
+)

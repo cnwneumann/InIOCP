@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2019-05-09 10:47:31.110.pas,D:\Administrator\Documents\RAD Studio\Projects\Unit3.pas=E:\ProgCodes\Delphi\InIOCP\Pk\InIOCPMsgServer\Form\frmInIOCPAdmin.pas</Transaction>
+    <Transaction>2019-05-09 10:47:31.110.dfm,D:\Administrator\Documents\RAD Studio\Projects\Unit3.dfm=E:\ProgCodes\Delphi\InIOCP\Pk\InIOCPMsgServer\Form\frmInIOCPAdmin.dfm</Transaction>
+    <Transaction>2019-05-09 10:47:47.560.bdsproj,D:\Administrator\Documents\RAD Studio\Projects\Project1.bdsproj=E:\ProgCodes\Delphi\InIOCP\Pk\InIOCPMsgServer\Package\InIOCPAdmin.bdsproj</Transaction>
+    <Transaction>2019-05-09 11:41:10.548.pas,E:\ProgCodes\Delphi\InIOCP\Pk\InIOCPMsgServer\Package\Unit1.pas=E:\ProgCodes\Delphi\InIOCP\Pk\InIOCPMsgServer\Form\frmInIOCPLogin.pas</Transaction>
+    <Transaction>2019-05-09 11:41:10.548.dfm,E:\ProgCodes\Delphi\InIOCP\Pk\InIOCPMsgServer\Package\Unit1.dfm=E:\ProgCodes\Delphi\InIOCP\Pk\InIOCPMsgServer\Form\frmInIOCPLogin.dfm</Transaction>
+    <Transaction>2019-05-10 10:37:27.498.pas,E:\ProgCodes\Delphi\InIOCP\Pk\InIOCPMsgServer\Package\Unit1.pas=E:\ProgCodes\Delphi\InIOCP\Pk\InIOCPMsgServer\Form\frmInIOCPRegister.pas</Transaction>
+    <Transaction>2019-05-10 10:37:27.498.dfm,E:\ProgCodes\Delphi\InIOCP\Pk\InIOCPMsgServer\Package\Unit1.dfm=E:\ProgCodes\Delphi\InIOCP\Pk\InIOCPMsgServer\Form\frmInIOCPRegister.dfm</Transaction>
+    <Transaction>2019-05-16 09:51:15.793.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\25_LANClientMgr\Package\InIOCPAdmin.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\25_LANClientMgr\Package\InIOCP_LAN_Admin.bdsproj</Transaction>
+  </Transactions>
+</BorlandProject>

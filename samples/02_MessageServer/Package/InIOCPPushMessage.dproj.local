@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\10_PushMessage\Form\frmInIOCPPushMessage.pas=D:\Administrator\Documents\RAD Studio\Projects\Unit3.pas</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\InIOCP\source\iocp_varis.pas=</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\10_PushMessage\Package\InIOCPPushMessage.bdsproj=D:\Administrator\Documents\RAD Studio\Projects\Project1.bdsproj</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\10_PushMessage\Form\frmInIOCPPushMessage.dfm=D:\Administrator\Documents\RAD Studio\Projects\Unit3.dfm</Transaction>
+  </Transactions>
+</BorlandProject>

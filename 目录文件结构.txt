@@ -1,0 +1,28 @@
+// =============================================================
+//
+//                     InIOCP 目录文件结构
+//
+// =============================================================
+
+一、InIOCP 目录（源码）：
+
+    memMgr  目录：内存管理工具
+    package 目录：InIOCP 工程文件
+    source  目录：InIOCP 单元文件
+
+    source\frame  目录：InIOCP 统计面板单元文件
+    source\module 目录：InIOCP 数模单元文件
+    source\editor 目录：TInSQLManager 编辑器目录
+    source\zlib   目录：zlib 压缩单元文件
+
+    安装时请设置以上目录为搜索路径。
+
+二、samples 目录（例子）：
+
+    注：为方便编译，新版例子用 access 数据库，用 ADO 连接，请建一个 ODBC 数据源，
+名称为 acc_db，数据库为例子目录下的 data\acc_db.mdb。
+
+三、bin 目录：
+    编译组件和例子程序的二进制文件输出目录。
+
+

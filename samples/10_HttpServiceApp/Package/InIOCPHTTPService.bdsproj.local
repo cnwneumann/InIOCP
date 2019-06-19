@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2018-06-22 00:25:35.500.pas,D:\My Documents\RAD Studio\Projects\Unit8.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\13_HttpServiceApp\Form\svInIOCPService.pas</Transaction>
+    <Transaction>2018-06-22 00:25:35.500.dfm,D:\My Documents\RAD Studio\Projects\Unit8.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\13_HttpServiceApp\Form\svInIOCPService.dfm</Transaction>
+    <Transaction>2018-06-22 00:25:48.781.bdsproj,D:\My Documents\RAD Studio\Projects\Project1.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\13_HttpServiceApp\Package\InIOCPService.bdsproj</Transaction>
+    <Transaction>2018-06-22 00:29:25.812.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\13_HttpServiceApp\Package\InIOCPService.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\13_HttpServiceApp\Package\InIOCPHTTPService.bdsproj</Transaction>
+  </Transactions>
+</BorlandProject>

@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2019-05-06 21:31:43.671.pas,D:\My Documents\RAD Studio\Projects\Unit9.pas=E:\ProgCodes\Delphi\InIOCP\InIOCPMsgServer\Form\frmInIOCPMsgServer.pas</Transaction>
+    <Transaction>2019-05-06 21:31:43.671.dfm,D:\My Documents\RAD Studio\Projects\Unit9.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCPMsgServer\Form\frmInIOCPMsgServer.dfm</Transaction>
+    <Transaction>2019-05-06 21:31:55.484.bdsproj,D:\My Documents\RAD Studio\Projects\Project2.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCPMsgServer\Package\InIOCPMsgServer.bdsproj</Transaction>
+    <Transaction>2019-05-06 22:05:50.484.pas,E:\ProgCodes\Delphi\InIOCP\pk\InIOCPMsgServer\Module\dm_iniocp_test.pas=E:\ProgCodes\Delphi\InIOCP\pk\InIOCPMsgServer\Module\dm_iniocp_sqlite3.pas</Transaction>
+    <Transaction>2019-05-06 22:05:50.484.dfm,E:\ProgCodes\Delphi\InIOCP\pk\InIOCPMsgServer\Module\dm_iniocp_test.dfm=E:\ProgCodes\Delphi\InIOCP\pk\InIOCPMsgServer\Module\dm_iniocp_sqlite3.dfm</Transaction>
+    <Transaction>2019-05-16 09:50:48.329.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\25_LANClientMgr\Package\InIOCPMsgServer.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\25_LANClientMgr\Package\InIOCP_LANClientMgr.bdsproj</Transaction>
+    <Transaction>2019-05-16 09:51:52.896.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\25_LANClientMgr\Package\InIOCP_LANClientMgr.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\25_LANClientMgr\Package\InIOCP_LAN_ClientMgr.bdsproj</Transaction>
+    <Transaction>2019-05-16 10:11:12.065.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\25_LANClientMgr\Package\InIOCP_LAN_ClientMgr.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\25_LANClientMgr\Package\InIOCP_LAN_MgrServer.bdsproj</Transaction>
+  </Transactions>
+</BorlandProject>

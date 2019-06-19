@@ -1,0 +1,80 @@
+package dclInIOCP;
+
+{$R *.res}
+{$R 'dclInIOCP.dcr'}
+{$ALIGN 8}
+{$ASSERTIONS ON}
+{$BOOLEVAL OFF}
+{$DEBUGINFO ON}
+{$EXTENDEDSYNTAX ON}
+{$IMPORTEDDATA ON}
+{$IOCHECKS ON}
+{$LOCALSYMBOLS ON}
+{$LONGSTRINGS ON}
+{$OPENSTRINGS ON}
+{$OPTIMIZATION OFF}
+{$OVERFLOWCHECKS OFF}
+{$RANGECHECKS OFF}
+{$REFERENCEINFO ON}
+{$SAFEDIVIDE OFF}
+{$STACKFRAMES ON}
+{$TYPEDADDRESS OFF}
+{$VARSTRINGCHECKS ON}
+{$WRITEABLECONST OFF}
+{$MINENUMSIZE 1}
+{$IMAGEBASE $400000}
+{$DESCRIPTION 'InIOCP小旋风服务套件'}
+{$IMPLICITBUILD ON}
+
+requires
+  rtl,
+  vcl,
+  inet,
+  dbrtl,
+  DesignIDE,
+  dsnap,
+  adortl,
+  xmlrtl,
+  vclactnband,
+  vclx,
+  vcldb;
+
+contains
+  iocp_reg in '..\source\iocp_reg.pas',
+  http_base in '..\source\http_base.pas',
+  http_objects in '..\source\http_objects.pas',
+  http_utils in '..\source\http_utils.pas',
+  iocp_api in '..\source\iocp_api.pas',
+  iocp_base in '..\source\iocp_base.pas',
+  iocp_baseObjs in '..\source\iocp_baseObjs.pas',
+  iocp_clients in '..\source\iocp_clients.pas',
+  iocp_lists in '..\source\iocp_lists.pas',
+  iocp_log in '..\source\iocp_log.pas',
+  iocp_managers in '..\source\iocp_managers.pas',
+  iocp_md5 in '..\source\iocp_md5.pas',
+  iocp_mmHash in '..\source\iocp_mmHash.pas',
+  iocp_msgPacks in '..\source\iocp_msgPacks.pas',
+  iocp_objPools in '..\source\iocp_objPools.pas',
+  iocp_Qos in '..\source\iocp_Qos.pas',
+  iocp_receivers in '..\source\iocp_receivers.pas',
+  iocp_senders in '..\source\iocp_senders.pas',
+  iocp_server in '..\source\iocp_server.pas',
+  iocp_SHA1 in '..\source\iocp_SHA1.pas',
+  iocp_sockets in '..\source\iocp_sockets.pas',
+  iocp_sqlMgr in '..\source\iocp_sqlMgr.pas',
+  iocp_threads in '..\source\iocp_threads.pas',
+  iocp_utils in '..\source\iocp_utils.pas',
+  iocp_varis in '..\source\iocp_varis.pas',
+  iocp_Winsock2 in '..\source\iocp_Winsock2.pas',
+  iocp_WsClients in '..\source\iocp_WsClients.pas',
+  iocp_wsExt in '..\source\iocp_wsExt.pas',
+  iocp_WsJSON in '..\source\iocp_WsJSON.pas',
+  iocp_zlib in '..\source\iocp_zlib.pas',
+  frmInSQLMgrEditor in '..\source\editor\frmInSQLMgrEditor.pas',
+  fmIOCPSvrInfo in '..\source\frame\fmIOCPSvrInfo.pas',
+  iocp_baseModule in '..\source\module\iocp_baseModule.pas',
+  ZLibEx in '..\source\zlib\ZLibEx.pas',
+  ZLibExApi in '..\source\zlib\ZLibExApi.pas',
+  ZLibExGZ in '..\source\zlib\ZLibExGZ.pas';
+
+end.

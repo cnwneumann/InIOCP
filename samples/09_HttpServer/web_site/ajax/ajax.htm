@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<script>
+var xmlhttp;
+
+function loadXMLDoc(url,cfunc)
+{
+if (window.XMLHttpRequest)
+  {// IE7+, Firefox, Chrome, Opera, Safari 代码
+  xmlhttp=new XMLHttpRequest();
+  }
+else
+  {// IE6, IE5 代码
+  xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+  }
+xmlhttp.onreadystatechange=cfunc;
+xmlhttp.open("GET",url,true);
+xmlhttp.send();
+}
+
+function myFunction()
+{
+	loadXMLDoc("/ajax/ajax_text.txt",function()
+	{
+		if (xmlhttp.readyState==4 && xmlhttp.status==200)	
+			if (xmlhttp.responseText=="INVALID_SESSION")
+			{
+				window.location.href="/ajax/login";
+			}
+			else
+			{
+				document.getElementById("myDiv").innerHTML=xmlhttp.responseText;
+			}
+	});
+}
+
+function getSvrTime()
+{
+	loadXMLDoc("/ajax/server_time.pas",function()
+	{
+		if (xmlhttp.readyState==4 && xmlhttp.status==200)	
+			if (xmlhttp.responseText=="INVALID_SESSION")
+			{
+				window.location.href="/ajax/login";
+			}
+			else
+			{
+				document.getElementById("myDiv").innerHTML=document.getElementById("myDiv").innerHTML+xmlhttp.responseText;
+			}
+	});
+}
+
+function getTableData()
+{
+	loadXMLDoc("/ajax/query_xzqh.pas?SQL=Select_tbl_xzqh",function()
+	{
+		if (xmlhttp.readyState==4 && xmlhttp.status==200)	
+			if (xmlhttp.responseText=="INVALID_SESSION")
+			{
+				window.location.href="/ajax/login";
+			}
+			else
+			{
+                                document.getElementById("myDiv").innerHTML=xmlhttp.responseText;
+				var jsonObject=eval(xmlhttp.responseText);
+				for(var i=0; i<jsonObject.length; i++) {
+      					var tr=document.createElement('tr');
+      					var tdCode=document.createElement('td');
+      					var tdDetail=document.createElement('td');
+
+      					tdCode.innerHTML=jsonObject[i].code;
+      					tdDetail.innerHTML=jsonObject[i].detail;
+
+      					tr.appendChild(tdCode);  
+      					tr.appendChild(tdDetail);  
+
+      					var tbody=document.getElementById('tbody');  
+      					tbody.appendChild(tr); 
+				}
+			}
+	});
+}
+
+function getExit()
+{
+	loadXMLDoc("/ajax/quit",function()
+	{
+		if (xmlhttp.readyState==4 && xmlhttp.status==200)
+		{
+                       window.location.href="/ajax/login";
+		}
+	});
+}
+
+</script>
+
+</head>
+<body>
+
+<div id="myDiv"><h2>用 AJAX 向服务器请求数据！</h2></div>
+<button type="btnrequest" onclick="myFunction()">请求</button>
+<button type="btnsvrtime" onclick="getSvrTime()">服务器时间</button>
+<button type="btnDBQuery" onclick="getTableData()">查询数据表</button>
+<button type="btnquit" onclick="getExit()">安全退出</button>
+<br>
+=====================数据表=====================<br>
+<table border="1" id="tb_xzqh">
+<thead> <tr>
+  <td>行政区划编码</td>
+  <td>行政区划名称</td>
+</tr></thead>
+<tbody id='tbody'>  
+
+</tbody>
+</table>
+
+</body>
+</html>

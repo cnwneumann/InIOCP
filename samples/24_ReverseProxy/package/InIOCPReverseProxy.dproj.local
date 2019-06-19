@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\24_ReverseProxy\package\InIOCPReverseBroker.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\24_ReverseProxy\package\InIOCPReverseProxyServer.bdsproj</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\24_ReverseProxy\package\InIOCPReverseProxyServer.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\24_ReverseProxy\package\InIOCPReverseProxy.bdsproj</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\24_ReverseProxy\Form\frmIOCPBroker.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\24_ReverseProxy\Form\frmIOCPReverseProxySvr.pas</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.dfm,D:\My Documents\RAD Studio\Projects\Unit8.dfm=E:\ProgCodes\Delphi\InIOCP\v2.0\Form\frmIOCPBroker.dfm</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\24_ReverseProxy\Form\frmIOCPBroker.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\24_ReverseProxy\Form\frmIOCPReverseProxySvr.dfm</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.pas,D:\My Documents\RAD Studio\Projects\Unit8.pas=E:\ProgCodes\Delphi\InIOCP\v2.0\Form\frmIOCPBroker.pas</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.bdsproj,D:\My Documents\RAD Studio\Projects\Project1.bdsproj=E:\ProgCodes\Delphi\InIOCP\v2.0\Package\InIOCPBroker.bdsproj</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\24_ReverseProxy\package\InIOCPBroker.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\24_ReverseProxy\package\InIOCPReverseBroker.bdsproj</Transaction>
+  </Transactions>
+</BorlandProject>

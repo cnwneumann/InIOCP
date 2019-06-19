@@ -1,0 +1,1 @@
+REM InIOCPHTTPService.exe /uninstall

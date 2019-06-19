@@ -1,0 +1,11 @@
+<p>ajax test text!</p>
+<p>ajax 中文，这是服务端的反馈信息！</p>
+<p>========================================</p>
+<p>服务端自动维护 Session，Session 的使用：</p>
+<p>1、登录成功时用 Respone.CreateSession 生成一个 Session 并返回给客户端；</p>
+<p>2、安全退出时用 Respone.InvalidSession 返回 INVALID_SESSION 覆盖客户端的 Session；</p>
+<p>3、Session 无效时返回实体 INVALID_SESSION，客户端代码要作相应检查（浏览器代码无法监测服务状态302）。</p>
+<p>请参考 ajax.htm 的 Script。</p>
+<p>========================================</p>
+<p>停止服务器后再开启，请求或取服务器时间可测试无效 Session 的运行结果。</p>
+

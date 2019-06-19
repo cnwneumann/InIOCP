@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2017-11-01 21:11:04.359.pas,D:\My Documents\RAD Studio\Projects\Unit7.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\BatchTasks\Form\frmInIOCPBatchTasks.pas</Transaction>
+    <Transaction>2017-11-01 21:11:04.359.dfm,D:\My Documents\RAD Studio\Projects\Unit7.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\BatchTasks\Form\frmInIOCPBatchTasks.dfm</Transaction>
+    <Transaction>2017-11-01 21:11:15.156.bdsproj,D:\My Documents\RAD Studio\Projects\Project1.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\BatchTasks\Package\batchTasks.bdsproj</Transaction>
+    <Transaction>2017-11-01 22:04:01.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\BatchTasks\Package\batchTasks.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\BatchTasks\Package\InIOCPBatchTasks.bdsproj</Transaction>
+    <Transaction>2018-04-09 11:51:47.058.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\08_NewFeatures\Package\InIOCPBatchTasks.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\08_NewFeatures\Package\InIOCPNewFeatures.bdsproj</Transaction>
+    <Transaction>2018-04-09 16:01:33.944.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\08_NewFeatures\Form\frmInIOCPBatchTasks.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\08_NewFeatures\Form\frmInIOCPNewFeatures.pas</Transaction>
+    <Transaction>2018-04-09 16:01:33.944.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\08_NewFeatures\Form\frmInIOCPBatchTasks.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\08_NewFeatures\Form\frmInIOCPNewFeatures.dfm</Transaction>
+  </Transactions>
+</BorlandProject>

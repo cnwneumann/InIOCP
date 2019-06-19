@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2017-07-24 00:09:24.953.pas,D:\My Documents\RAD Studio\Projects\Unit6.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Form\frmInIOCPFileMgrClient.pas</Transaction>
+    <Transaction>2017-07-24 00:09:24.953.dfm,D:\My Documents\RAD Studio\Projects\Unit6.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Form\frmInIOCPFileMgrClient.dfm</Transaction>
+    <Transaction>2017-07-24 00:14:10.000.bdsproj,D:\My Documents\RAD Studio\Projects\Project1.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Package\inIOCPFileMgrCLient.bdsproj</Transaction>
+    <Transaction>2017-07-24 20:09:54.421.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Package\inIOCPFileMgrCLient.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Package\inIOCPFileMgrClient.bdsproj</Transaction>
+    <Transaction>2017-07-24 22:46:01.078.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Package\inIOCPFileMgrClient.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\DbMgr\Package\inIOCPDbMgrClient.bdsproj</Transaction>
+    <Transaction>2017-07-24 22:46:29.015.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Form\frmInIOCPFileMgrClient.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\DbMgr\Form\frmInIOCPDbMgrClient.pas</Transaction>
+    <Transaction>2017-07-24 22:46:29.015.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Form\frmInIOCPFileMgrClient.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\DbMgr\Form\frmInIOCPDbMgrClient.dfm</Transaction>
+    <Transaction>2018-04-14 19:43:38.484.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\04_DatabaseServer\Form\frmInIOCPDbMgrClient.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\04_DatabaseServer\Form\frmInIOCPDbSvrClient.pas</Transaction>
+    <Transaction>2018-04-14 19:43:38.484.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\04_DatabaseServer\Form\frmInIOCPDbMgrClient.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\04_DatabaseServer\Form\frmInIOCPDbSvrClient.dfm</Transaction>
+    <Transaction>2018-04-14 19:44:00.687.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\04_DatabaseServer\Package\inIOCPDbMgrClient.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\04_DatabaseServer\Package\inIOCPDbSvrClient.bdsproj</Transaction>
+  </Transactions>
+</BorlandProject>

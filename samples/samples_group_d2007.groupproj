@@ -1,0 +1,372 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{1A14CB10-1EA0-493C-A038-9D97379243E6}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="..\InIOCP\package\dclInIOCP.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="99_All-In-One\Package\InIOCP_all_in_one.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="01_CertifyServer\Package\InIOCPCertifyServer.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="02_MessageServer\Package\InIOCPMessageServer.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="02_MessageServer\Package\InIOCPPushMessage.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="03_FileServer\Package\InIOCPFileServer.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="03_FileServer\Package\inIOCPFileSvrClient.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="04_DatabaseServer\Package\InIOCPDBServer.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="04_DatabaseServer\Package\inIOCPDbSvrClient.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="05_CustomServer\Package\InIOCPCustomServer.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="06_StreamServer\Package\InIOCPStreamServer.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="07_ShortConnection\Package\InIOCPShortConnection.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="08_NewFeatures\Package\InIOCPNewFeatures.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="09_HttpServer\Package\InIOCPHttpServer.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="10_HttpServiceApp\Package\InIOCPHTTPService.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="11_WebQueryScores\Package\InIOCPWebQueryScores.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="20_WebSocketChat\Package\InIOCPWebSocketChat.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="21_WebSocketJSON\Package\InIOCPWebSocketJSON.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="21_WebSocketJSON\Package\InIOCPWebSocketDBClient.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="22_WebSocketMsgPush\Package\InIOCPWebSocketMsgServer.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="22_WebSocketMsgPush\Package\InIOCPWebSocketMsgClient.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="23_ProxyServer\Package\InIOCPProxyServer.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="24_ReverseProxy\package\InIOCPReverseProxy.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="24_ReverseProxy\package\InIOCPOutProxyServer.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="12_DoubleServer\Package\InIOCPDoubleServer.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="13_InLog\Package\InIOCPInLog.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="25_LANClientMgr\Package\InIOCP_LAN_MgrServer.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="25_LANClientMgr\Package\InIOCP_LAN_Admin.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="25_LANClientMgr\Package\InIOCP_LAN_Client.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="dclInIOCP">
+        <MSBuild Projects="..\InIOCP\package\dclInIOCP.dproj"/>
+    </Target>
+    <Target Name="dclInIOCP:Clean">
+        <MSBuild Projects="..\InIOCP\package\dclInIOCP.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="dclInIOCP:Make">
+        <MSBuild Projects="..\InIOCP\package\dclInIOCP.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="InIOCP_all_in_one">
+        <MSBuild Projects="99_All-In-One\Package\InIOCP_all_in_one.dproj"/>
+    </Target>
+    <Target Name="InIOCP_all_in_one:Clean">
+        <MSBuild Projects="99_All-In-One\Package\InIOCP_all_in_one.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="InIOCP_all_in_one:Make">
+        <MSBuild Projects="99_All-In-One\Package\InIOCP_all_in_one.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="InIOCPCertifyServer">
+        <MSBuild Projects="01_CertifyServer\Package\InIOCPCertifyServer.dproj"/>
+    </Target>
+    <Target Name="InIOCPCertifyServer:Clean">
+        <MSBuild Projects="01_CertifyServer\Package\InIOCPCertifyServer.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="InIOCPCertifyServer:Make">
+        <MSBuild Projects="01_CertifyServer\Package\InIOCPCertifyServer.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="InIOCPMessageServer">
+        <MSBuild Projects="02_MessageServer\Package\InIOCPMessageServer.dproj"/>
+    </Target>
+    <Target Name="InIOCPMessageServer:Clean">
+        <MSBuild Projects="02_MessageServer\Package\InIOCPMessageServer.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="InIOCPMessageServer:Make">
+        <MSBuild Projects="02_MessageServer\Package\InIOCPMessageServer.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="InIOCPPushMessage">
+        <MSBuild Projects="02_MessageServer\Package\InIOCPPushMessage.dproj"/>
+    </Target>
+    <Target Name="InIOCPPushMessage:Clean">
+        <MSBuild Projects="02_MessageServer\Package\InIOCPPushMessage.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="InIOCPPushMessage:Make">
+        <MSBuild Projects="02_MessageServer\Package\InIOCPPushMessage.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="InIOCPFileServer">
+        <MSBuild Projects="03_FileServer\Package\InIOCPFileServer.dproj"/>
+    </Target>
+    <Target Name="InIOCPFileServer:Clean">
+        <MSBuild Projects="03_FileServer\Package\InIOCPFileServer.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="InIOCPFileServer:Make">
+        <MSBuild Projects="03_FileServer\Package\InIOCPFileServer.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="inIOCPFileSvrClient">
+        <MSBuild Projects="03_FileServer\Package\inIOCPFileSvrClient.dproj"/>
+    </Target>
+    <Target Name="inIOCPFileSvrClient:Clean">
+        <MSBuild Projects="03_FileServer\Package\inIOCPFileSvrClient.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="inIOCPFileSvrClient:Make">
+        <MSBuild Projects="03_FileServer\Package\inIOCPFileSvrClient.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="InIOCPDBServer">
+        <MSBuild Projects="04_DatabaseServer\Package\InIOCPDBServer.dproj"/>
+    </Target>
+    <Target Name="InIOCPDBServer:Clean">
+        <MSBuild Projects="04_DatabaseServer\Package\InIOCPDBServer.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="InIOCPDBServer:Make">
+        <MSBuild Projects="04_DatabaseServer\Package\InIOCPDBServer.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="inIOCPDbSvrClient">
+        <MSBuild Projects="04_DatabaseServer\Package\inIOCPDbSvrClient.dproj"/>
+    </Target>
+    <Target Name="inIOCPDbSvrClient:Clean">
+        <MSBuild Projects="04_DatabaseServer\Package\inIOCPDbSvrClient.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="inIOCPDbSvrClient:Make">
+        <MSBuild Projects="04_DatabaseServer\Package\inIOCPDbSvrClient.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="InIOCPCustomServer">
+        <MSBuild Projects="05_CustomServer\Package\InIOCPCustomServer.dproj"/>
+    </Target>
+    <Target Name="InIOCPCustomServer:Clean">
+        <MSBuild Projects="05_CustomServer\Package\InIOCPCustomServer.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="InIOCPCustomServer:Make">
+        <MSBuild Projects="05_CustomServer\Package\InIOCPCustomServer.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="InIOCPStreamServer">
+        <MSBuild Projects="06_StreamServer\Package\InIOCPStreamServer.dproj"/>
+    </Target>
+    <Target Name="InIOCPStreamServer:Clean">
+        <MSBuild Projects="06_StreamServer\Package\InIOCPStreamServer.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="InIOCPStreamServer:Make">
+        <MSBuild Projects="06_StreamServer\Package\InIOCPStreamServer.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="InIOCPShortConnection">
+        <MSBuild Projects="07_ShortConnection\Package\InIOCPShortConnection.dproj"/>
+    </Target>
+    <Target Name="InIOCPShortConnection:Clean">
+        <MSBuild Projects="07_ShortConnection\Package\InIOCPShortConnection.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="InIOCPShortConnection:Make">
+        <MSBuild Projects="07_ShortConnection\Package\InIOCPShortConnection.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="InIOCPNewFeatures">
+        <MSBuild Projects="08_NewFeatures\Package\InIOCPNewFeatures.dproj"/>
+    </Target>
+    <Target Name="InIOCPNewFeatures:Clean">
+        <MSBuild Projects="08_NewFeatures\Package\InIOCPNewFeatures.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="InIOCPNewFeatures:Make">
+        <MSBuild Projects="08_NewFeatures\Package\InIOCPNewFeatures.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="InIOCPHttpServer">
+        <MSBuild Projects="09_HttpServer\Package\InIOCPHttpServer.dproj"/>
+    </Target>
+    <Target Name="InIOCPHttpServer:Clean">
+        <MSBuild Projects="09_HttpServer\Package\InIOCPHttpServer.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="InIOCPHttpServer:Make">
+        <MSBuild Projects="09_HttpServer\Package\InIOCPHttpServer.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="InIOCPHTTPService">
+        <MSBuild Projects="10_HttpServiceApp\Package\InIOCPHTTPService.dproj"/>
+    </Target>
+    <Target Name="InIOCPHTTPService:Clean">
+        <MSBuild Projects="10_HttpServiceApp\Package\InIOCPHTTPService.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="InIOCPHTTPService:Make">
+        <MSBuild Projects="10_HttpServiceApp\Package\InIOCPHTTPService.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="InIOCPWebQueryScores">
+        <MSBuild Projects="11_WebQueryScores\Package\InIOCPWebQueryScores.dproj"/>
+    </Target>
+    <Target Name="InIOCPWebQueryScores:Clean">
+        <MSBuild Projects="11_WebQueryScores\Package\InIOCPWebQueryScores.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="InIOCPWebQueryScores:Make">
+        <MSBuild Projects="11_WebQueryScores\Package\InIOCPWebQueryScores.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="InIOCPWebSocketChat">
+        <MSBuild Projects="20_WebSocketChat\Package\InIOCPWebSocketChat.dproj"/>
+    </Target>
+    <Target Name="InIOCPWebSocketChat:Clean">
+        <MSBuild Projects="20_WebSocketChat\Package\InIOCPWebSocketChat.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="InIOCPWebSocketChat:Make">
+        <MSBuild Projects="20_WebSocketChat\Package\InIOCPWebSocketChat.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="InIOCPWebSocketJSON">
+        <MSBuild Projects="21_WebSocketJSON\Package\InIOCPWebSocketJSON.dproj"/>
+    </Target>
+    <Target Name="InIOCPWebSocketJSON:Clean">
+        <MSBuild Projects="21_WebSocketJSON\Package\InIOCPWebSocketJSON.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="InIOCPWebSocketJSON:Make">
+        <MSBuild Projects="21_WebSocketJSON\Package\InIOCPWebSocketJSON.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="InIOCPWebSocketDBClient">
+        <MSBuild Projects="21_WebSocketJSON\Package\InIOCPWebSocketDBClient.dproj"/>
+    </Target>
+    <Target Name="InIOCPWebSocketDBClient:Clean">
+        <MSBuild Projects="21_WebSocketJSON\Package\InIOCPWebSocketDBClient.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="InIOCPWebSocketDBClient:Make">
+        <MSBuild Projects="21_WebSocketJSON\Package\InIOCPWebSocketDBClient.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="InIOCPWebSocketMsgServer">
+        <MSBuild Projects="22_WebSocketMsgPush\Package\InIOCPWebSocketMsgServer.dproj"/>
+    </Target>
+    <Target Name="InIOCPWebSocketMsgServer:Clean">
+        <MSBuild Projects="22_WebSocketMsgPush\Package\InIOCPWebSocketMsgServer.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="InIOCPWebSocketMsgServer:Make">
+        <MSBuild Projects="22_WebSocketMsgPush\Package\InIOCPWebSocketMsgServer.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="InIOCPWebSocketMsgClient">
+        <MSBuild Projects="22_WebSocketMsgPush\Package\InIOCPWebSocketMsgClient.dproj"/>
+    </Target>
+    <Target Name="InIOCPWebSocketMsgClient:Clean">
+        <MSBuild Projects="22_WebSocketMsgPush\Package\InIOCPWebSocketMsgClient.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="InIOCPWebSocketMsgClient:Make">
+        <MSBuild Projects="22_WebSocketMsgPush\Package\InIOCPWebSocketMsgClient.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="InIOCPProxyServer">
+        <MSBuild Projects="23_ProxyServer\Package\InIOCPProxyServer.dproj"/>
+    </Target>
+    <Target Name="InIOCPProxyServer:Clean">
+        <MSBuild Projects="23_ProxyServer\Package\InIOCPProxyServer.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="InIOCPProxyServer:Make">
+        <MSBuild Projects="23_ProxyServer\Package\InIOCPProxyServer.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="InIOCPReverseProxy">
+        <MSBuild Projects="24_ReverseProxy\package\InIOCPReverseProxy.dproj"/>
+    </Target>
+    <Target Name="InIOCPReverseProxy:Clean">
+        <MSBuild Projects="24_ReverseProxy\package\InIOCPReverseProxy.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="InIOCPReverseProxy:Make">
+        <MSBuild Projects="24_ReverseProxy\package\InIOCPReverseProxy.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="InIOCPOutProxyServer">
+        <MSBuild Projects="24_ReverseProxy\package\InIOCPOutProxyServer.dproj"/>
+    </Target>
+    <Target Name="InIOCPOutProxyServer:Clean">
+        <MSBuild Projects="24_ReverseProxy\package\InIOCPOutProxyServer.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="InIOCPOutProxyServer:Make">
+        <MSBuild Projects="24_ReverseProxy\package\InIOCPOutProxyServer.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="InIOCPDoubleServer">
+        <MSBuild Projects="12_DoubleServer\Package\InIOCPDoubleServer.dproj"/>
+    </Target>
+    <Target Name="InIOCPDoubleServer:Clean">
+        <MSBuild Projects="12_DoubleServer\Package\InIOCPDoubleServer.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="InIOCPDoubleServer:Make">
+        <MSBuild Projects="12_DoubleServer\Package\InIOCPDoubleServer.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="InIOCPInLog">
+        <MSBuild Projects="13_InLog\Package\InIOCPInLog.dproj"/>
+    </Target>
+    <Target Name="InIOCPInLog:Clean">
+        <MSBuild Projects="13_InLog\Package\InIOCPInLog.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="InIOCPInLog:Make">
+        <MSBuild Projects="13_InLog\Package\InIOCPInLog.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="InIOCP_LAN_MgrServer">
+        <MSBuild Projects="25_LANClientMgr\Package\InIOCP_LAN_MgrServer.dproj"/>
+    </Target>
+    <Target Name="InIOCP_LAN_MgrServer:Clean">
+        <MSBuild Projects="25_LANClientMgr\Package\InIOCP_LAN_MgrServer.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="InIOCP_LAN_MgrServer:Make">
+        <MSBuild Projects="25_LANClientMgr\Package\InIOCP_LAN_MgrServer.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="InIOCP_LAN_Admin">
+        <MSBuild Projects="25_LANClientMgr\Package\InIOCP_LAN_Admin.dproj"/>
+    </Target>
+    <Target Name="InIOCP_LAN_Admin:Clean">
+        <MSBuild Projects="25_LANClientMgr\Package\InIOCP_LAN_Admin.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="InIOCP_LAN_Admin:Make">
+        <MSBuild Projects="25_LANClientMgr\Package\InIOCP_LAN_Admin.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="InIOCP_LAN_Client">
+        <MSBuild Projects="25_LANClientMgr\Package\InIOCP_LAN_Client.dproj"/>
+    </Target>
+    <Target Name="InIOCP_LAN_Client:Clean">
+        <MSBuild Projects="25_LANClientMgr\Package\InIOCP_LAN_Client.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="InIOCP_LAN_Client:Make">
+        <MSBuild Projects="25_LANClientMgr\Package\InIOCP_LAN_Client.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="dclInIOCP;InIOCP_all_in_one;InIOCPCertifyServer;InIOCPMessageServer;InIOCPPushMessage;InIOCPFileServer;inIOCPFileSvrClient;InIOCPDBServer;inIOCPDbSvrClient;InIOCPCustomServer;InIOCPStreamServer;InIOCPShortConnection;InIOCPNewFeatures;InIOCPHttpServer;InIOCPHTTPService;InIOCPWebQueryScores;InIOCPWebSocketChat;InIOCPWebSocketJSON;InIOCPWebSocketDBClient;InIOCPWebSocketMsgServer;InIOCPWebSocketMsgClient;InIOCPProxyServer;InIOCPReverseProxy;InIOCPOutProxyServer;InIOCPDoubleServer;InIOCPInLog;InIOCP_LAN_MgrServer;InIOCP_LAN_Admin;InIOCP_LAN_Client"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="dclInIOCP:Clean;InIOCP_all_in_one:Clean;InIOCPCertifyServer:Clean;InIOCPMessageServer:Clean;InIOCPPushMessage:Clean;InIOCPFileServer:Clean;inIOCPFileSvrClient:Clean;InIOCPDBServer:Clean;inIOCPDbSvrClient:Clean;InIOCPCustomServer:Clean;InIOCPStreamServer:Clean;InIOCPShortConnection:Clean;InIOCPNewFeatures:Clean;InIOCPHttpServer:Clean;InIOCPHTTPService:Clean;InIOCPWebQueryScores:Clean;InIOCPWebSocketChat:Clean;InIOCPWebSocketJSON:Clean;InIOCPWebSocketDBClient:Clean;InIOCPWebSocketMsgServer:Clean;InIOCPWebSocketMsgClient:Clean;InIOCPProxyServer:Clean;InIOCPReverseProxy:Clean;InIOCPOutProxyServer:Clean;InIOCPDoubleServer:Clean;InIOCPInLog:Clean;InIOCP_LAN_MgrServer:Clean;InIOCP_LAN_Admin:Clean;InIOCP_LAN_Client:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="dclInIOCP:Make;InIOCP_all_in_one:Make;InIOCPCertifyServer:Make;InIOCPMessageServer:Make;InIOCPPushMessage:Make;InIOCPFileServer:Make;inIOCPFileSvrClient:Make;InIOCPDBServer:Make;inIOCPDbSvrClient:Make;InIOCPCustomServer:Make;InIOCPStreamServer:Make;InIOCPShortConnection:Make;InIOCPNewFeatures:Make;InIOCPHttpServer:Make;InIOCPHTTPService:Make;InIOCPWebQueryScores:Make;InIOCPWebSocketChat:Make;InIOCPWebSocketJSON:Make;InIOCPWebSocketDBClient:Make;InIOCPWebSocketMsgServer:Make;InIOCPWebSocketMsgClient:Make;InIOCPProxyServer:Make;InIOCPReverseProxy:Make;InIOCPOutProxyServer:Make;InIOCPDoubleServer:Make;InIOCPInLog:Make;InIOCP_LAN_MgrServer:Make;InIOCP_LAN_Admin:Make;InIOCP_LAN_Client:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>

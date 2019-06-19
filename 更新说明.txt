@@ -1,0 +1,306 @@
+// ===================================================== //
+//
+//               InIOCP（小旋风服务套件）
+//            （开源，正式版：2.6.43.1302）
+//
+//        适用于：Delphi 7、Delphi 2007、
+//                Delphi XE、Delphi XE5-XE10
+//
+//      作    者：高凉新农，QQ群：365531817
+//
+//      下载途径：csdn.net、2ccc.com 的 ftp 资源
+//
+//        github：https://github.com/cnwneumann/InIOCP
+//
+// ===================================================== //
+
+2019-06-19，正式版：2.6.43.1302
+    纠正建推送消息的一个问题，服务端注册客户端时，名称统一存为小写。
+
+2019-06-17，正式版：2.6.42.1300
+    纠正直接连接到代理服务时出现的一个问题。
+
+2019-06-15，正式版：2.6.41.1298
+    完善优化代码，增强实用性：
+    1、调整 TActionType 的项目名称，优化服务端推送消息的代码；
+    2、把 TInMessageManager 的事件 OnGetFiles 改名为 OnListFiles；
+    3、因服务端不主动推送文件，删除推送文件的请求事件 TInFileManager.OnTransmitRequest；
+    4、服务端由开发者根据 Document.UserName 决定文件共享方法，删除共享文件事件 TInFileManager.OnShareFile；
+    5、增加几个推送消息的方法，可按需推送消息（详见 iocp_managers 单元的 TInMessageManager 类定义）；
+    6、服务端增加登录时用户名属性 TIOCPSocket.LogName、TReceiveParams.LogName；
+    7、把 TInMessageClient 的方法 Get 改名为 GetOfflineMsgs；
+    8、修正客户端暂停断点传输不稳定的问题；
+    9、完善、优化代码，修正几个潜在问题。
+
+    请参考新增的例子 25_LANClientMgr（局域网客户端管理），它是接近实际业务的开发，并因此完善、优化多处代码。
+
+2019-04-25，正式版：2.5.40.1262
+    1、优化调整统计面板的计算方法；
+    2、删除服务端发送器的残留字段；
+    3、增加快速日志例子。
+
+2019-04-22，正式版：2.5.39.1260
+    1、纠正服务端更新数据表时，TDataSetProvider 和事务不属同一数模实例的问题；
+    2、调整统计面板的计算方法。
+
+2019-04-21，正式版：2.5.38.1256
+    1、优化代理功能代码；
+    2、纠正上版关闭服务时的一个异常。
+
+2019-04-15，正式版：2.5.37.1247
+    1、纠正取消单元变量后引起的 WebSocket 广播消息的潜在错误；
+    2、纠正 TInHttpDataProvider.KeepAlive 默认值为 True 的问题；
+    3、上版本取消单元变量后服务端管理组件异常，给予修正。
+
+2019-04-10，正式版：2.5.34.1242
+    1、取消单元变量，支持一个应用程序使用多个 InIOCP 服务（仍共用一个日志文件），见例子 DoubleServer；
+    2、改 TIOCPSocket.Data 为TIOCPSocket.Envir，增加 TBaseSocket.Data 属性，用于存放用户数据；
+    3、给 TInIOCPServer 增加事件 OnConnect、OnDisconnect，允许接入时关闭连接。
+
+2019-03-22，正式版：2.5.33.1230
+    1. 服务端：
+      ..调整 TBaseMessage.LoadFromVariant，可传输多个数据集，方便主从表查询；
+      ..增加 TInIOCPDataModule.InterApplyUpdates，方便更新数据表。
+    2. 客户端：
+      ..增加 TInDBQueryClient.AddClientDataSets，加入子数据表；
+      ..调整 TInDBQueryClient.ApplyUpdates、TInDBQueryClient.ExecQuery；
+      ..删除 TInDBQueryClient.TableName 属性。
+
+    服务端在内存中处理查询数据集，查询时要尽量避免大数据查询。
+
+2019-03-02，正式版：2.5.32.1223
+    1. 增加属性 TInDBConnection.ConnectionIndex（数据库连接编号）；
+    2. TInDBSQLClient、TInDBQueryClient 增加属性 DBConnection 取代原来的 Connection，
+       执行请求时会自动发送当前数据库连接编号；
+    3. 服务端自动设置 TInDBSQLClient、TInDBQueryClient 的当前数据库连接编号；
+    4. 调整 C/S 模式 SessionId 的生成方法。
+
+    以后可以直接设 TInDBConnection.ConnectionIndex 而不用执行 TInDBConnection.Connect，
+计划下版实现主从表数据的传输和提交功能。
+
+2019-02-28，正式版：2.5.31.1222
+   修正客户端断开时定时器被释放但仍可能被设 Enabled 的问题。
+
+2018-12-30，正式版：2.5.30.1221
+    1、纠正 HTTP CONNECT 请求的问题；
+    2、TInIOCPBroker 增加事件 OnAccept，用于判断是否允许建立代理连接；
+    3、取消 TInHttpDataProvider 组件的 OnConnect 事件（用代理组件实现）。
+
+2018-09-10，正式版：2.5.29.1220
+    1、InIOCP-JSON 支持记录对象；
+    2、文件管理器组件支持 InIOCP-JSON 格式的文件传输；
+    3、排除保存记录对象的一处隐患；
+    4、客户端组件 TFileClient.ListFiles 可以带参数。
+
+    例子 FileServer 增加用查询、下载多文件的方法；
+    例子 WebSocketJSON 增加用 WebSocket 查询服务端文件的方法。
+
+2018-09-08，正式版：2.5.28.1218
+    1、代理直接支持 HTTP 协议；
+    2、优化反向代理发起连接的方法；
+    3、服务端停止或客户端异常断开时，客户端组件自动感应；
+    4、排除 C/S 模式客户端的两处隐患。
+
+2018-08-14，正式版：2.5.27.1216
+    新版增加代理服务，扩展 WebSocket 协议，用 InIOCP-JSON 封装 WebSocket 消息：
+
+    1、增加代理组件 TInIOCPBroker，支持反向代理，统计面板代码作相应调整；
+
+    2、JSON 消息支持大文件上传、下载；
+    3、支持数据集传输、更新（增加更新数据表的方法），支持消息推送；
+    4、纠正双字节环境 JSON 消息 UTF-8 字符集的中文转换乱码问题；
+    5、纠正 WebSocket 协议客户端掩码发送的问题；
+
+    6、修正 HTTP GET 参数的中文解码问题；
+    7、纠正大 AVI 文件自动压缩的问题，改为：不自动压缩 AVI, 大于64M的文件不压缩；
+    8、修改推送时复制内存的多余操作；
+    9、优化工作线程、推送线程的信号灯的使用。
+    10、调整优化其他代码。
+
+    说明：此版本的反向代理建起的通讯通道不能修改；代理时要关联两个套接字，两者配合工作，
+此时可能出现 995 异常，但数据正常传输完毕，用 ab.exe 测试没异常提示；
+
+    疑问：C/S模式断点上传的有问题。
+
+2018-07-03，正式版：2.3.26.1187
+    纠正推送线程的等待信号灯的错误（句柄被覆盖）。
+
+2018-07-02，正式版：2.3.25.1186
+    新版本支持 WebSocket：
+    1、优化 HTTP 服务代码，支持 WebSocket；
+    2、增加 TInWebSocketManager 管理组件；
+    3、服务端数据发送器支持 WebSocket 格式发送；
+    4、增加 TWebSocket 类、TWSReceiver 数据接收器；
+    5、调整 C/S 模式查询客户端列表的代码，修正一个潜在隐患；
+    6、修正系统繁忙、拒绝推送时消息没释放问题。
+
+    WebSocket 暂无客户端组件，服务端不支持用 TransmitFile 发送，可以连续发送数据。
+
+    调整：服务端 TInIOCPServer 不关联组件 TInClientManager 时，客户端免登录，
+连接后即可发送请求，但此时不能使用认证服务的全部功能，不能直接设置权限、广播等。
+
+24、2018-06-15，版本：2.1.24.1160
+   1、纠正 C/S TransmitFile 发送模式的一个问题；
+   2、使用 InLog 快速日志。
+
+23、2018-06-03，版本：2.1.23.1158
+   1、纠正接入后过早超时的问题；
+   2、真正纠正 C/S 模式服务端的 995 问题；
+   3、纠正 HTTP 表单参数长度过长时的转换问题；
+   4、优化代码。
+
+22、2018-05-29，版本：2.1.22.1156
+   1、纠正下载大文件的等待反馈问题；
+   2、纠正上版 HTTP 响应的 FStatusCode 问题，纠正 HTTP 断点下载的一个问题；
+   3、优化 C/S 模式客户端收发进程显示；
+   4、优化数据发送器，服务端支持 WSASend、TransmitFile 两种模式发送数据（调整编译设置文件 in_iocp.inc）；
+   5、加快 HTTP 请求的解码速度，加快响应速度。
+
+   6、纠正服务端两种发送模式的 995 异常问题；
+   7、纠正 TransmitFile 发送模式资源释放时的指针引用异常；
+   8、纠正 C/S 模式客户端接收消息的协议头、校验码折断问题；
+   9、优化 C/S 模式客户端发送附件的等待反馈方法。
+
+   10、优化 HTTP 分块发送，减少内存分配；
+   11、修补 WSASend 模式 HTTP 服务端发送数据流的一个隐患；
+   12、优化 HTTP Respone 自定义报头的使用；
+   13、优化其他代码。
+
+   大文件传输、断点续传的稳定性有待继续测试：
+   1、C/S 模式的大文件上传下载、断点上传下载是否存在问题；
+   2、C/S 模式的取消、重新续传是否存在问题。
+
+21、2018-04-29，版本：2.0.21.1135
+   纠正发送器、TStreamSocket 两处问题，兼容 HTTP/1.0，解决下载大文件的超时断开问题。
+
+20、2018-04-28，版本：2.0.20.1132
+   支持断点上传、下载，开发期在32、64位系统测试正常，客户端 TInConnection 增加
+属性 MaxChunkSize，纠正前测试版的 http 发送问题。
+   使用前请重新编译（内附 Delphi XE10 的组件工程文件）。
+
+19、2018-04-20，版本：2.0.19.1129
+   发布 2.0 正式版，新版使用全新的传输机制，优化消息封装，增加消息新特性，
+支持真正的消息推送、广播，支持大文件（大于4G）传输。
+   参考《InIOCP技术要点》，暂无使用说明。
+
+// ===================================================== //
+
+18、2018-03-08，版本：1.6.18.962
+   1、增加属性 THttpRespone.CharSet，可返回 UTF-8 编码的 JSON 数据；
+   2、调整 THttpRespone 方法的 String 为 AnsiString，纠正一个问题；
+   3、调整 Http 会话 ID 长度；
+   4、优化代码。
+
+17、2018-02-11，版本：1.6.17.961
+   纠正 URL 带 UTF-8 编码时的解码问题。
+
+16、2018-02-05，版本：1.6.16.960
+   1、纠正统计面板的一处统计错误；
+   2、调整 AcceptEx 套接字的投放数和计算方法；
+   3、http 请求解码时，调整表单类型判断，增加变量 Referer；
+   4、调整接受连接的代码。
+
+15、2018-01-28，版本：1.6.15.959
+   1、调整优化 HTTP 服务代码；
+   2、调整 HTML 表单类型的判断，支持个别特殊浏览器；
+   3、删除 HTTP 的文件类型数组的重复内容；
+   4、例子数据库改用 ADO+Access，方便编译。
+
+14、2018-01-25，版本：1.6.14.957
+   1. 增加 Http 分块发送大数据集 JSON 的方法；
+   2. 调整 TInIOCPServer 的属性 TimeOut 的位置；
+   3. 纠正 Http 分块发送数据完毕后，还发送多余的报头的问题；
+   4. 删除 TInHttpDataPrivoder 的属性 KeepAlive（Http 1.1 用短连接）；
+   5. 优化日志、循环线程和 TInStringList 的代码。
+
+13、2018-01-15，版本：1.6.13.955
+   优化稳定性控制的代码，删除 TInIOCPServer 的属性 WorkThreadCount。
+
+12、2018-01-12，版本：1.6.12.953
+   1. Http 服务的 THttpRequest、THttpRespone 增加属性 ConnectionState，
+      处理业务时可用其检查套接字是否异常；
+   2. 纠正 C/S 模式未设置 TBusiWorker 属性 GlobalLock 的问题。
+
+11、2018-01-11，版本：1.6.11.952
+   1. 精简优化代码，删除均衡器组件；
+   2. 增加服务端的 SQL 命令管理器 TInSQLManager；
+   3. 删除响应服务例子（数据流服务是通用的）、均衡服务例子；
+   4. 增加功能集合例子 All-In-One。
+
+10、2018-01-05，版本：1.5.10.948
+   HTTP 服务支持 360 浏览器。
+
+10、2018-01-05，版本：1.5.10.948
+   HTTP 服务支持 360 浏览器。
+
+9、2018-01-04，版本：1.5.9.947
+   给客户端信息增加三字段，见结构 TClientInfo；
+   纠正客户端不处理被删除、超时关闭、拒绝服务的问题。
+
+8、2018-01-02，版本：1.5.8.946
+   1、改进代码，用原子操作解决服务客户端的线程安全问题，代码更简洁，更高效解决稳定性问题；
+   2、关闭服务客户端时不回收资源，下次使用时响应速度更快，同时调整在用内存块的统计方法。
+
+   代码见 TBaseSocket 字段 FState 的相关过程函数。
+
+7、2017-12-30，版本：1.5.7.942
+   1、完善代码，解决稳定性问题（开发期稳定，相关代码还可以优化）；
+   2、TInIOCPServer 增加一个属性 TimeOut，用于设置超时时长（毫秒）；
+   3、纠正上次客户端代码修改后的上传、下载文件的一个问题；
+   4、Http 服务支持断点下载，纠正上传文件的错误参数传递，
+      TInHttpDataProvider.OnAccept、OnReceiveFile 增加一个参数；
+   5、纠正 Delphi 7 下的问题。
+
+   给例子增加应用示例：
+   1、客户端事件 OnServerCall 的示例；
+   2、http 服务的数据库操作方法，请参考例子。
+
+   保证稳定性的原则：
+   绝对不能关闭正在执行任务的客户端 Socket!
+   系统只有一个关闭客户端 Socket 的方法，详见：
+   TWorkThread.HandleIOData、TBaseSocket.SetState、TBaseSocket.InterSetState、TBaseSocket.PostEvent。
+
+6、2017-12-05，版本：1.5.6.925
+   增强对套接字中断和异常的检测；
+   支持原始的数据流服务，详见例子；
+   新版的响应服务要加入任何一种 IOCPManager，否则当作原始数据流服务，详见例子；
+   HTTP 基本服务增加 Session 支持，支持 Session 防攻击；
+   从版本 1.0.5.912 开始，客户端调整了代码，文件下载方法有调整，详见例子。
+
+5、2017-11-02，版本：1.0.5.912
+   支持 HTTP 基本服务；
+   支持 C/S 服务模式的文件流共享下载、批任务。
+
+4、2017-10-18，版本：1.0.4.896
+   重要改变：
+   1. 分离通讯、业务代码，调整类：
+      TBaseSocket、TBalanceSocket、TTransmitSocket、TIOCPSocket
+
+   2. 增加编译开关 USESYSQUEUE，默认使用系统的任务队列调度业务。
+
+   调整 TInIOCPServer 的属性分组，增加 ServiceType 属性（预留 http 服务）。
+   修改数据块的独占引用方法：TIODataPool.Reference。
+
+   注：原计划增加 http 服务的预览版，要推迟。
+
+3. 2017-09-21，版本：1.0.3.888
+   纠正潜在问题：
+   TInBaseClient.CheckState、TIOCPSocket.CheckWorkState、
+   TIOCPSocket.ReceiveData
+
+   调整代码：
+   TBaseServer.InternalClose、TIOCPSocket.FreeResource
+
+   下次升级：增加 http 服务，分离通讯、业务代码。
+
+2. 2017-08-31，版本：1.0.2.887
+   纠正使用 UniCode 时的两个问题：
+   TStringHash.HashOf、TInStringList.SaveToFile
+
+   纠正例子 FileMgr 客户端查询文件的显示文件信息问题。
+
+   感谢“秦皇岛一诺<13780342177>”、“左手拉右手(305337616)”的测试。
+
+1. 2017-08-26，版本：1.0.1.886
+   首次发布，感谢网友“歼10”的建议。
+

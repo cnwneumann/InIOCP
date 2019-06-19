@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2018-06-22 16:33:05.401.bdsproj,D:\Administrator\Documents\RAD Studio\Projects\Project1.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Package\InIOCPWebSocketChar.bdsproj</Transaction>
+    <Transaction>2018-06-22 16:42:44.739.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Form\frmInIOCPHttpServer.pas=</Transaction>
+    <Transaction>2018-06-22 16:42:44.739.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Form\frmInIOCPHttpServer.dfm=</Transaction>
+    <Transaction>2018-06-22 16:44:32.450.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Package\Unit1.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Form\frmInIOCPWebSocketChar.pas</Transaction>
+    <Transaction>2018-06-22 16:44:32.450.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Package\Unit1.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Form\frmInIOCPWebSocketChar.dfm</Transaction>
+    <Transaction>2018-06-22 16:44:59.107.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Package\InIOCPWebSocketChar.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Package\InIOCPWebSocketChat.bdsproj</Transaction>
+    <Transaction>2018-06-22 16:45:15.457.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Form\frmInIOCPWebSocketChar.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Form\frmInIOCPWebSocketChat.pas</Transaction>
+    <Transaction>2018-06-22 16:45:15.457.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Form\frmInIOCPWebSocketChar.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Form\frmInIOCPWebSocketChat.dfm</Transaction>
+    <Transaction>2018-07-16 23:21:31.703.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\12_WebSocketJSON\Package\InIOCPWebSocketChat.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\12_WebSocketJSON\Package\InIOCPWebSocketJSON.bdsproj</Transaction>
+    <Transaction>2018-07-16 23:21:49.625.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\12_WebSocketJSON\Form\frmInIOCPWebSocketChat.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\12_WebSocketJSON\Form\frmInIOCPWebSocketJSON.pas</Transaction>
+    <Transaction>2018-07-16 23:21:49.625.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\12_WebSocketJSON\Form\frmInIOCPWebSocketChat.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\12_WebSocketJSON\Form\frmInIOCPWebSocketJSON.dfm</Transaction>
+    <Transaction>2018-07-17 08:56:46.319.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\15_WebSocketMsgPush\Package\InIOCPWebSocketJSON.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\15_WebSocketMsgPush\Package\InIOCPWebSocketMsgPush.bdsproj</Transaction>
+    <Transaction>2018-07-17 08:57:14.294.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\15_WebSocketMsgPush\Form\frmInIOCPWebSocketJSON.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\15_WebSocketMsgPush\Form\frmInIOCPWebSocketMsgPush.pas</Transaction>
+    <Transaction>2018-07-17 08:57:14.294.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\15_WebSocketMsgPush\Form\frmInIOCPWebSocketJSON.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\15_WebSocketMsgPush\Form\frmInIOCPWebSocketMsgPush.dfm</Transaction>
+    <Transaction>2018-07-17 08:58:32.102.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\15_WebSocketMsgPush\Package\InIOCPWebSocketMsgPush.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\15_WebSocketMsgPush\Package\InIOCPWebSocketMsgPushServer.bdsproj</Transaction>
+    <Transaction>2018-07-17 08:58:49.630.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\15_WebSocketMsgPush\Package\InIOCPWebSocketMsgPushServer.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\15_WebSocketMsgPush\Package\InIOCPWebSocketMsgServer.bdsproj</Transaction>
+    <Transaction>2018-07-17 08:59:48.315.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\15_WebSocketMsgPush\Form\frmInIOCPWebSocketMsgPush.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\15_WebSocketMsgPush\Form\frmInIOCPWebSocketMsgServer.pas</Transaction>
+    <Transaction>2018-07-17 08:59:48.315.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\15_WebSocketMsgPush\Form\frmInIOCPWebSocketMsgPush.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\15_WebSocketMsgPush\Form\frmInIOCPWebSocketMsgServer.dfm</Transaction>
+    <Transaction>2018-07-17 09:37:20.037.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\15_WebSocketMsgPush\Form\frmInIOCPWebSocketMsgServer.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\15_WebSocketMsgPush\Form\frmInIOCPWebSocketMsgClient.pas</Transaction>
+    <Transaction>2018-07-17 09:37:20.037.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\15_WebSocketMsgPush\Form\frmInIOCPWebSocketMsgServer.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\15_WebSocketMsgPush\Form\frmInIOCPWebSocketMsgClient.dfm</Transaction>
+    <Transaction>2018-07-17 09:53:34.414.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\15_WebSocketMsgPush\Form\frmInIOCPWebSocketMsgClient.pas=</Transaction>
+    <Transaction>2018-07-17 09:53:34.414.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\15_WebSocketMsgPush\Form\frmInIOCPWebSocketMsgClient.dfm=</Transaction>
+  </Transactions>
+</BorlandProject>

@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2017-07-23 13:39:40.343.pas,D:\My Documents\RAD Studio\Projects\Unit6.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\Echo\Form\frmInIOCPEcho.pas</Transaction>
+    <Transaction>2017-07-23 13:39:40.343.dfm,D:\My Documents\RAD Studio\Projects\Unit6.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\Echo\Form\frmInIOCPEcho.dfm</Transaction>
+    <Transaction>2017-07-23 13:40:01.437.bdsproj,D:\My Documents\RAD Studio\Projects\Project1.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\Echo\Package\InIOCPEcho.bdsproj</Transaction>
+    <Transaction>2017-07-23 19:30:23.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\Echo\Package\InIOCPEcho.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\MsgMgr\Package\InIOCPMsgMgr.bdsproj</Transaction>
+    <Transaction>2017-07-23 19:30:46.125.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\Echo\Form\frmInIOCPEcho.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\MsgMgr\Form\frmInIOCPMsgMgr.pas</Transaction>
+    <Transaction>2017-07-23 19:30:46.125.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\Echo\Form\frmInIOCPEcho.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\MsgMgr\Form\frmInIOCPMsgMgr.dfm</Transaction>
+    <Transaction>2017-07-23 19:59:48.812.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\MsgMgr\Package\InIOCPMsgMgr.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\samples_group.bdsproj</Transaction>
+    <Transaction>2017-07-23 20:03:35.859.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\samples_group.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\MsgMgr\Package\InIOCPMsgMgr.bdsproj</Transaction>
+    <Transaction>2017-07-23 23:42:29.218.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\MsgMgr\Package\InIOCPMsgMgr.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Package\InIOCPFileMgrServer.bdsproj</Transaction>
+    <Transaction>2017-07-23 23:42:47.500.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\MsgMgr\Form\frmInIOCPMsgMgr.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Form\frmInIOCPFileMgrSvr.pas</Transaction>
+    <Transaction>2017-07-23 23:42:47.500.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\MsgMgr\Form\frmInIOCPMsgMgr.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Form\frmInIOCPFileMgrSvr.dfm</Transaction>
+    <Transaction>2017-07-23 23:47:38.281.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Form\frmInIOCPFileMgrSvr.pas=</Transaction>
+    <Transaction>2017-07-23 23:47:38.281.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Form\frmInIOCPFileMgrSvr.dfm=</Transaction>
+    <Transaction>2017-07-23 23:48:48.546.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Form\frmInIOCPMsgMgr.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Form\frmInIOCPFileMgrSvr.pas</Transaction>
+    <Transaction>2017-07-23 23:48:48.546.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Form\frmInIOCPMsgMgr.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Form\frmInIOCPFileMgrSvr.dfm</Transaction>
+    <Transaction>2017-07-24 21:27:16.265.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Package\InIOCPFileMgrServer.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\DbMgr\Package\InIOCPDBMgrServer.bdsproj</Transaction>
+    <Transaction>2017-07-24 21:27:43.078.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Form\frmInIOCPFileMgrSvr.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\DbMgr\Form\frmInIOCPDBMgrSvr.pas</Transaction>
+    <Transaction>2017-07-24 21:27:43.078.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Form\frmInIOCPFileMgrSvr.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\DbMgr\Form\frmInIOCPDBMgrSvr.dfm</Transaction>
+    <Transaction>2017-07-24 21:42:30.546.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\DbMgr\Package\Unit1.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\DbMgr\Module\dmDBSQLite3.pas</Transaction>
+    <Transaction>2017-07-24 21:42:30.546.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\DbMgr\Package\Unit1.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\DbMgr\Module\dmDBSQLite3.dfm</Transaction>
+    <Transaction>2018-04-14 19:42:38.656.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\04_DatabaseServer\Form\frmInIOCPDBMgrSvr.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\04_DatabaseServer\Form\frmInIOCPDBServer.pas</Transaction>
+    <Transaction>2018-04-14 19:42:38.656.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\04_DatabaseServer\Form\frmInIOCPDBMgrSvr.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\04_DatabaseServer\Form\frmInIOCPDBServer.dfm</Transaction>
+    <Transaction>2018-04-14 19:42:50.375.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\04_DatabaseServer\Package\InIOCPDBMgrServer.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\04_DatabaseServer\Package\InIOCPDBServer.bdsproj</Transaction>
+  </Transactions>
+</BorlandProject>

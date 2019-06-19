@@ -1,0 +1,6 @@
+
+因本软件和快驴都使用了单元文件 MidasLib，安装时会出现 MidasLib 已被其他组件包含的错误，解决方法：
+
+找到单元文件 iocp_clients.pas、iocp_baseModule.pas 删除对单元 MidasLib 的引用，编译安装。
+
+记住：如果程序中使用了数据库模块的组件，务必加入 MidasLib 单元引用。
