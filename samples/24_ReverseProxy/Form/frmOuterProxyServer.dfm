@@ -1,8 +1,8 @@
 object FormIOCPOutProxySvr: TFormIOCPOutProxySvr
   Left = 0
   Top = 0
-  Caption = 'InIOCP - '#22806#37096#20195#29702#26381#21153
-  ClientHeight = 421
+  Caption = 'InIOCP - '#21453#21521#20195#29702#26381#21153#65288#22806#37096#65289
+  ClientHeight = 459
   ClientWidth = 676
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -15,11 +15,11 @@ object FormIOCPOutProxySvr: TFormIOCPOutProxySvr
   Scaled = False
   OnClose = FormClose
   OnCreate = FormCreate
-  PixelsPerInch = 96
+  PixelsPerInch = 120
   TextHeight = 15
   object Label1: TLabel
-    Left = 201
-    Top = 376
+    Left = 221
+    Top = 416
     Width = 61
     Height = 15
     Margins.Left = 2
@@ -29,8 +29,8 @@ object FormIOCPOutProxySvr: TFormIOCPOutProxySvr
     Caption = #26381#21153'IP'#65306
   end
   object Button1: TButton
-    Left = 446
-    Top = 366
+    Left = 466
+    Top = 406
     Width = 94
     Height = 33
     Margins.Left = 2
@@ -42,8 +42,8 @@ object FormIOCPOutProxySvr: TFormIOCPOutProxySvr
     OnClick = Button1Click
   end
   object Button2: TButton
-    Left = 554
-    Top = 366
+    Left = 574
+    Top = 406
     Width = 94
     Height = 33
     Margins.Left = 2
@@ -56,8 +56,8 @@ object FormIOCPOutProxySvr: TFormIOCPOutProxySvr
     OnClick = Button2Click
   end
   object Edit1: TEdit
-    Left = 266
-    Top = 373
+    Left = 286
+    Top = 413
     Width = 118
     Height = 23
     Margins.Left = 2
@@ -70,8 +70,8 @@ object FormIOCPOutProxySvr: TFormIOCPOutProxySvr
     OnDblClick = Edit1DblClick
   end
   object EditPort: TEdit
-    Left = 388
-    Top = 373
+    Left = 408
+    Top = 413
     Width = 47
     Height = 23
     Margins.Left = 2
@@ -86,17 +86,19 @@ object FormIOCPOutProxySvr: TFormIOCPOutProxySvr
     Left = 9
     Top = 268
     Width = 659
-    Height = 85
+    Height = 125
     Margins.Left = 2
     Margins.Top = 2
     Margins.Right = 2
     Margins.Bottom = 2
     ImeName = #35895#27468#25340#38899#36755#20837#27861' 2'
     Lines.Strings = (
-      'InIOCP'#22806#37096#20195#29702#26381#21153#65281
+      'InIOCP'#21453#21521#20195#29702#30340#22806#37096#26381#21153#65281
       ''
       'InIOCPBroker1 '#30340' ProxyType = ptOuter '#26102#65292#26159#22806#37096#20195#29702#65292
-      #35201#37096#32626#20110#29992#25143#33021#35775#38382#24471#21040#30340#22320#26041#65292#23427#21644#21453#21521#20195#29702#37197#21512#35775#38382#20869#32593#12290)
+      #35201#37096#32626#20110#29992#25143#33021#35775#38382#24471#21040#30340#22320#26041#65292#23427#21644#21453#21521#20195#29702#30340#20869#37096#26381#21153#37197#21512#35775#38382#20869#32593#12290
+      ''
+      #22806#37096#20195#29702#19982#21327#35758' Protocol '#26080#20851#12290)
     TabOrder = 4
   end
   inline FrameIOCPSvrInfo1: TFrameIOCPSvrInfo
@@ -376,10 +378,9 @@ object FormIOCPOutProxySvr: TFormIOCPOutProxySvr
     Top = 88
   end
   object InIOCPBroker1: TInIOCPBroker
-    Protocol = tpHTTP
     ProxyType = ptOuter
     OnBind = InIOCPBroker1Bind
-    Left = 328
+    Left = 296
     Top = 88
   end
 end

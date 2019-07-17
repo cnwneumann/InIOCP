@@ -74,9 +74,10 @@ type
 
   // ================== 业务执行模块基类 ======================
 
-  TIOCPSocket = class;
-  THttpSocket = class;
-  TWebSocket  = class;
+  TStreamSocket = class;
+  TIOCPSocket   = class;
+  THttpSocket   = class;
+  TWebSocket    = class;
 
   TBaseWorker = class(TObject)
   protected
@@ -85,8 +86,9 @@ type
     FThreadIdx: Integer;        // 编号
   protected
     procedure Execute(const ASocket: TIOCPSocket); virtual; abstract;
+    procedure StreamExecute(const ASocket: TStreamSocket); virtual; abstract;
     procedure HttpExecute(const ASocket: THttpSocket); virtual; abstract;
-    procedure WSExecute(const ASocket: TWebSocket); virtual; abstract;
+    procedure WebSocketExecute(const ASocket: TWebSocket); virtual; abstract;
   public
     property GlobalLock: TThreadLock read FGlobalLock; // 可以在业务操时用
     property ThreadIdx: Integer read FThreadIdx;
@@ -111,7 +113,6 @@ type
     FServer: TObject;          // TInIOCPServer 服务器
     FWorker: TBaseWorker;      // 业务执行者（引用）
 
-    FByteCount: Cardinal;      // 接收字节数
     FComplete: Boolean;        // 接收完毕/触发业务
     FRefCount: Integer;        // 引用数
     FState: Integer;           // 状态（原子操作变量）
@@ -129,10 +130,12 @@ type
     procedure InternalRecv(Complete: Boolean);
     procedure OnSendError(Sender: TObject);
   protected
-    {$IFDEF TRANSMIT_FILE}      // TransmitFile 发送模式
-    FTask: TTransmitObject;     // 待发送数据描述
-    FTaskExists: Boolean;       // 存在任务
-    procedure InterTransmit;    // 发送数据
+    FByteCount: Cardinal;      // 接收字节数
+    {$IFDEF TRANSMIT_FILE}     // TransmitFile 发送模式
+    FTask: TTransmitObject;    // 待发送数据描述
+    FTaskExists: Boolean;      // 存在任务
+    procedure FreeTransmitRes; // 释放 TransmitFile 的资源
+    procedure InterTransmit;   // 发送数据
     procedure InterFreeRes; virtual; abstract; // 释放发送资源
     {$ENDIF}
     procedure ClearResources; virtual; abstract;
@@ -144,31 +147,17 @@ type
     procedure InternalPush(AData: PPerIOData); // 推送入口
     procedure MarkIODataBuf(AData: PPerIOData); virtual;
     procedure SocketError(IOKind: TIODataType); virtual;
+
+    // 保护以下方法，防止在应用层被误用
+    function CheckTimeOut(ANowTickCount: Cardinal): Boolean;  // 超时检查
+    function Lock(PushMode: Boolean): Integer;  // 工作前加锁
+    procedure PostRecv; virtual;  // 投递接收
+    procedure PostEvent(IOKind: TIODataType); virtual; abstract; // 投放事件
+    procedure TryClose;  // 尝试关闭
   public
     constructor Create(AObjPool: TIOCPSocketPool; ALinkNode: PLinkRec); virtual;
     destructor Destroy; override;
-
-    // 超时检查
-    function CheckTimeOut(ANowTickCount: Cardinal): Boolean;
-
-    // 关闭
-    procedure Close; override;  
-
-    {$IFDEF TRANSMIT_FILE}
-    procedure FreeTransmitRes;  // 释放 TransmitFile 的资源
-    {$ENDIF}
-
-    // 工作前加锁
-    function Lock(PushMode: Boolean): Integer; 
-
-    // 投递接收
-    procedure PostRecv; virtual;
-
-    // 投放事件：被删除、拒绝服务、超时
-    procedure PostEvent(IOKind: TIODataType); virtual; abstract;
-
-    // 尝试关闭
-    procedure TryClose;
+    procedure Close; override;  // 关闭
   public
     property Active: Boolean read GetActive;
     property BufferPool: TIODataPool read GetBufferPool;
@@ -190,19 +179,27 @@ type
   // ================== 原始数据流 Socket ==================
 
   TStreamSocket = class(TBaseSocket)
+  private
+    FClientId: TNameString;    // 客户端 id
+    FRole: TClientRole;        // 权限
   protected
     {$IFDEF TRANSMIT_FILE}
     procedure InterFreeRes; override;
     {$ENDIF}
     procedure ClearResources; override;
     procedure ExecuteWork; override;
+    procedure IniSocket(AServer: TObject; ASocket: TSocket; AData: Pointer = nil); override;
+    procedure PostEvent(IOKind: TIODataType); override; 
   public
-    procedure PostEvent(IOKind: TIODataType); override;
     procedure SendData(const Data: PAnsiChar; Size: Cardinal); overload; virtual;
     procedure SendData(const Msg: String); overload; virtual;
     procedure SendData(Handle: THandle); overload; virtual;
     procedure SendData(Stream: TStream); overload; virtual;
-    procedure SendDataVar(Data: Variant); virtual; 
+    procedure SendDataVar(Data: Variant); virtual;
+  public
+    property ByteCount: Cardinal read FByteCount;
+    property ClientId: TNameString read FClientId write FClientId;
+    property Role: TClientRole read FRole write FRole;  // 角色/权限
   end;
 
   // ================== C/S 模式业务处理 ==================
@@ -274,12 +271,12 @@ type
     procedure ExecuteWork; override;  // 调用入口
     procedure IniSocket(AServer: TObject; ASocket: TSocket; AData: Pointer = nil); override;
     procedure InterCloseSocket(Sender: TObject); override;
+    procedure PostEvent(IOKind: TIODataType); override;
     procedure SocketError(IOKind: TIODataType); override;
   public
     destructor Destroy; override;
   public
     // 业务模块调用
-    procedure PostEvent(IOKind: TIODataType); override;
     procedure SetLogState(AEnvir: PEnvironmentVar);
   public
     property Action: TActionType read FAction;
@@ -312,11 +309,10 @@ type
     {$ENDIF}
     procedure ClearResources; override;
     procedure ExecuteWork; override;
+    procedure PostEvent(IOKind: TIODataType); override;  // 投放事件
     procedure SocketError(IOKind: TIODataType); override;
   public
     destructor Destroy; override;
-    // 推送事件
-    procedure PostEvent(IOKind: TIODataType); override;
     // 文件流操作
     procedure CreateStream(const FileName: String);
     procedure WriteStream(Data: PAnsiChar; DataLength: Integer);
@@ -357,11 +353,11 @@ type
     procedure ClearResources; override;
     procedure ExecuteWork; override;
     procedure InternalPing;
+    procedure PostEvent(IOKind: TIODataType); override;
   public
     constructor Create(AObjPool: TIOCPSocketPool; ALinkNode: PLinkRec); override;
     destructor Destroy; override;
 
-    procedure PostEvent(IOKind: TIODataType); override;
     procedure SendData(const Data: PAnsiChar; Size: Cardinal); overload; override;
     procedure SendData(const Msg: String); overload; override;
     procedure SendData(Handle: THandle); overload; override;
@@ -425,13 +421,13 @@ type
     procedure IniSocket(AServer: TObject; ASocket: TSocket; AData: Pointer = nil); override;
     procedure InterCloseSocket(Sender: TObject); override;
     procedure MarkIODataBuf(AData: PPerIOData); override;
+    procedure PostEvent(IOKind: TIODataType); override; // 投放事件：被删除、拒绝服务、超时        
   protected
     procedure AssociateInner(InnerBroker: TSocketBroker);
     procedure SendInnerFlag;
     procedure SetConnection(AServer: TObject; Connection: TSocket);
   public
     procedure CreateBroker(const AServer: AnsiString; APort: Integer);  // 建连接中继
-    procedure PostEvent(IOKind: TIODataType); override;
   end;
 
 implementation
@@ -667,6 +663,7 @@ end;
 
 procedure TBaseSocket.Close;
 begin
+  // 关闭：用于禁止接入时
   ClearResources;  // 只清空资源，不释放，下次不用新建
   inherited;
 end;
@@ -980,16 +977,22 @@ end;
 
 procedure TStreamSocket.ExecuteWork;
 begin
-  // 直接调用 Server 的 OnDataReceive 事件（未必接收完毕）
   try
     FTickCount := GetTickCount;
-    if Assigned(TInIOCPServer(FServer).OnDataReceive) then
-      TInIOCPServer(FServer).OnDataReceive(Self, FRecvBuf^.Data.buf, FByteCount);
+    FWorker.StreamExecute(Self);  // 新版用管理器执行
   finally
     {$IFDEF TRANSMIT_FILE}
     if (FTaskExists = False) then {$ENDIF}
       InternalRecv(True);  // 继续接收
   end;
+end;
+
+procedure TStreamSocket.IniSocket(AServer: TObject; ASocket: TSocket;
+  AData: Pointer);
+begin
+  inherited;
+  FClientId := '';
+  FRole := crUnknown;
 end;
 
 procedure TStreamSocket.PostEvent(IOKind: TIODataType);
@@ -1492,6 +1495,7 @@ procedure TIOCPSocket.PostEvent(IOKind: TIODataType);
 var
   Msg: TPushMessage;
 begin
+  // 投放事件：被删除、拒绝服务、超时    
   // 构造、推送一个协议头消息（给自己）
   //   C/S 服务 IOKind 只有 ioDelete、ioRefuse、ioTimeOut，
   //  其他消息用：Push(ATarget: TBaseSocket; UseUniqueMsgId: Boolean);
@@ -1769,7 +1773,7 @@ procedure THttpSocket.ExecuteWork;
 begin
   // 执行 Http 请求
   try
-    // 0. 使用 C/S 协议时，要转换为 TIOCPSocket
+    // 1. 使用 C/S 协议时，要转换为 TIOCPSocket
     if (FTickCount = NEW_TICKCOUNT) and (FByteCount = IOCP_SOCKET_FLEN) and
       MatchSocketType(FRecvBuf^.Data.Buf, IOCP_SOCKET_FLAG) then
     begin
@@ -1777,10 +1781,17 @@ begin
       Exit;  // 返回
     end;
 
-    // 1. 命令解码
+    // 2. 是否提供 HTTP 服务
+    if (Assigned(TInIOCPServer(FServer).HttpDataProvider) = False) then
+    begin
+      InterCloseSocket(Self);
+      Exit;
+    end;
+
+    // 2. 命令解码
     DecodeHttpRequest;
 
-    // 2. 检查升级 WebSocket
+    // 3. 检查升级 WebSocket
     if (FRequest.UpgradeState > 0) then
     begin
       if FRequest.Accepted then  // 升级为 WebSocket，不能返回 THttpSocket 了
@@ -1792,7 +1803,7 @@ begin
       Exit;     // 返回
     end;
 
-    // 3. 执行业务
+    // 4. 执行业务
     FComplete := FRequest.Complete;   // 是否接收完毕
     FSessionId := FRespone.SessionId; // SendWork 时会被删除
     FRespone.StatusCode := FRequest.StatusCode;
@@ -1800,7 +1811,7 @@ begin
     if FComplete and FRequest.Accepted and (FRequest.StatusCode < 400) then
       FWorker.HttpExecute(Self);
 
-    // 4. 检查是否要保持连接
+    // 5. 检查是否要保持连接
     if FRequest.Attacked then // 被攻击
       FKeepAlive := False
     else
@@ -1809,16 +1820,16 @@ begin
         // 是否保存连接
         FKeepAlive := FRespone.KeepAlive;
 
-        // 5. 发送内容给客户端
+        // 6. 发送内容给客户端
         TResponeObject(FRespone).SendWork;
 
         if {$IFNDEF TRANSMIT_FILE} FKeepAlive {$ELSE}
-           (FTaskExists = False) {$ENDIF} then // 6. 清资源，准备下次请求
+           (FTaskExists = False) {$ENDIF} then // 7. 清资源，准备下次请求
           ClearResources;
       end else
         FKeepAlive := True;   // 未完成，还不能关闭
 
-    // 7. 继续投放或关闭
+    // 8. 继续投放或关闭
     if FKeepAlive and (FErrorCode = 0) then  // 继续投放
     begin
       {$IFDEF TRANSMIT_FILE}
@@ -2001,7 +2012,7 @@ begin
     begin
       if (FMsgType <> mtDefault) then
         FResult.Action := FJSON.Action;  // 复制 Action
-      FWorker.WSExecute(Self);
+      FWorker.WebSocketExecute(Self);
     end;
   finally
     if FComplete then   // 接收完毕
@@ -2126,15 +2137,13 @@ begin
     FDualBuf^.Owner := Self;  // 改宿主
     FPeerIPPort := 'Dual:' + FPeerIPPort;
   finally
-    // 清除原资源值
-    InnerBroker.FConnected := False;
-    InnerBroker.FSocket := INVALID_SOCKET;
+    // 清除 InnerBroker 资源值，回收
     InnerBroker.FRecvBuf := nil;
-    // 回收 TBaseSocket
+    InnerBroker.FConnected := False;
+    InnerBroker.FDualConnected := False;
+    InnerBroker.FSocket := INVALID_SOCKET;
     InnerBroker.InterCloseSocket(InnerBroker);
   end;
-  if (FSocketType = stWebSocket) or (TInIOCPBroker(FBroker).Protocol = tpNone) then
-    FOnBind := nil;  // 删除绑定事件，以后不再绑定！ }
 end;
 
 procedure TSocketBroker.BrokerPostRecv(ASocket: TSocket; AData: PPerIOData; ACheckState: Boolean);
@@ -2180,7 +2189,7 @@ procedure TSocketBroker.ClearResources;
 begin
   // 反向代理：未关联的连接被断开，向外补发连接
   if TInIOCPBroker(FBroker).ReverseMode and (FSocketType = stOuterSocket) then
-    TIOCPBrokerRef(FBroker).ConnectOuter;
+    TIOCPBrokerRef(FBroker).IncOuterConnection;
   if FDualConnected then  // 尝试关闭
     TryClose;
 end;
@@ -2199,40 +2208,32 @@ begin
 
   if (ConnectSocket(FDualSocket, AServer, APort) = False) then  // 连接
   begin
-    FDualConnected := False;
     FErrorCode := GetLastError;
     iocp_log.WriteLog('TSocketBroker.CreateBroker:ConnectSocket->' + GetSysErrorMessage(FErrorCode));
-    InterCloseSocket(Self);  // 关闭代理
   end else
   if TInIOCPServer(FServer).IOCPEngine.BindIoCompletionPort(FDualSocket) then  // 绑定
   begin
-    FDualConnected := True;
-    FTargetHost := AServer;
-    FTargetPort := APort;
-    FPeerIPPort := 'Dual:' + FPeerIPPort;  // 加入标志
-
     // 分配接收内存块
     if (FDualBuf = nil) then
       FDualBuf := BufferPool.Pop^.Data;
 
-    BrokerPostRecv(FDualSocket, FDualBuf, False);  // 投放 FDualSocket
+    // 投放 FDualSocket
+    BrokerPostRecv(FDualSocket, FDualBuf, False);  
 
-    if (FErrorCode > 0) then  // 异常
-      FDualConnected := False
-    else
-    if TInIOCPBroker(FBroker).ReverseMode then  // 反向代理，向外补发连接
+    if (FErrorCode = 0) then  // 异常
     begin
-      FSocketType := stDefault;  // 改变（关闭时不补充连接）
-      TIOCPBrokerRef(FBroker).ConnectOuter;
+      FDualConnected := True;
+      FPeerIPPort := 'Dual:' + FPeerIPPort;  // 加入标志
+      FTargetHost := AServer;
+      FTargetPort := APort;
+      if TInIOCPBroker(FBroker).ReverseMode then  // 反向代理
+      begin
+        FSocketType := stDefault;  // 改变（关闭时不补充连接）
+        TIOCPBrokerRef(FBroker).IncOuterConnection;  // 向外补发连接
+      end;
     end;
-
-    FOnBind := nil;  // 删除绑定事件，以后不再绑定！
   end else
-  begin
-    FDualConnected := False;
     FErrorCode := GetLastError;
-    InterCloseSocket(Self);  // 关闭代理
-  end;
 
 end;
 
@@ -2264,10 +2265,10 @@ procedure TSocketBroker.ExecuteWork;
       FAction := 0;
     end;
   end;
-  procedure ForwardDataEx(ASocket, AToSocket: TSocket; AData: PPerIOData; MaskInt: Integer);
+  procedure CopyForwardData(ASocket, AToSocket: TSocket; AData: PPerIOData; MaskInt: Integer);
   begin
+    // 不能简单互换数据块，否则大并发时 AData 被重复投放 -> 995 异常
     try
-      // 不能简单互换数据块，否则大并发时 AData 被重复投放 -> 995 异常
       FSender.Socket := AToSocket;  // 发给 AToSocket
       FRecvState := FRecvState and MaskInt;  // 去除状态
       TServerTaskSender(FSender).CopySend(AData);  // 发送数据
@@ -2278,19 +2279,18 @@ procedure TSocketBroker.ExecuteWork;
         InterCloseSocket(Self);
     end;
   end;
-  procedure ForwardData;
+  procedure ForwardData(AProxyType: TProxyType);
   begin
-    // 复制、转发数据
-    if FCmdConnect then  // Http代理: Connect 请求，响应
+    if FCmdConnect then  // 1. Http代理的 Connect 请求，响应：and (AProxyType <> ptOuter) 
     begin
       FCmdConnect := False;
       FSender.Send(HTTP_PROXY_RESPONE);
       BrokerPostRecv(FSocket, FRecvBuf);
-    end else
+    end else  // 2. 转发数据
     if (FRecvState and $0001 = 1) then
-      ForwardDataEx(FSocket, FDualSocket, FRecvBuf, 2)
+      CopyForwardData(FSocket, FDualSocket, FRecvBuf, 2)
     else
-      ForwardDataEx(FDualSocket, FSocket, FDualBuf, 1);
+      CopyForwardData(FDualSocket, FSocket, FDualBuf, 1);
   end;
 begin
   // 执行：
@@ -2300,10 +2300,10 @@ begin
   // 要合理设置 TInIOCPBroker.ProxyType
 
   FTickCount := GetTickCount;
-  
+
   case TInIOCPBroker(FBroker).ProxyType of
     ptDefault: // 默认代理模式
-      if (FAction > 0) then  // 见：SendInnerFlag
+      if (FAction > 0) then  // 反向代理, 见：SendInnerFlag
       begin
         ExecSocketAction;    // 执行操作，返回
         BrokerPostRecv(FSocket, FRecvBuf);  // 投放
@@ -2317,30 +2317,25 @@ begin
       end;
   end;
 
-  if (Assigned(FOnBind) = False) then  // 无绑定方法  
-    ForwardData  // 转发数据
-  else  // 开始时 FOnBind <> nil
-    try
-      FOnBind(Self, FRecvBuf^.Data.buf, FByteCount)  // 绑定、关联
-    finally
-      if FDualConnected then  // 转发数据
-        ForwardData;
-    end;
+  // 开始时根据协议绑定一个方法，代理连接设置后再删除绑定
+
+  try
+    if Assigned(FOnBind) then  // 开始时 FOnBind <> nil
+      try
+        FOnBind(Self, FRecvBuf^.Data.buf, FByteCount);  // 绑定、关联
+      finally
+        FOnBind := nil;  // 删除绑定事件，以后不再绑定！
+      end;
+  finally
+    if FDualConnected then  // 存在代理连接设置
+      ForwardData(TInIOCPBroker(FBroker).ProxyType)  // 转发数据
+    else
+      InterCloseSocket(Self);
+  end;
 
 end;
 
 procedure TSocketBroker.HttpBindOuter(Connection: TSocketBroker; const Data: PAnsiChar; DataSize: Cardinal);
-  function ChangeConnection(const ABrokerId, AServer: AnsiString; APort: Integer): Boolean;
-  begin
-    // 检查关联目的是否已经改变
-    if (TInIOCPBroker(FBroker).ProxyType = ptOuter) then
-      Result := (ABrokerId <> FBrokerId)  // 反向代理改变
-    else
-      Result := not (((AServer = FTargetHost) or
-                      (LowerCase(AServer) = 'localhost') and (FTargetHost = '127.0.0.1') or
-                      (LowerCase(FTargetHost) = 'localhost') and (AServer = '127.0.0.1')) and (
-                      (APort = FTargetPort) or (APort = TInIOCPServer(FServer).ServerPort)));
-  end;
   procedure GetConnectHost(var p: PAnsiChar);
   var
     pb: PAnsiChar;
@@ -2503,13 +2498,10 @@ procedure TSocketBroker.HttpBindOuter(Connection: TSocketBroker; const Data: PAn
   begin
     // Http 协议：连接到请求的主机 HOST，没有时连接到参数指定的
     if (FTargetHost <> '') and (FTargetPort > 0) then
-    begin
       CreateBroker(FTargetHost, FTargetPort)
-    end else
-    if (AServer <> '') and (APort > 0) then  // 用参数指定的
-      CreateBroker(AServer, APort)
     else
-      InterCloseSocket(Self);  // 关闭
+    if (AServer <> '') and (APort > 0) then  // 用参数指定的
+      CreateBroker(AServer, APort);
   end;
 var
   Accept: Boolean;
@@ -2529,46 +2521,53 @@ begin
     TInIOCPBroker(FBroker).OnAccept(Self, FTargetHost, FTargetPort, Accept);
 
   if Accept then
-    if (TInIOCPBroker(FBroker).ProxyType = ptDefault) then  // 默认代理：新建连接，关联
-      HttpConnectHost(TInIOCPBroker(FBroker).InnerServer.ServerAddr,
-                      TInIOCPBroker(FBroker).InnerServer.ServerPort)
-    else  // 内部代理：从内部连接池选取关联对象
-    if (FDualConnected = False) or
-      ChangeConnection(FBrokerId, FTargetHost, FTargetPort) then
-      TIOCPBrokerRef(FBroker).BindInnerBroker(Connection, Data, DataSize);
+    case TInIOCPBroker(FBroker).ProxyType of
+      ptDefault:  // 默认代理：新建连接，关联
+        HttpConnectHost(TInIOCPBroker(FBroker).InnerServer.ServerAddr,
+                        TInIOCPBroker(FBroker).InnerServer.ServerPort);
+      ptOuter:    // 内部代理：从内部连接池选取关联对象
+        TIOCPBrokerRef(FBroker).BindInnerBroker(Connection, Data, DataSize);
+    end;
 
 end;
 
 procedure TSocketBroker.IniSocket(AServer: TObject; ASocket: TSocket; AData: Pointer);
 begin
   inherited;
-  FDualConnected := False;  // Dual 未连接
-  FDualSocket := INVALID_SOCKET;
-
   FRecvState := 0;
   FTargetHost := '';
   FTargetPort := 0;
   FUseTransObj := False;  // 不用 TransmitFile
 
+  FCmdConnect := False;
+  FDualConnected := False;  // Dual 未连接
+  FDualSocket := INVALID_SOCKET;
+
   // 代理管理器
   FBroker := TInIOCPServer(FServer).IOCPBroker;
 
-  if (TInIOCPBroker(FBroker).ProxyType = ptOuter) then  
-    FBrokerId := 'DEFAULT';  // 默认的 FBrokerId
-
-  if (TInIOCPBroker(FBroker).Protocol = tpHTTP) then
-    FOnBind := HttpBindOuter  // http 协议，直接内部绑定、解析
-  else
-  if (TInIOCPBroker(FBroker).ProxyType = ptDefault) then
-    FOnBind := TInIOCPBroker(FBroker).OnBind  // 绑定组件事件
-  else  // 外部代理，绑定组件方法
-    FOnBind := TIOCPBrokerRef(FBroker).BindInnerBroker;
+  case TInIOCPBroker(FBroker).ProxyType of
+    ptDefault:  // 绑定设计界面的组件事件
+      if (TInIOCPBroker(FBroker).Protocol = tpHTTP) then
+        FOnBind := HttpBindOuter
+      else
+        FOnBind := TInIOCPBroker(FBroker).OnBind;
+    ptOuter: begin
+      FBrokerId := 'DEFAULT';  // 默认的 FBrokerId
+      FOnBind := TIOCPBrokerRef(FBroker).BindInnerBroker;  // 直接配对，此时 FCmdConnect 恒为 False
+    end;
+  end;
 
 end;
 
 procedure TSocketBroker.InterCloseSocket(Sender: TObject);
 begin
-  // 关闭 DualSocket
+  // 回收内存块、关闭 DualSocket
+  if TInIOCPServer(FServer).Active and Assigned(FDualBuf) then
+  begin
+    BufferPool.Push(FDualBuf^.Node);
+    FDualBuf := nil;
+  end;
   if FDualConnected then
     try
       iocp_Winsock2.Shutdown(FDualSocket, SD_BOTH);
@@ -2604,7 +2603,7 @@ end;
 
 procedure TSocketBroker.SetConnection(AServer: TObject; Connection: TSocket);
 begin
-  // 反向代理：设置主动发起到外部的连接
+  // 反向代理：内部设置主动发起到外部的连接
   IniSocket(AServer, Connection);
   FSocketType := stOuterSocket;  // 连接到外部的
   if (TInIOCPBroker(FBroker).Protocol = tpNone) then

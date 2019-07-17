@@ -105,12 +105,14 @@ type
     function GetDatabaseMgr: TInDatabaseManager;   // 数据库管理
     function GetFileMgr: TInFileManager;           // 文件管理
     function GetMessageMgr: TInMessageManager;     // 消息管理
+    function GetStreamMgr: TInStreamManager;       // 流管理
   private
     procedure SetClientMgr(const Value: TInClientManager);
     procedure SetCustomMgr(const Value: TInCustomManager);
     procedure SetDatabaseMgr(const Value: TInDatabaseManager);
     procedure SetFileMgr(const Value: TInFileManager);
     procedure SetMessageMgr(const Value: TInMessageManager);
+    procedure SetStreamMgr(const Value: TInStreamManager);
   public
     constructor Create(AOwner: TInIOCPServer);
   published
@@ -119,13 +121,13 @@ type
     property DatabaseManager: TInDatabaseManager read GetDatabaseMgr write SetDatabaseMgr;
     property FileManager: TInFileManager read GetFileMgr write SetFileMgr;
     property MessageManager: TInMessageManager read GetMessageMgr write SetMessageMgr;
+    property StreamManager: TInStreamManager read GetStreamMgr write SetStreamMgr;
   end;
   
   // ================== TInIOCPServer 服务器 类 ==================
 
   TOnConnectEvnet   = procedure(Sender: TObject; Socket: TBaseSocket) of object;
-  TOnStreamInEvent  = procedure(Sender: TBaseSocket; const Data: PAnsiChar; Size: Cardinal) of object;
-  TOnStreamOutEvent = procedure(Sender: TBaseSocket; Size: Cardinal) of object;
+  TOnStreamIOEvent  = procedure(Sender: TBaseSocket; Size: Cardinal) of object;
   TOnErrorEvent     = procedure(Sender: TObject; const Error: Exception) of object;
 
   TInIOCPServer = class(TComponent)
@@ -164,7 +166,7 @@ type
     FSessionMgr: THttpSessionManager;    // Http 的会话管理（引用）
     FStartParams: TServerParams;         // 启动参数属性组
     FState: Integer;                     // 状态
-    FStreamMode: Boolean;                // 当作流服务模式
+    FStreamMode: Boolean;                // 代理、流服务模式
     FTimeOut: Cardinal;                  // 超时间隔（0时不检查）
     FTimeoutChecking: Boolean;           // 关闭线程工作状态
     
@@ -181,8 +183,9 @@ type
     FDatabaseMgr: TInDatabaseManager;    // 数据库管理
     FFileMgr: TInFileManager;            // 文件管理
     FMessageMgr: TInMessageManager;      // 消息管理
+    FStreamMgr: TInStreamManager;        // 流服务
     FHttpDataProvider: TInHttpDataProvider; // Http 服务
-
+        
     // =========== 事件 ===========
 
     FBeforeOpen: TNotifyEvent;           // 启动前事件
@@ -191,8 +194,8 @@ type
     FAfterClose: TNotifyEvent;           // 停止后事件
 
     FOnConnect: TOnConnectEvnet;         // 接入事件
-    FOnDataReceive: TOnStreamInEvent;    // 收到数据
-    FOnDataSend: TOnStreamOutEvent;      // 发出数据
+    FOnDataReceive: TOnStreamIOEvent;    // 收到数据
+    FOnDataSend: TOnStreamIOEvent;       // 发出数据
     FOnDisconnect: TOnConnectEvnet;      // 断开事件    
     FOnError: TOnErrorEvent;             // 异常事件
     
@@ -243,7 +246,6 @@ type
     property MaxIOTraffic: Integer read FMaxIOTraffic;    
     property PushManager: TPushMsgManager read FPushManager;
     property PushThreadCount: Integer read FPushThreadCount;
-    property StreamMode: Boolean read FStreamMode;
     property TimeOut: Cardinal read FTimeOut;
     property WorkThreadCount: Integer read FWorkThreadCount;
   public
@@ -258,6 +260,7 @@ type
     property DatabaseManager: TInDatabaseManager read FDatabaseMgr;
     property FileManager: TInFileManager read FFileMgr;
     property MessageManager: TInMessageManager read FMessageMgr;
+    property StreamManager: TInStreamManager read FStreamMgr;
   published
     property Active: Boolean read FActive write SetActive default False;
     property HttpDataProvider: TInHttpDataProvider read FHttpDataProvider write SetHttpDataProvider;
@@ -270,8 +273,8 @@ type
   published
     // 事件
     property OnConnect: TOnConnectEvnet read FOnConnect write FOnConnect;
-    property OnDataReceive: TOnStreamInEvent read FOnDataReceive write FOnDataReceive;
-    property OnDataSend: TOnStreamOutEvent read FOnDataSend write FOnDataSend;
+    property OnDataReceive: TOnStreamIOEvent read FOnDataReceive write FOnDataReceive;
+    property OnDataSend: TOnStreamIOEvent read FOnDataSend write FOnDataSend;
     property OnDisconnect: TOnConnectEvnet read FOnDisconnect write FOnDisconnect;
     property OnError: TOnErrorEvent read FOnError write FOnError;
   published
@@ -589,6 +592,11 @@ begin
   Result := FOwner.FMessageMgr;
 end;
 
+function TIOCPManagers.GetStreamMgr: TInStreamManager;
+begin
+  Result := FOwner.FStreamMgr;
+end;
+
 procedure TIOCPManagers.SetClientMgr(const Value: TInClientManager);
 begin
   if Assigned(FOwner.FClientMgr) then
@@ -598,6 +606,7 @@ begin
   begin
     FOwner.FClientMgr.FreeNotification(FOwner);  // 设计时通知消息
     TBaseManagerRef(FOwner.FClientMgr).FServer := FOwner;
+    FOwner.FStreamMgr := nil;
     FOwner.IOCPBroker := nil;
   end;
 end;
@@ -611,6 +620,7 @@ begin
   begin
     FOwner.FCustomMgr.FreeNotification(FOwner);
     TBaseManagerRef(FOwner.FCustomMgr).FServer := FOwner;
+    FOwner.FStreamMgr := nil;
     FOwner.IOCPBroker := nil;
   end;
 end;
@@ -624,6 +634,7 @@ begin
   begin
     FOwner.FDatabaseMgr.FreeNotification(FOwner);
     TBaseManagerRef(FOwner.FDatabaseMgr).FServer := FOwner;
+    FOwner.FStreamMgr := nil;
     FOwner.IOCPBroker := nil;
   end;
 end;
@@ -637,6 +648,7 @@ begin
   begin
     FOwner.FFileMgr.FreeNotification(FOwner);
     TBaseManagerRef(FOwner.FFileMgr).FServer := FOwner;
+    FOwner.FStreamMgr := nil;
     FOwner.IOCPBroker := nil;
   end;
 end;
@@ -650,7 +662,30 @@ begin
   begin
     FOwner.FMessageMgr.FreeNotification(FOwner);
     TBaseManagerRef(FOwner.FMessageMgr).FServer := FOwner;
+    FOwner.FStreamMgr := nil;
     FOwner.IOCPBroker := nil;
+  end;
+end;
+
+procedure TIOCPManagers.SetStreamMgr(const Value: TInStreamManager);
+begin
+  if Assigned(FOwner.FStreamMgr) then
+    FOwner.FStreamMgr.RemoveFreeNotification(FOwner);  // 取消通知消息
+  FOwner.FStreamMgr := Value;
+  if Assigned(FOwner.FStreamMgr) then
+  begin
+    FOwner.FStreamMgr.FreeNotification(FOwner);  // 设计时通知消息
+    TBaseManagerRef(FOwner.FStreamMgr).FServer := FOwner;
+
+    // 清除其他组件引用
+    ClientManager := nil;
+    CustomManager := nil;
+    DatabaseManager := nil;
+    FileManager := nil;
+    MessageManager := nil;
+
+    FOwner.IOCPBroker := nil;
+    FOwner.HttpDataProvider := nil;
   end;
 end;
 
@@ -676,7 +711,7 @@ begin
   end;
 
   // 准备、设置 Socket（默认为 THttpSocket）
-  if FStreamMode then  // 纯粹的数据流服务
+  if FStreamMode then  // 代理、流服务模式
     SocketPool := FSocketPool
   else
     SocketPool := FHttpSocketPool;
@@ -711,14 +746,13 @@ begin
 
     if ASocket.Connected then  // 允许接入
     begin
-      ASocket.PostRecv;        // 投放接收内存块
+      ASocket.PostRecv;    // 投放接收内存块
       {$IFDEF DEBUG_MODE}
       iocp_log.WriteLog('TInIOCPServer.AcceptClient->客户端接入：' + ASocket.PeerIPPort);
       {$ENDIF}
     end else
     begin
-      CloseSocket(ASocket);    // 回收Socket
-      {$IFDEF DEBUG_MODE}
+      {$IFDEF DEBUG_MODE}  // 已经被断开、回收
       iocp_log.WriteLog('TInIOCPServer.AcceptClient->禁止客户端接入：' + ASocket.PeerIPPort);
       {$ENDIF}
     end;
@@ -938,26 +972,19 @@ begin
   CSSocketUsedCount := IODataCount - FBusiThreadCount;  // C/S 占用数
   WorkerUsedCount := FBusiThreadCount;  // 发送器/工作线程占用
   
-  if FStreamMode then // 流模式、代理模式
+  if Assigned(FHttpSocketPool) then  // 建了 THttpSocket
   begin
-    HttpSocketUsedCount := 0;
-    PushQueueCount := 0;
+    HttpSocketUsedCount := FHttpSocketPool.NodeCount;
+    Dec(CSSocketUsedCount, HttpSocketUsedCount);  // 总数减少
   end else
-  begin
-    if Assigned(FHttpSocketPool) then  // 建了 THttpSocket
-    begin
-      HttpSocketUsedCount := FHttpSocketPool.NodeCount;
-      Dec(CSSocketUsedCount, HttpSocketUsedCount);  // 总数减少
-    end else
-      HttpSocketUsedCount := 0;
+    HttpSocketUsedCount := 0;
 
-    if Assigned(FPushManager) then  // 建了 FPushManager
-    begin
-      PushQueueCount := FPushManager.ActiveCount;
-      Dec(CSSocketUsedCount, PushQueueCount);  // 总数减少
-    end else
-      PushQueueCount := 0;
-  end;
+  if Assigned(FPushManager) then  // 建了 FPushManager
+  begin
+    PushQueueCount := FPushManager.ActiveCount;
+    Dec(CSSocketUsedCount, PushQueueCount);  // 总数减少
+  end else
+    PushQueueCount := 0;
 end;
 
 procedure TInIOCPServer.GetThreadInfo(const ThreadInfo: PWorkThreadSummary;
@@ -980,20 +1007,22 @@ begin
     PushActiveCount := 0;
   end;
 
-  CheckTimeOut := FCheckThread.FWorktime;       // 超时检查时间
+  CheckTimeOut := FCheckThread.FWorktime;  // 超时检查时间
 end;
 
 procedure TInIOCPServer.InitExtraResources;
 begin
   // 检查调整服务类型
+
+  // Assigned(FIOCPBroker)、Assigned(FStreamMgr) 是流服务
+  FStreamMode := Assigned(FIOCPBroker)  or Assigned(FStreamMgr) or not (
+                 Assigned(FClientMgr)   or Assigned(FCustomMgr) or
+                 Assigned(FDatabaseMgr) or Assigned(FFileMgr)   or
+                 Assigned(FMessageMgr)  or Assigned(FHttpDataProvider));
+
   if Assigned(FIOCPBroker) then
-  begin
-    FStreamMode := True;  // 当作是流服务
     TInIOCPBrokerRef(FIOCPBroker).CheckServerPort(FServerAddr, FServerPort);
-  end else
-    FStreamMode := not (Assigned(FClientMgr)   or Assigned(FCustomMgr) or
-                        Assigned(FDatabaseMgr) or Assigned(FFileMgr)   or
-                        Assigned(FMessageMgr)  or Assigned(FHttpDataProvider));
+
   // 建消息书写器
   if Assigned(FMessageMgr) then
     FMessageMgr.CreateMsgWriter(Assigned(FHttpDataProvider));
@@ -1206,12 +1235,8 @@ begin
   if Assigned(FBeforeOpen) then
     FBeforeOpen(Self);
 
-  // 设置时可能为 True, 重设 False
-  FActive := False;
+  FActive := False;  // 可能界面设置为 True, 重设 False
   FState := SERVER_IGNORED;
-
-  // 开始当作流服务器，在 InitMoreResource 中会调整
-  FStreamMode := True;  
 
   // 调整繁忙拒绝、客户端池（允许不开连接池）
   if FBusyRefuseService and (FClientPoolSize = 0) then
@@ -1228,7 +1253,7 @@ begin
   {$ENDIF}
 
   // 设置额外资源
-  InitExtraResources;
+  InitExtraResources; // 调整服务模式：FStreamMode
 
   // 防攻击管理
   if FPreventAttack then
@@ -1246,10 +1271,10 @@ begin
   {$ENDIF}
 
   // 准备客户端池
-  if Assigned(FIOCPBroker) then  // 代理模式（特殊的流）
+  if Assigned(FIOCPBroker) then  // 代理模式，特殊的流
     FSocketPool := TIOCPSocketPool.Create(otBroker, FClientPoolSize)
   else
-  if FStreamMode then  // 用 TStreamSocket
+  if FStreamMode then  // 用 TStreamSocket，纯数据流
     FSocketPool := TIOCPSocketPool.Create(otStreamSocket, FClientPoolSize)
   else begin  // 用 TIOCPSocket + THttpSocket
     FSocketPool := TIOCPSocketPool.Create(otSocket, FClientPoolSize);
@@ -1289,7 +1314,8 @@ begin
   {$ENDIF}
 
   // 在推送线程调度（在 FBusiWorkMgr 后）
-  if (FStreamMode = False) then
+  //   调整：非代理模式都支持推送，包括流服务
+  if not Assigned(FIOCPBroker) then
   begin
     FPushManager := TPushMsgManager.Create(FBusiWorkMgr, FPushThreadCount, FMaxPushCount);
     {$IFDEF DEBUG_MODE}
@@ -1466,6 +1492,7 @@ begin
     FIOCPManagers.DatabaseManager := nil;
     FIOCPManagers.FileManager := nil;
     FIOCPManagers.MessageManager := nil;
+    FIOCPManagers.StreamManager := nil;
     HttpDataProvider := nil;
   end;
 end;
@@ -1576,9 +1603,8 @@ begin
   // 执行收、发事件
   if (FPerIOData^.IOType in [ioAccept, ioReceive]) then
   begin
-    // 不在此处理收到原始数据流，见：TStreamSocket.ExecuteWork
-    if (FServer.FStreamMode = False) and Assigned(FServer.FOnDataReceive) then
-      FServer.FOnDataReceive(FBaseSocket, FPerIOData^.Data.buf, FByteCount);
+    if Assigned(FServer.FOnDataReceive) then  // 新版增加了流管理器
+      FServer.FOnDataReceive(FBaseSocket, FByteCount);
   end else
   if Assigned(FServer.FOnDataSend) then  // 发出数据事件
     FServer.FOnDataSend(FBaseSocket, FByteCount);
@@ -1705,7 +1731,7 @@ begin
         if (FPerIOData^.IOType <> ioPush) or FBaseSocket.Reference then
           WriteCloseLog(FBaseSocket.PeerIPPort);
         {$ENDIF}
-        FBaseSocket.TryClose;
+        TBaseSocketRef(FBaseSocket).TryClose;
       end;
     IODATA_STATE_RECV:  // 2. 收到数据，加锁使用
       begin
@@ -1714,7 +1740,7 @@ begin
       end;
     {$IFDEF TRANSMIT_FILE}
     IODATA_STATE_TRANS: // 3. TransmitFile 发送完毕，释放数据源
-      FBaseSocket.FreeTransmitRes;
+      TBaseSocketRef(FBaseSocket).FreeTransmitRes;
     {$ENDIF}
   end;
 
@@ -1861,7 +1887,7 @@ procedure TTimeoutThread.CreateQueue(SocketPool: TIOCPSocketPool);
 var
   CurrNode: PLinkRec;
   TickCount: Cardinal;
-  Socket: TBaseSocket;
+  Socket: TBaseSocketRef;
 begin
   // 建死连接客户端列表
   //   死连接：超时或接入后长期没接收过数据
@@ -1871,7 +1897,7 @@ begin
     TickCount := GetTickCount;  // 当前时间
     while (CurrNode <> Nil) do
     begin
-      Socket := TBaseSocket(CurrNode^.Data);
+      Socket := TBaseSocketRef(CurrNode^.Data);
       if Socket.CheckTimeOut(TickCount) then
         FSockets.Add(Socket);
       CurrNode := CurrNode^.Next;
@@ -1888,7 +1914,7 @@ procedure TTimeoutThread.ExecuteWork;
   begin
     // 1. 发超时退出消息给客户端
     for i := 0 to FSockets.Count - 1 do
-      TBaseSocket(FSockets.Items[i]).PostEvent(ioTimeOut);
+      TBaseSocketRef(FSockets.Items[i]).PostEvent(ioTimeOut);
   end;
 const
   MSECOND_COUNT = 30000;  // 接入 30 秒没数据传输就尝试断开

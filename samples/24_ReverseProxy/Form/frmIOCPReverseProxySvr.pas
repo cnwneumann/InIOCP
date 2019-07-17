@@ -26,6 +26,8 @@ type
     procedure Button2Click(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure Edit1DblClick(Sender: TObject);
+    procedure InIOCPBroker1Accept(Sender: TSocketBroker; const Host: string;
+      Port: Integer; var Accept: Boolean);
   private
     { Private declarations }
     FAppDir: String;
@@ -91,25 +93,39 @@ begin
   MyCreateDir(FAppDir + 'log');   // 日志路径
 
   // 读入参数
+  // 反向代理要向外部服务器发起连接，此时：
+  // TInIOCPBroker.ProxyType = ptDefault 且 OuterProxy.ServerAddr 不为空
+
   with TIniFile.Create(FAppDir + 'settings.ini') do
   begin
     Edit1.Text := ReadString('ReverseOptions', 'LocalHost', '127.0.0.1');
     EditPort.Text := ReadString('ReverseOptions', 'LocalPort', '900');
 
+    // 设置服务协议
     if (ReadString('ReverseOptions', 'Protocol', 'HTTP') = 'HTTP') then
-      InIOCPBroker1.Protocol := tpHTTP // 测试多个反向代理，模拟多局域网
+      InIOCPBroker1.Protocol := tpHTTP 
     else
       InIOCPBroker1.Protocol := tpNone;
 
-    InIOCPBroker1.BrokerId := ReadString('ReverseOptions', 'BrokerId', '分公司A');
+    // 此三参数对 HTTP 协议无效
+    InIOCPBroker1.BrokerId := ReadString('ReverseOptions', 'BrokerId', '分公司A');  // 测试多个反向代理，模拟多局域网
     InIOCPBroker1.InnerServer.ServerAddr := ReadString('ReverseOptions', 'InnerServerAddr', '127.0.0.1');
     InIOCPBroker1.InnerServer.ServerPort := ReadInteger('ReverseOptions', 'InnerServerPort', 3060);
 
+    // 反向代理的内部服务必须设置 OuterServer 地址端口
     InIOCPBroker1.OuterServer.ServerAddr := ReadString('OuterOptions', 'LocalHost', '127.0.0.1');
     InIOCPBroker1.OuterServer.ServerPort := ReadInteger('OuterOptions', 'LocalPort', 900);
 
     Free;
   end;  
+end;
+
+procedure TFormInIOCPRecvProxySvr.InIOCPBroker1Accept(Sender: TSocketBroker;
+  const Host: string; Port: Integer; var Accept: Boolean);
+begin
+  // 版本：2.5.30.1221 增加，判断是否允许连接到 Host 的 Port 端口
+  // 默认 Accept := True，Accept := False 不允许
+  // TInIOCPBroker.ProxyType = ptOuter 时忽略此事件  
 end;
 
 procedure TFormInIOCPRecvProxySvr.InIOCPBroker1Bind(Sender: TSocketBroker;

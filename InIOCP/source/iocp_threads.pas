@@ -105,7 +105,7 @@ type
   public
     constructor Create(Msg: PPerIOData; BroadcastType: TBroadcastType = btUnknown); overload;
     constructor Create(ASocketPool: TIOCPSocketPool; ABufferPool: TIODataPool;
-                       BroadcastType: TBroadcastType = btUnknown); overload;
+                       BroadcastType: TBroadcastType = btUnknown; MsgSize: Cardinal = 0); overload;
     constructor Create(Socket: TBaseSocket; IOKind: TIODataType; MsgSize: Cardinal); overload;
     destructor Destroy; override;
   public
@@ -278,7 +278,7 @@ begin
   // 取列表第一个 Socket，执行
   while (Terminated = False) and
          FManager.GetWork(TObject(FSocket)) do
-    case FSocket.Lock(False) of  // 加锁，非推送模式
+    case TBaseSocketRef(FSocket).Lock(False) of  // 加锁，非推送模式
 
       SOCKET_LOCK_OK: begin  // 加锁成功
         InterlockedIncrement(FManager.FActiveThreadCount);  // 活动业务线程+
@@ -505,6 +505,7 @@ begin
   FBufPool := TBaseSocket(Msg^.Owner).BufferPool;
 
   FPushBuf := FBufPool.Pop^.Data;
+
   FPushBuf^.IOType := ioPush; // 推送
   FPushBuf^.Data.len := Msg^.Overlapped.InternalHigh; // 消息大小
   FPushBuf^.Overlapped.InternalHigh := FPushBuf^.Data.len; // 消息大小
@@ -514,7 +515,7 @@ begin
 end;
 
 constructor TPushMessage.Create(ASocketPool: TIOCPSocketPool;
-  ABufferPool: TIODataPool; BroadcastType: TBroadcastType);
+  ABufferPool: TIODataPool; BroadcastType: TBroadcastType; MsgSize: Cardinal);
 begin
   inherited Create;
   // 广播一条消息，在外部设置 FPushBuf 内容
@@ -526,9 +527,8 @@ begin
   FPushBuf := FBufPool.Pop^.Data;
 
   FPushBuf^.IOType := ioPush; // 固定 = ioPush
-  FPushBuf^.Data.len := 0;  // 内容长度
-  FPushBuf^.Overlapped.InternalHigh := 0;
-
+  FPushBuf^.Data.len := MsgSize;  // 内容长度
+  FPushBuf^.Overlapped.InternalHigh := MsgSize;
 end;
 
 constructor TPushMessage.Create(Socket: TBaseSocket; IOKind: TIODataType; MsgSize: Cardinal);
@@ -631,7 +631,7 @@ end;
 procedure TPushThread.PushMesssage;
 begin
   // 推送 FMsg.FPushBuf 给 FSocket
-  case FSocket.Lock(True) of
+  case TBaseSocketRef(FSocket).Lock(True) of
 
     SOCKET_LOCK_OK: begin  // 加锁成功
       // 工作量统计到 FTotalCount

@@ -139,7 +139,7 @@ begin
 
     FServer.GetIODataInfo(CountA, CountB, CountC, CountD, CountE);
 
-    if FServer.StreamMode then  // 无 Http、推送功能
+    if (Assigned(FServer.PushManager) = False) then  // 无 Http、推送功能
       lblIODataInfo.Caption := '总计:' + IntToStr(CountA) +
                                ',C/S:' + IntToStr(CountB) { 活动的 } +
                                ',发送器:' + IntToStr(CountE)
@@ -154,7 +154,7 @@ begin
     //              业务线程、推送线程(+1)、活动数
     FServer.GetThreadInfo(@ThreadSummary, CountA, CountB, CountC, CountD, CheckTimeOut);
 
-    if FServer.StreamMode then  // 代理模式无推送功能
+    if (Assigned(FServer.PushManager) = False) then  // 代理模式无推送功能
       lblThreadInfo.Caption := '总计:' + IntToStr(FServer.WorkThreadCount + CountA + CountC + 2) +
                                ',工作:' + IntToStr(ThreadSummary.ActiveCount) { 活动的 } + '/' +
                                           IntToStr(FServer.WorkThreadCount) +

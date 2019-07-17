@@ -23,14 +23,10 @@ object FormInIOCPStreamServer: TFormInIOCPStreamServer
     Height = 160
     ImeName = #35895#27468#25340#38899#36755#20837#27861' 2'
     Lines.Strings = (
-      'TInIOCPServer '#19981#24102#20219#20309#31649#29702#22120#65292#36825#26159#21407#22987#25968#25454#27969#26381#21153#12290
-      #35831#29992' Socket '#36830#25509#12289#21457#36865#20219#20309#25968#25454#65292' '#21487#25171#24320#27983#35272#22120#35775#38382#65306
+      'TInIOCPServer+TInStreamManager '#26159#21407#22987#25968#25454#27969#26381#21153#65292#21487#20197#29992#20110#27599#27425#20256#36755#37327#19981
+      #22823#30340#35774#22791#30417#25511#12290
       ''
-      'http://127.0.0.1:800/'
-      ''
-      #20063#21487#20197#29992#24037#20855#36719#20214' ab.exe '#27979#35797':'
-      ''
-      'ab -n 100000 -c 1000 -k -r http://127.0.0.1:800/')
+      #35831#36816#34892#23458#25143#31471#65288#29992' TIdTCPClient'#21457#36865#25968#25454#65289)
     TabOrder = 0
   end
   object btnStart: TButton
@@ -246,6 +242,7 @@ object FormInIOCPStreamServer: TFormInIOCPStreamServer
     end
   end
   object InIOCPServer1: TInIOCPServer
+    IOCPManagers.StreamManager = InStreamManager1
     ServerAddr = '127.0.0.1'
     ServerPort = 800
     StartParams.TimeOut = 0
@@ -259,6 +256,11 @@ object FormInIOCPStreamServer: TFormInIOCPStreamServer
     AfterOpen = InIOCPServer1AfterOpen
     AfterClose = InIOCPServer1AfterClose
     Left = 264
+    Top = 264
+  end
+  object InStreamManager1: TInStreamManager
+    OnReceive = InStreamManager1Receive
+    Left = 328
     Top = 264
   end
 end

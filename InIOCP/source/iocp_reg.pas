@@ -31,7 +31,7 @@ uses
 procedure Register;
 begin
   RegisterComponents('InIOCP服务组件库(服务端)', [TInIOCPServer, TInIOCPBroker,
-                     TInClientManager, TInMessageManager, TInFileManager,
+                     TInStreamManager, TInClientManager, TInMessageManager, TInFileManager,
                      TInDatabaseManager, TInCustomManager, TInRemoteFunctionGroup,
                      TInHttpDataProvider, TInWebSocketManager, TInSQLManager]);
 

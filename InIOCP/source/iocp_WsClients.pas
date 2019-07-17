@@ -19,7 +19,7 @@ uses
   Windows, Classes, SysUtils, ExtCtrls,
   Variants, DSIntf, DBClient, {$ENDIF}
   iocp_Winsock2, iocp_base, iocp_lists, iocp_senders,
-  iocp_receivers, iocp_baseObjs, iocp_utils,
+  iocp_receivers, iocp_baseObjs, iocp_utils, iocp_wsExt,
   iocp_msgPacks, iocp_WsJSON;
 
 type
@@ -326,8 +326,9 @@ end;
 procedure TInWSConnection.InternalClose;
 begin
   // 断开连接
-  if Assigned(FBeforeDisConnect) then
-    FBeforeDisConnect(Self);
+  if not (csDestroying in ComponentState) then
+    if Assigned(FBeforeDisConnect) then
+      FBeforeDisConnect(Self);
 
   if (FSocket <> INVALID_SOCKET) then
   begin
@@ -335,40 +336,36 @@ begin
     ShutDown(FSocket, SD_BOTH);
     CloseSocket(FSocket);
 
+    FActive := False;
     FSocket := INVALID_SOCKET;
 
-    if FActive then
+    // 释放接收线程
+    if Assigned(FRecvThread) then
     begin
-      FActive := False;
+      FRecvThread.Terminate;  // 100 毫秒后退出
+      FRecvThread := nil;
+    end;
 
-      // 释放接收线程
-      if Assigned(FRecvThread) then
-      begin
-        FRecvThread.Terminate;  // 100 毫秒后退出
-        FRecvThread := nil;
-      end;
+    // 投放线程
+    if Assigned(FPostThread) then
+    begin
+      FPostThread.Stop;
+      FPostThread := nil;
+    end;
 
-      // 投放线程
-      if Assigned(FPostThread) then
-      begin
-        FPostThread.Stop;
-        FPostThread := nil;
-      end;
+    // 释放发送线程
+    if Assigned(FSendThread) then
+    begin
+      FSendThread.FSender.Stoped := True;
+      FSendThread.Stop;
+      FSendThread := nil;
+    end;
 
-      // 释放发送线程
-      if Assigned(FSendThread) then
-      begin
-        FSendThread.FSender.Stoped := True;
-        FSendThread.Stop;
-        FSendThread := nil;
-      end;
-
-      // 释放定时器
-      if Assigned(FTimer) then
-      begin
-        FTimer.Free;
-        FTimer := nil;
-      end;      
+    // 释放定时器
+    if Assigned(FTimer) then
+    begin
+      FTimer.Free;
+      FTimer := nil;
     end;
   end;
 
@@ -387,38 +384,27 @@ const
                        'Sec-WebSocket-Key: w4v7O6xFTi36lq3RNcgctw=='#13#10 +
                        'Sec-WebSocket-Version: 13'#13#10 +
                        'Origin: InIOCP-WebSocket'#13#10#13#10);
-var
-  Addr: TSockAddrIn;
 begin
   // 创建 WSASocket，连接到服务器
-  if Assigned(FBeforeConnect) then
-    FBeforeConnect(Self);
+  if not (csDestroying in ComponentState) then
+    if Assigned(FBeforeConnect) then
+      FBeforeConnect(Self);
 
+  FActive := False;  
   if (FSocket = INVALID_SOCKET) then
   begin
     // 新建 Socket
     FSocket := WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, nil, 0, WSA_FLAG_OVERLAPPED);
-
-    // 设置连接地址、端口，连接
-    Addr.sin_family := AF_INET;
-    Addr.sin_port := htons(FServerPort);
-    Addr.sin_addr.s_addr := inet_addr(PAnsiChar(ResolveHostIP(FServerAddr)));
-
-    // 刷新 FActive
-    FActive := iocp_Winsock2.WSAConnect(FSocket, TSockAddr(Addr),
-                             SizeOf(TSockAddr), nil, nil, nil, nil) = 0;
-
-    if FActive then    // 连接成功
+    if iocp_utils.ConnectSocket(FSocket, FServerAddr, FServerPort) then    // 连接成功
     begin
       // 定时器
       CreateTimer;
 
+      // 心跳
+      iocp_wsExt.SetKeepAlive(FSocket);
+            
       // 立刻发送 WS_UPGRADE_REQUEST，服务端升级为 WebSocket
       iocp_Winsock2.Send(FSocket, WS_UPGRADE_REQUEST[1], Length(WS_UPGRADE_REQUEST), 0);
-
-      // 收发数
-      FRecvCount := 0;
-      FSendCount := 0;
 
       // 投放线程
       FPostThread := TPostThread.Create(Self);
@@ -430,6 +416,12 @@ begin
       FPostThread.Resume;
       FSendThread.Resume;
       FRecvThread.Resume;
+
+      // 收发数
+      FRecvCount := 0;
+      FSendCount := 0;
+
+      FActive := True;      
     end else
     begin
       ShutDown(FSocket, SD_BOTH);
@@ -438,11 +430,12 @@ begin
     end;
   end;
 
-  if FActive and Assigned(FAfterConnect) then
-    FAfterConnect(Self)
-  else
-  if not FActive and Assigned(FOnError) then
-    FOnError(Self, '无法连接到服务器.');
+  if not (csDestroying in ComponentState) then
+    if FActive and Assigned(FAfterConnect) then
+      FAfterConnect(Self)
+    else
+    if not FActive and Assigned(FOnError) then
+      FOnError(Self, '无法连接到服务器.');
     
 end;
 
@@ -797,7 +790,10 @@ begin
   begin
     // 服务端关闭时 cbTransferred = 0, 要断开连接：2019-02-28
     if (cbTransferred = 0) then
+    begin
+      Connection.FActive := False;  // 直接赋值
       Thread.Synchronize(Connection.TryDisconnect); // 同步
+    end;
     Exit;
   end;
 

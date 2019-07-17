@@ -81,6 +81,10 @@ begin
   iocp_Varis.gAppPath := FAppDir;
   MyCreateDir(FAppDir + 'log');   // 日志路径
 
+  // 读入参数：
+  // 设置 TInIOCPServer 的 IOCPBroker 组件即可（此时其他管理组件无效）；
+  // 普通代理：InIOCPBroker.ProxyType = ptDefault 且 OuterProxy.ServerAddr 为空
+
   with TIniFile.Create(FAppDir + 'settings.ini') do
   begin
     Edit1.Text := ReadString('Options', 'LocalHost', '127.0.0.1');
@@ -105,6 +109,7 @@ procedure TFormInIOCPProxySvr.InIOCPBroker1Accept(Sender: TSocketBroker;
 begin
   // 版本：2.5.30.1221 增加，判断是否允许连接到 Host 的 Port 端口
   // 默认 Accept := True，Accept := False 不允许
+  // TInIOCPBroker.ProxyType = ptOuter 时忽略此事件
 end;
 
 procedure TFormInIOCPProxySvr.InIOCPBroker1Bind(Sender: TSocketBroker;

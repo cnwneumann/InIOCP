@@ -48,7 +48,7 @@ uses
 
 function AdjustFileName(const FileName: AnsiString): AnsiString;
 var
-  i, k: Integer;
+  i: Integer;
   p, p2: PAnsiChar;
   IsSlash: Boolean;
 begin

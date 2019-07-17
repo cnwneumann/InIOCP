@@ -247,6 +247,30 @@ begin
       FConnection.RollbackTrans;
     Raise;    // 基类有异常处理，要 Raise
   end;
+
+  { //AParams.SaveToFile()
+    with FExecSQL do
+    begin // 参数赋值
+        // aparams.fields[0] = username;
+        // aparams.fields[1] = sqlText;
+        // aparams.fields[-1] = hasParams;
+        for i:= 0 to Parameters.Count - 1 do
+        begin
+            st_name := Parameters[i].Name;
+            if aparams.Fields[i].VarType = etString then
+               Parameters.ParamByName(st_name).Value := AParams.AsString[st_name]
+            else if aparams.Fields[i].VarType = etInteger then
+                 parameters.ParamByName(st_name).Value := aParams.AsInteger[st_name]
+            else if aparams.Fields[i].VarType = etStream then
+                 parameters.ParamByName(st_name).LoadFromStream(AParams.AsStream[st_name], ftBlob);
+        end;
+
+      //  Parameters.ParamByName('picutre').LoadFromStream(AParams.AsStream['picture'], ftBlob);
+     //   Parameters.ParamByName('code').Value := AParams.AsString['code'];
+
+        Execute;
+    end; }
+
 end;
 
 procedure TdmInIOCPTest.InIOCPDataModuleExecStoredProcedure(

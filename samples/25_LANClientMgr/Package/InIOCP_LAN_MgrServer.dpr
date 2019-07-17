@@ -7,7 +7,6 @@ program InIOCP_LAN_MgrServer;
 
 uses
   ScaleMM2 in '..\..\..\inIocp\memMgr\scalemm2\ScaleMM2.pas',
-  DESCrypt in '..\ThirdCodes\DESCrypt.pas',
   Forms,
   iocp_baseModule in '..\..\..\InIOCP\source\module\iocp_baseModule.pas' {InIOCPDataModule: TDataModule},
   dm_iniocp_sqlite3 in '..\Module\dm_iniocp_sqlite3.pas' {dmInIOCPSQLite3: TInIOCPDataModule},

@@ -192,8 +192,6 @@ type
     procedure InHttpDataProvider1InvalidSession(Sender: TObject;
       Request: THttpRequest; Respone: THttpRespone);
     procedure InIOCPServer1DataSend(Sender: TBaseSocket; Size: Cardinal);
-    procedure InIOCPServer1DataReceive(Sender: TBaseSocket;
-      const Data: PAnsiChar; Size: Cardinal);
     procedure InHttpDataProvider1Accept(Sender: TObject; Request: THttpRequest;
       var Accept: Boolean);
     procedure InHttpDataProvider1ReceiveFile(Sender: TObject;
@@ -241,6 +239,7 @@ type
     procedure InIOCPServer1Disconnect(Sender: TObject; Socket: TBaseSocket);
     procedure InMessageManager1ListFiles(Sender: TObject;
       Params: TReceiveParams; Result: TReturnResult);
+    procedure InIOCPServer1DataReceive(Sender: TBaseSocket; Size: Cardinal);
   private
     { Private declarations }
     FAppDir: String;
@@ -1560,21 +1559,21 @@ begin
 end;
 
 procedure TFormTestIOCPServer.InIOCPServer1DataReceive(Sender: TBaseSocket;
-  const Data: PAnsiChar; Size: Cardinal);
+  Size: Cardinal);
 begin
-  // 已在 TWorkThread.IOIncrement 加锁，
-  //   线程安全：严格来说不要访问主线程的任何控件
-{  AddMessage(mmoServer, '收到数据长度=' + IntToStr(Size) + ' Bytes');
-  if (Sender is TStreamSocket) then
-    mmoServer.Lines.Add('原始的流数据');   }
+  // 服务端收到数据
+  // 1. 重大调整，新版增加流服务管理器 TInStreamManager，
+  //    在 TInStreamManager.OnReceive 中处理收到的数据
+  // 2. 由 TWorkThread.ExecIOEvent 调用，未加锁！
+  //    线程安全：严格来说不要访问主线程的任何控件。
 end;
 
 procedure TFormTestIOCPServer.InIOCPServer1DataSend(Sender: TBaseSocket;
   Size: Cardinal);
 begin
-  // 已在 TWorkThread.IOIncrement 加锁
-  //   线程安全：严格来说不要访问主线程的任何控件
-//  AddMessage(mmoServer, '发出数据长度=' + IntToStr(Size) + ' Bytes');
+  // 服务端发出数据
+  // 由 TWorkThread.ExecIOEvent 调用，未加锁！
+  //    线程安全：严格来说不要访问主线程的任何控件。
 end;
 
 procedure TFormTestIOCPServer.InIOCPServer1Disconnect(Sender: TObject;

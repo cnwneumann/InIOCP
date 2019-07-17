@@ -16,7 +16,7 @@ object FormTestIOCPServer: TFormTestIOCPServer
   OnClose = FormClose
   OnCreate = FormCreate
   OnDestroy = FormDestroy
-  PixelsPerInch = 96
+  PixelsPerInch = 120
   TextHeight = 12
   object bvl2: TBevel
     Left = 719
@@ -337,7 +337,7 @@ object FormTestIOCPServer: TFormTestIOCPServer
     Width = 111
     Height = 20
     ImeName = #35895#27468#25340#38899#36755#20837#27861' 2'
-    ItemHeight = 0
+    ItemHeight = 12
     TabOrder = 29
   end
   object btnDBConnection: TButton
@@ -359,15 +359,11 @@ object FormTestIOCPServer: TFormTestIOCPServer
     TabOrder = 31
     object TabSheet1: TTabSheet
       Caption = #25805#20316#20449#24687
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object mmoClient: TMemo
         Left = 0
         Top = 0
         Width = 574
-        Height = 192
+        Height = 191
         Align = alClient
         ImeName = #35895#27468#25340#38899#36755#20837#27861' 2'
         Lines.Strings = (

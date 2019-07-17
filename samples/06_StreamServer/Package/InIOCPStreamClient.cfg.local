@@ -1,0 +1,8 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2019-06-26 17:38:14.519.pas,D:\Administrator\Documents\RAD Studio\Projects\Unit4.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\06_StreamServer\Form\frmInIOCPStreamClient.pas</Transaction>
+    <Transaction>2019-06-26 17:38:14.519.dfm,D:\Administrator\Documents\RAD Studio\Projects\Unit4.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\06_StreamServer\Form\frmInIOCPStreamClient.dfm</Transaction>
+    <Transaction>2019-06-26 17:38:29.209.bdsproj,D:\Administrator\Documents\RAD Studio\Projects\Project1.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\06_StreamServer\Package\InIOCPStreamClient.cfg</Transaction>
+  </Transactions>
+</BorlandProject>

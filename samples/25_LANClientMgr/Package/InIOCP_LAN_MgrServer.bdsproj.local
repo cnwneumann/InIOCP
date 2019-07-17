@@ -9,5 +9,6 @@
     <Transaction>2019-05-16 09:50:48.329.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\25_LANClientMgr\Package\InIOCPMsgServer.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\25_LANClientMgr\Package\InIOCP_LANClientMgr.bdsproj</Transaction>
     <Transaction>2019-05-16 09:51:52.896.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\25_LANClientMgr\Package\InIOCP_LANClientMgr.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\25_LANClientMgr\Package\InIOCP_LAN_ClientMgr.bdsproj</Transaction>
     <Transaction>2019-05-16 10:11:12.065.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\25_LANClientMgr\Package\InIOCP_LAN_ClientMgr.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\25_LANClientMgr\Package\InIOCP_LAN_MgrServer.bdsproj</Transaction>
+    <Transaction>2019-07-15 10:03:37.341.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\25_LANClientMgr\ThirdCodes\DESCrypt.pas=</Transaction>
   </Transactions>
 </BorlandProject>

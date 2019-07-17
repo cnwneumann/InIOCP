@@ -688,8 +688,9 @@ end;
 procedure TInConnection.InternalClose;
 begin
   // 断开连接
-  if Assigned(FBeforeDisConnect) then
-    FBeforeDisConnect(Self);
+  if not (csDestroying in ComponentState) then
+    if Assigned(FBeforeDisConnect) then
+      FBeforeDisConnect(Self);
 
   if (FSocket <> INVALID_SOCKET) then
   begin
@@ -697,46 +698,42 @@ begin
     ShutDown(FSocket, SD_BOTH);
     CloseSocket(FSocket);
 
-    FLogined := False;
+    FActive := False;
     FSocket := INVALID_SOCKET;
+    FLogined := False;
 
-    if FActive then
+    // 短连接：保留凭证，下次免登录
+    if not FReuseSessionId then
+      FSessionId := INI_SESSION_ID;
+
+    // 释放接收线程
+    if Assigned(FRecvThread) then
     begin
-      FActive := False;
+      FRecvThread.Terminate;  // 100 毫秒后退出
+      FRecvThread := nil;
+    end;
 
-      // 短连接：保留凭证，下次免登录
-      if not FReuseSessionId then
-        FSessionId := INI_SESSION_ID;
+    // 投放线程
+    if Assigned(FPostThread) then
+    begin
+      FPostThread.Stop;
+      FPostThread := nil;
+    end;
 
-      // 释放接收线程
-      if Assigned(FRecvThread) then
-      begin
-        FRecvThread.Terminate;  // 100 毫秒后退出
-        FRecvThread := nil;
-      end;
+    // 释放发送线程
+    if Assigned(FSendThread) then
+    begin
+      FSendThread.Stop;
+      FSendThread.FSender.Stoped := True;
+      FSendThread.ServerReturn;
+      FSendThread := nil;
+    end;
 
-      // 投放线程
-      if Assigned(FPostThread) then
-      begin
-        FPostThread.Stop;
-        FPostThread := nil;
-      end;
-
-      // 释放发送线程
-      if Assigned(FSendThread) then
-      begin
-        FSendThread.Stop;
-        FSendThread.FSender.Stoped := True;
-        FSendThread.ServerReturn;
-        FSendThread := nil;
-      end;
-
-      // 释放定时器
-      if Assigned(FTimer) then
-      begin
-        FTimer.Free;
-        FTimer := nil;
-      end;
+    // 释放定时器
+    if Assigned(FTimer) then
+    begin
+      FTimer.Free;
+      FTimer := nil;
     end;
   end;
 
@@ -748,18 +745,16 @@ end;
 procedure TInConnection.InternalOpen;
 begin
   // 创建 WSASocket，连接到服务器
-  if Assigned(FBeforeConnect) then
-    FBeforeConnect(Self);
+  if not (csDestroying in ComponentState) then
+    if Assigned(FBeforeConnect) then
+      FBeforeConnect(Self);
 
+  FActive := False;
   if (FSocket = INVALID_SOCKET) then
   begin
     // 新建 Socket
     FSocket := WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, nil, 0, WSA_FLAG_OVERLAPPED);
-
-    // 尝试连接
-    FActive := iocp_utils.ConnectSocket(FSocket, FServerAddr, FServerPort);
-
-    if FActive then  // 连接成功
+    if iocp_utils.ConnectSocket(FSocket, FServerAddr, FServerPort) then  // 连接成功
     begin
       // 定时器
       CreateTimer;
@@ -769,10 +764,6 @@ begin
 
       // 立刻发送 IOCP_SOCKET_FLAG，服务端转为 TIOCPSocet
       iocp_Winsock2.Send(FSocket, IOCP_SOCKET_FLAG[1], IOCP_SOCKET_FLEN, 0);
-
-      // 收发数
-      FRecvCount := 0;
-      FSendCount := 0;
 
       // 投放线程
       FPostThread := TPostThread.Create(Self);
@@ -784,6 +775,12 @@ begin
       FPostThread.Resume;
       FSendThread.Resume;
       FRecvThread.Resume;
+
+      // 收发数
+      FRecvCount := 0;
+      FSendCount := 0;
+            
+      FActive := True;
     end else
     begin
       ShutDown(FSocket, SD_BOTH);
@@ -792,11 +789,12 @@ begin
     end;
   end;
 
-  if FActive and Assigned(FAfterConnect) then
-    FAfterConnect(Self)
-  else
-  if not FActive and Assigned(FOnError) then
-    FOnError(Self, '无法连接到服务器.');
+  if not (csDestroying in ComponentState) then
+    if FActive and Assigned(FAfterConnect) then
+      FAfterConnect(Self)
+    else
+    if not FActive and Assigned(FOnError) then
+      FOnError(Self, '无法连接到服务器.');
 
 end;
 
@@ -2521,7 +2519,10 @@ begin
   begin
     // 服务端关闭时 cbTransferred = 0, 要断开连接：2019-02-28
     if (cbTransferred = 0) then
+    begin
+      Connection.FActive := False;  // 直接赋值
       Thread.Synchronize(Connection.TryDisconnect); // 同步
+    end;
     Exit;
   end;
 

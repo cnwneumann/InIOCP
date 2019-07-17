@@ -1,7 +1,7 @@
 object FormInIOCPRecvProxySvr: TFormInIOCPRecvProxySvr
   Left = 0
   Top = 0
-  Caption = 'InIOCP-'#21453#21521#20195#29702#26381#21153
+  Caption = 'InIOCP-'#21453#21521#20195#29702#26381#21153#65288#20869#37096#65289
   ClientHeight = 434
   ClientWidth = 670
   Color = clBtnFace
@@ -50,7 +50,7 @@ object FormInIOCPRecvProxySvr: TFormInIOCPRecvProxySvr
     Height = 106
     ImeName = #35895#27468#25340#38899#36755#20837#27861' 2'
     Lines.Strings = (
-      'InIOCP'#21453#21521#20195#29702#26381#21153#65281
+      'InIOCP'#21453#21521#20195#29702#30340#20869#37096#26381#21153#65281
       ''
       #35774#32622' TInIOCPServer '#30340' IOCPBroker '#32452#20214#21363#21487#65288#27492#26102#20854#20182#31649#29702#32452#20214#26080#25928#65289#12290
       
@@ -346,6 +346,7 @@ object FormInIOCPRecvProxySvr: TFormInIOCPRecvProxySvr
     InnerServer.ServerPort = 3060
     OuterServer.ServerAddr = '127.0.0.1'
     OuterServer.ServerPort = 900
+    OnAccept = InIOCPBroker1Accept
     OnBind = InIOCPBroker1Bind
     Left = 320
     Top = 88

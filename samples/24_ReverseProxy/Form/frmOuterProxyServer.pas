@@ -87,15 +87,16 @@ begin
   MyCreateDir(FAppDir + 'log');   // 日志路径
 
   // 读入参数
+  // 外部服务设置 TInIOCPBroker.ProxyType = ptOuter 即可，
+  // 与协议 TInIOCPBroker.Protocol 无关
+
+  // 此时内部的反向代理设置为：
+  // TInIOCPBroker.ProxyType = ptDefault 且 OuterProxy.ServerAddr 不为空
+
   with TIniFile.Create(FAppDir + 'settings.ini') do
   begin
     Edit1.Text := ReadString('OuterOptions', 'LocalHost', '127.0.0.1');
     EditPort.Text := ReadString('OuterOptions', 'LocalPort', '80');
-
-    if (ReadString('OuterOptions', 'Protocol', 'HTTP') = 'HTTP') then
-      InIOCPBroker1.Protocol := tpHTTP // 测试多个反向代理，模拟多局域网
-    else
-      InIOCPBroker1.Protocol := tpNone;
 
     Free;
   end;

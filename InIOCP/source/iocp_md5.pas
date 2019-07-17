@@ -32,7 +32,7 @@ type
     Buffer: MD5Buff;
   end;
 
-  // 加
+  // 增加 IOCP 应用结构 
   PIOCPHashCode = ^TIOCPHashCode;
   TIOCPHashCode = record
     case Integer of

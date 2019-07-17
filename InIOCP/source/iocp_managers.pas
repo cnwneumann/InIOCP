@@ -48,14 +48,38 @@ type
   private
     FOnAttachBegin: TAttachmentEvent;  // 准备接收附件
     FOnAttachFinish: TAttachmentEvent; // 附件接收完毕
+    FOnBackground: TRequestEvent;      // 后台执行事件
     function GetGlobalLock: TThreadLock; {$IFDEF USE_INLINE} inline; {$ENDIF}
   protected
     procedure Execute(Socket: TIOCPSocket); virtual; abstract;
   protected
     property OnAttachBegin: TAttachmentEvent read FOnAttachBegin write FOnAttachBegin;
     property OnAttachFinish: TAttachmentEvent read FOnAttachFinish write FOnAttachFinish;
+    property OnBackground: TRequestEvent read FOnBackground write FOnBackground;
   public
     property GlobalLock: TThreadLock read GetGlobalLock;
+  end;
+
+  // ================== 流服务管理 类 ======================
+
+  TDataInEvent = procedure(Socket: TStreamSocket; const Data: PAnsiChar; Size: Cardinal) of object;
+
+  TInStreamManager = class(TBaseManager)
+  private
+    FClientId: string;         // 待查找的客户端
+    FOnReceive: TDataInEvent;  // 接收数据流事件
+    function CheckState(const AClientId: String; var ASocket: TStreamSocket): Boolean; overload;
+    procedure CallbackMethod(ObjType: TObjectType; var FromObject: Pointer;
+                             const Data: TObject; var CancelScan: Boolean);
+    procedure InterPushText(AOwner, ATarget: TStreamSocket; const AText: AnsiString = '');
+  protected
+    procedure Execute(Socket: TIOCPSocket); override;
+  public
+    function Logined(const AClientId: String): Boolean;
+    procedure Broadcast(AOwner: TStreamSocket; const AText: string = '');
+    procedure SendTo(AOwner: TStreamSocket; const AToClient: string; const AText: string = '');
+  published
+    property OnReceive: TDataInEvent read FOnReceive write FOnReceive;
   end;
 
   // ================== 客户端管理 类 ======================
@@ -97,6 +121,7 @@ type
     property OnLogout: TRequestEvent read FOnLogout write FOnLogout;
     property OnRegister: TRequestEvent read FOnRegister write FOnRegister;
     property OnQueryState: TRequestEvent read FOnQueryState write FOnQueryState;
+    property OnBackground;
   end;
 
   // ================== 消息管理器 ======================
@@ -146,6 +171,7 @@ type
     property OnListFiles: TRequestEvent read FOnListFiles write FOnListFiles;
     property OnPush: TRequestEvent read FOnPush write FOnPush;
     property OnReceive: TRequestEvent read FOnReceive write FOnReceive;
+    property OnBackground;
   end;
 
   // ================== 文件管理器 ======================
@@ -189,6 +215,7 @@ type
     property OnRenameDir: TRequestEvent read FOnRenameDir write FOnRenameDir;
     property OnRenameFile: TRequestEvent read FOnRenameFile write FOnRenameFile;
     property OnSetWorkDir: TRequestEvent read FOnSetWorkDir write FOnSetWorkDir;
+    property OnBackground;
   end;
 
   // ================== 数据库管理器 ======================
@@ -214,6 +241,8 @@ type
   public
     property DataModuleList: TInStringList read FDataModuleList;
     property DataModuleCount: Integer read GetDataModuleCount;
+  published
+    property OnBackground;
   end;
 
   // ================== 自定义管理器 ======================
@@ -230,6 +259,7 @@ type
   published
     property OnAttachBegin;
     property OnAttachFinish;
+    property OnBackground;
     property OnReceive: TRequestEvent read FOnReceive write FOnReceive;
   end;
 
@@ -257,10 +287,11 @@ type
 
   TInWebSocketManager = class(TBaseManager)
   private
-    FJSONLength: Integer;         // JSON 长度
-    FUserName: string;            // 要查找的人
-    FOnReceive: TWebSocketEvent;  // 接收事件
-    FOnUpgrade: TOnUpgradeEvent;  // 升级为 WebSocket 事件
+    FJSONLength: Integer;           // JSON 长度
+    FUserName: string;              // 要查找的人
+    FOnBackground: TWebSocketEvent; // 后台执行事件
+    FOnReceive: TWebSocketEvent;    // 接收事件
+    FOnUpgrade: TOnUpgradeEvent;    // 升级为 WebSocket 事件
     procedure CallbackMethod(ObjType: TObjectType; var FromObject: Pointer;
                              const Data: TObject; var CancelScan: Boolean);
     procedure InterPushMsg(Source, Target: TWebSocket); overload;
@@ -281,8 +312,9 @@ type
     function Logined(const UserName: String; var Socket: TWebSocket): Boolean; overload;
     function Logined(const UserName: String): Boolean; overload;
   published
+    property OnBackground: TWebSocketEvent read FOnBackground write FOnBackground;  // 覆盖
     property OnReceive: TWebSocketEvent read FOnReceive write FOnReceive;
-    property OnUpgrade: TOnUpgradeEvent read FOnUpgrade write FOnUpgrade;       
+    property OnUpgrade: TOnUpgradeEvent read FOnUpgrade write FOnUpgrade;
   end;
 
   // ================== Http 服务 ======================
@@ -341,14 +373,14 @@ type
     function GetConnectionCount: Word;
     procedure SetConnectionCount(const Value: Word);
   published
-    property ConnectionCount: Word read GetConnectionCount write SetConnectionCount default 20;
+    property ConnectionCount: Word read GetConnectionCount write SetConnectionCount default 50;
   end;
   
   TInIOCPBroker = class(TBaseManager)
   private
     FReverseBrokers: TStrings;      // 反向代理列表
     FProtocol: TTransportProtocol;  // 传输协议
-    FProxyType: TProxyType;         // 代理类型
+    FProxyType: TProxyType;         // 代理类型/部署位置
 
     FOuterServer: TProxyOptions;    // 外部服务信息
     FInnerServer: TBrokenOptions;   // 内部默认服务器
@@ -373,8 +405,8 @@ type
   protected
     procedure AddConnection(Broker: TSocketBroker; const InnerId: String);
     procedure BindInnerBroker(Connection: TSocketBroker; const Data: PAnsiChar; DataSize: Cardinal);
-    procedure ConnectOuter;
     procedure CheckServerPort(const AServerAddr: string; AServerPort: Word);
+    procedure IncOuterConnection;
     procedure Prepare;
     procedure Stop;
   public
@@ -409,10 +441,12 @@ type
     FDataModule: TInIOCPDataModule; // 当前数模
     function GetDataModule(Index: Integer): TInIOCPDataModule;
     procedure SetConnection(Index: Integer);
+    procedure SetDefaultDataModule;
   protected
     procedure Execute(const Socket: TIOCPSocket); override;
+    procedure StreamExecute(const Socket: TStreamSocket); override;
     procedure HttpExecute(const Socket: THttpSocket); override;
-    procedure WSExecute(const Socket: TWebSocket); override;
+    procedure WebSocketExecute(const Socket: TWebSocket); override;
   public
     constructor Create(AServer: TObject; AThreadIdx: Integer);
     destructor Destroy; override;
@@ -432,6 +466,7 @@ uses
 
 type
 
+  TBaseSocketRef    = class(TBaseSocket);
   TReceiveParamsRef = class(TReceiveParams);
   TReturnResultRef  = class(TReturnResult);
   TSocketBrokerRef  = class(TSocketBroker);
@@ -484,6 +519,98 @@ begin
     Result := TInIOCPServer(FServer).GlobalLock
   else
     Result := Nil;
+end;
+
+{ TInStreamManager }
+
+procedure TInStreamManager.Broadcast(AOwner: TStreamSocket; const AText: string);
+begin
+  if Assigned(FServer) then
+    InterPushText(AOwner, nil, AText);
+end;
+
+procedure TInStreamManager.Execute(Socket: TIOCPSocket);
+begin
+  // Socket 是 TStreamSocket
+  if Assigned(FOnReceive) then
+    FOnReceive(TStreamSocket(Socket),
+               Socket.RecvBuf.Data.buf,
+               TStreamSocket(Socket).ByteCount);
+end;
+
+procedure TInStreamManager.InterPushText(AOwner, ATarget: TStreamSocket; const AText: AnsiString);
+var
+  CastType: TBroadcastType;
+  Msg: TPushMessage;
+begin
+  // 给 ATarget/全部客户端 推送文本消息 AText
+
+  Msg := nil;
+  if Assigned(ATarget) then
+    CastType := btUnknown
+  else
+    CastType := btAllClient;
+  
+  case Length(AText) of
+    0:
+      Msg := TPushMessage.Create(AOwner.RecvBuf, CastType);
+    1..IO_BUFFER_SIZE: begin
+      Msg := TPushMessage.Create(AOwner.ObjPool, AOwner.BufferPool, CastType, Length(AText));
+      System.Move(AText[1], Msg.PushBuf^.Data.buf^, Msg.PushBuf^.Data.len);
+    end;
+  end;
+
+  // 忽略自己
+  Msg.IngoreSocket := AOwner;
+
+  if Assigned(ATarget) then  // 推送目的
+    Msg.Add(ATarget);
+
+  // 推送
+  TInIOCPServer(FServer).PushManager.AddWork(Msg);
+  
+end;
+
+procedure TInStreamManager.CallbackMethod(ObjType: TObjectType;
+  var FromObject: Pointer; const Data: TObject; var CancelScan: Boolean);
+begin
+  // 扫描列表的回调方法，已加锁
+  if (TStreamSocket(Data).ClientId = FClientId) then
+  begin
+    FromObject := Data;
+    CancelScan := True; // 退出查找
+  end;
+end;
+
+function TInStreamManager.CheckState(const AClientId: String; var ASocket: TStreamSocket): Boolean;
+begin
+  // 检查客户端 AClientId 状态
+  TInIOCPServer(FServer).IOCPSocketPool.Lock;
+  try
+    ASocket := nil;
+    FClientId := AClientId;  // 查找这个客户端
+    TInIOCPServer(FServer).IOCPSocketPool.Scan(Pointer(ASocket), CallbackMethod);
+  finally
+    Result := Assigned(ASocket);
+    TInIOCPServer(FServer).IOCPSocketPool.UnLock;
+  end;
+end;
+
+function TInStreamManager.Logined(const AClientId: String): Boolean;
+var
+  Socket: TStreamSocket;
+begin
+  // 检查客户端 AClientId 状态
+  Result := Assigned(FServer) and CheckState(AClientId, Socket);
+end;
+
+procedure TInStreamManager.SendTo(AOwner: TStreamSocket; const AToClient, AText: string);
+var
+  Target: TStreamSocket;
+begin
+  // 推送消息给 AToClient
+  if Assigned(FServer) and CheckState(AToClient, Target) then
+    InterPushText(AOwner, Target, AText);
 end;
 
 { TInClientManager }
@@ -577,7 +704,7 @@ var
 begin
   // 只断开客户端，要在外部删除账户
   if Logined(UserName, oSocket) then
-    oSocket.PostEvent(ioDelete);
+    TBaseSocketRef(oSocket).PostEvent(ioDelete);
 end;
 
 destructor TInClientManager.Destroy;
@@ -1062,8 +1189,6 @@ begin
 end;
 
 procedure TInFileManager.Execute(Socket: TIOCPSocket);
-var
-  FileName: AnsiString;
 begin
   // 先执行内部操作事件
   //   服务端的附件先发送，才收到客户端的附件
@@ -1348,7 +1473,7 @@ begin
   if FDataModuleList.IndexOf(ADescription) = -1 then
   begin
     FDataModuleList.Add(ADescription, TObject(ADataModule));
-    if Assigned(TInIOCPServer(FServer).BusiWorkMgr) then   // 运行状态，建实例
+    if Assigned(FServer) and Assigned(TInIOCPServer(FServer).BusiWorkMgr) then   // 运行状态，建实例
       TInIOCPServer(FServer).BusiWorkMgr.AddDataModule(FDataModuleList.Count - 1);
   end;
 end;
@@ -1389,8 +1514,7 @@ end;
 procedure TInDatabaseManager.Execute(Socket: TIOCPSocket);
   procedure InnerSetConnection;
   begin
-    // 准备当前操作的数模实例
-    if Assigned(Socket.Envir) then
+    if Assigned(Socket.Envir) then  // 准备当前操作的数模实例
       if (Socket.Envir^.DBConnection <> Integer(Socket.Params.Target)) then
         Socket.Envir^.DBConnection := Socket.Params.Target;
     TBusiWorker(Socket.Worker).SetConnection(Socket.Params.Target);
@@ -1456,7 +1580,7 @@ begin
     Item := FDataModuleList.Items[Index];
     AClassName := TClass(Item^.FObject).ClassName;  // 类名
     ADescription := Item^.FString;    // 描述
-    if Assigned(TInIOCPServer(FServer).BusiWorkMgr) then
+    if Assigned(FServer) and Assigned(TInIOCPServer(FServer).BusiWorkMgr) then
       ARunning := TInIOCPServer(FServer).BusiWorkMgr.DataModuleState[Index]  // 运行状态
     else
       ARunning := False;
@@ -1482,7 +1606,7 @@ end;
 procedure TInDatabaseManager.RemoveDataModule(Index: Integer);
 begin
   // 删除数模
-  if (Index >= 0) and (Index < FDataModuleList.Count) then
+  if Assigned(FServer) and (Index >= 0) and (Index < FDataModuleList.Count) then
     if Assigned(TInIOCPServer(FServer).BusiWorkMgr) then  // 释放实例，但不能删除列表（防影响后面的数模编号）
       TInIOCPServer(FServer).BusiWorkMgr.RemoveDataModule(Index)
     else
@@ -2084,24 +2208,12 @@ begin
   FInnerServer.CheckServerPort(AServerAddr, AServerPort);
 end;
 
-procedure TInIOCPBroker.ConnectOuter;
-begin
-  // 补充内部连接
-  GlobalLock.Acquire;
-  try
-    if TInIOCPServer(FServer).Active then
-      Inc(FCreateCount);
-  finally
-    GlobalLock.Release;
-  end;
-end;
-
 constructor TInIOCPBroker.Create(AOwner: TComponent);
 begin
   inherited;
   FInnerServer := TBrokenOptions.Create(Self);
   FOuterServer := TProxyOptions.Create(Self);
-  FConnectionCount := 20;
+  FConnectionCount := 50;
   FDefaultInnerPort := 80;
   FServerPort := 80;
 end;
@@ -2129,6 +2241,18 @@ begin
   // 是否为反向模式
   Result := (FProxyType = ptDefault) and
             (FServerAddr <> '') and (FServerPort > 0);
+end;
+
+procedure TInIOCPBroker.IncOuterConnection;
+begin
+  // 补充内部连接
+  GlobalLock.Acquire;
+  try
+    if TInIOCPServer(FServer).Active then
+      Inc(FCreateCount);
+  finally
+    GlobalLock.Release;
+  end;
 end;
 
 procedure TInIOCPBroker.InterConnectOuter(ACount: Integer);
@@ -2282,11 +2406,10 @@ end;
 
 procedure TBusiWorker.Execute(const Socket: TIOCPSocket);
 begin
-  // 进入业务模块
+  // 进入 C/S 业务模块
 
   // 默认的数据连接
-  if (FDMCount > 0) and (FDataModule = Nil) then
-    FDataModule := FDMArray[0];
+  SetDefaultDataModule;
 
   with TInIOCPServer(FServer) do
     case Socket.Params.Action of
@@ -2324,12 +2447,8 @@ end;
 procedure TBusiWorker.HttpExecute(const Socket: THttpSocket);
 begin
   // 进入 http 服务业务模块
-  if Assigned(TInIOCPServer(FServer).HttpDataProvider) then
-  begin
-    if (FDMCount > 0) then     // 默认数模
-      FDataModule := FDMArray[0];
-    TInIOCPServer(FServer).HttpDataProvider.Execute(Socket);
-  end;
+  SetDefaultDataModule;  // 默认的数据连接
+  TInIOCPServer(FServer).HttpDataProvider.Execute(Socket);
 end;
 
 procedure TBusiWorker.RemoveDataModule(Index: Integer);
@@ -2349,13 +2468,25 @@ begin
     FDataModule := FDMArray[Index];
 end;
 
-procedure TBusiWorker.WSExecute(const Socket: TWebSocket);
+procedure TBusiWorker.SetDefaultDataModule;
 begin
-  // 进入 WebSocket 业务模块（当作 TIOCPSocket）
-  if (FDMCount > 0) and (FDataModule = Nil) then  // 默认的数据连接
+  // 设置当前的数据连接
+  if (FDataModule = Nil) and (FDMCount > 0) then
     FDataModule := FDMArray[0];
+end;
+
+procedure TBusiWorker.StreamExecute(const Socket: TStreamSocket);
+begin
+  SetDefaultDataModule;  // 默认的数据连接
+  TInIOCPServer(FServer).StreamManager.Execute(TIOCPSocket(Socket));
+end;
+
+procedure TBusiWorker.WebSocketExecute(const Socket: TWebSocket);
+begin
+  // 进入 WebSocket 业务模块
+  SetDefaultDataModule;  // 默认的数据连接
   with TInIOCPServer(FServer).HttpDataProvider do
-    WebSocketManager.Execute(TIOCPSocket(Socket));
+    WebSocketManager.Execute(TIOCPSocket(Socket));  // 当作 TIOCPSocket
 end;
 
 end.
