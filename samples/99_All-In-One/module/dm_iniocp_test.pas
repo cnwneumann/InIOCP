@@ -376,7 +376,7 @@ begin
   //    用 Attachment 返回给客户端，如：
   // FQuery.SaveToFile('e:\aaa.json', sfJSON);
   // Result.Attachment := TFileStream.Create('e:\aaa.json', fmOpenRead);
-  // Result.S['attach'] := 'query.dat';  //附件名称
+  // Result.S['attach'] := 'query.dat';  // 附件名称
 
   // C. 用以下方法返回不带字段描述信息的 JSON 给客户端：
   // Result.DataSet := FQuery;  // 发送完毕会自动关闭 FQuery

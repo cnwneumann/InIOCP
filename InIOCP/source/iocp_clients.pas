@@ -374,7 +374,7 @@ type
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
-    procedure AddClientDataSets(AClientDataSet: TClientDataSet);
+    procedure AddClientDataSet(AClientDataSet: TClientDataSet);
     procedure ApplyUpdates;
     procedure ClearClientDataSets;
     procedure ExecQuery;
@@ -1661,7 +1661,7 @@ end;
 
 { TInDBQueryClient }
 
-procedure TInDBQueryClient.AddClientDataSets(AClientDataSet: TClientDataSet);
+procedure TInDBQueryClient.AddClientDataSet(AClientDataSet: TClientDataSet);
 begin
   // 加入子表 TClientDataSet
   if FSubClientDataSets.IndexOf(AClientDataSet) = -1 then

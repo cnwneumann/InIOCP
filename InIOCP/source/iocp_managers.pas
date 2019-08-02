@@ -48,14 +48,14 @@ type
   private
     FOnAttachBegin: TAttachmentEvent;  // 准备接收附件
     FOnAttachFinish: TAttachmentEvent; // 附件接收完毕
-    FOnBackground: TRequestEvent;      // 后台执行事件
     function GetGlobalLock: TThreadLock; {$IFDEF USE_INLINE} inline; {$ENDIF}
   protected
     procedure Execute(Socket: TIOCPSocket); virtual; abstract;
   protected
     property OnAttachBegin: TAttachmentEvent read FOnAttachBegin write FOnAttachBegin;
     property OnAttachFinish: TAttachmentEvent read FOnAttachFinish write FOnAttachFinish;
-    property OnBackground: TRequestEvent read FOnBackground write FOnBackground;
+  public
+    procedure AddToBackground(Socket: TBaseSocket);
   public
     property GlobalLock: TThreadLock read GetGlobalLock;
   end;
@@ -121,7 +121,6 @@ type
     property OnLogout: TRequestEvent read FOnLogout write FOnLogout;
     property OnRegister: TRequestEvent read FOnRegister write FOnRegister;
     property OnQueryState: TRequestEvent read FOnQueryState write FOnQueryState;
-    property OnBackground;
   end;
 
   // ================== 消息管理器 ======================
@@ -171,7 +170,6 @@ type
     property OnListFiles: TRequestEvent read FOnListFiles write FOnListFiles;
     property OnPush: TRequestEvent read FOnPush write FOnPush;
     property OnReceive: TRequestEvent read FOnReceive write FOnReceive;
-    property OnBackground;
   end;
 
   // ================== 文件管理器 ======================
@@ -215,7 +213,6 @@ type
     property OnRenameDir: TRequestEvent read FOnRenameDir write FOnRenameDir;
     property OnRenameFile: TRequestEvent read FOnRenameFile write FOnRenameFile;
     property OnSetWorkDir: TRequestEvent read FOnSetWorkDir write FOnSetWorkDir;
-    property OnBackground;
   end;
 
   // ================== 数据库管理器 ======================
@@ -241,8 +238,6 @@ type
   public
     property DataModuleList: TInStringList read FDataModuleList;
     property DataModuleCount: Integer read GetDataModuleCount;
-  published
-    property OnBackground;
   end;
 
   // ================== 自定义管理器 ======================
@@ -257,10 +252,10 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
   published
+    property OnReceive: TRequestEvent read FOnReceive write FOnReceive;
+  published
     property OnAttachBegin;
     property OnAttachFinish;
-    property OnBackground;
-    property OnReceive: TRequestEvent read FOnReceive write FOnReceive;
   end;
 
   // ================== 远程函数组 ======================
@@ -289,7 +284,7 @@ type
   private
     FJSONLength: Integer;           // JSON 长度
     FUserName: string;              // 要查找的人
-    FOnBackground: TWebSocketEvent; // 后台执行事件
+    FOnBackground: TWebSocketEvent; // 后台执行事件（覆盖）
     FOnReceive: TWebSocketEvent;    // 接收事件
     FOnUpgrade: TOnUpgradeEvent;    // 升级为 WebSocket 事件
     procedure CallbackMethod(ObjType: TObjectType; var FromObject: Pointer;
@@ -511,6 +506,17 @@ begin
 end;
 
 { TBaseManager }
+
+procedure TBaseManager.AddToBackground(Socket: TBaseSocket);
+begin
+  // 将任务改为后台执行（从新加入业务线程）
+{  if (TBaseSocketRef(Socket).Background = False) and (
+     (Socket.ClassType = TIOCPSocket) or (Socket.ClassType = TWebSocket)) then
+  begin
+    TBaseSocketRef(Socket).FBackground := True;  // 设为在后台执行
+    TInIOCPServer(FServer).BusiWorkMgr.AddWork(Socket);
+  end; }
+end;
 
 function TBaseManager.GetGlobalLock: TThreadLock;
 begin
@@ -1522,6 +1528,14 @@ procedure TInDatabaseManager.Execute(Socket: TIOCPSocket);
 begin
   // 数据库操作与数模关系密切，不进入界面性业务模块，减少复杂性。
   // 调用前已经设置用当前数据连接，见：TBusiWorker.Execute
+
+  if Socket.Background then  // 后台执行
+  begin
+    TBaseSocketRef(Socket).FBackground := False;
+    Self.Execute(Socket);
+    Exit;
+  end;
+
   case Socket.Action of
     atAfterSend: begin   // 发送附件完毕
       Socket.Result.Clear;

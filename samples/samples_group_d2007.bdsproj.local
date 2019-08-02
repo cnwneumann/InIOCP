@@ -5,6 +5,6 @@
     <Transaction>2017-10-14 19:29:01.343.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\samples_group_d2007.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\samples_group_d2007.bdsproj</Transaction>
   </Transactions>
 	<Default.Personality>
-		<Projects ActiveProject="InIOCPReverseProxy.exe"/>
+		<Projects ActiveProject="InIOCP_all_in_one.exe"/>
 	</Default.Personality>
 </BorlandProject>

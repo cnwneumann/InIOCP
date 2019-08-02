@@ -78,7 +78,7 @@ type
     function FieldSpace: Integer; {$IFDEF USE_INLINE} inline; {$ENDIF}
     function GetDataRef: Pointer; {$IFDEF USE_INLINE} inline; {$ENDIF}
     function GetIsNull: Boolean; {$IFDEF USE_INLINE} inline; {$ENDIF}
-    function GetSize: Integer; // {$IFDEF USE_INLINE} inline; {$ENDIF}
+    function GetSize: Integer; {$IFDEF USE_INLINE} inline; {$ENDIF}
     procedure InterClear;
     procedure InterSetBuffer(AEleType: TElementType; ABuffer: PAnsiChar; ASize: Integer);
     procedure InterSetStream(AEleType: TElementType; ABuffer: PAnsiChar; ASize: Integer);    

@@ -183,7 +183,7 @@ begin
   Result^.No := FNodeCount;
   {$ENDIF}
 
-  CreateObjData(Result);    // 建关联对象
+  CreateObjData(Result);  // 建关联的对象
 
   Result^.Prev := Nil;
   Result^.Next := FFreeNode;
@@ -377,7 +377,7 @@ begin
   FLock.Acquire;
   try
     if (FFreeNode = nil) then
-      Result := AddNode
+      Result := AddNode  // 增加节点（同时建实例）
     else
       Result := FFreeNode;
 

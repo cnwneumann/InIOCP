@@ -130,7 +130,9 @@ type
     procedure InternalRecv(Complete: Boolean);
     procedure OnSendError(Sender: TObject);
   protected
+    FBackground: Boolean;      // 后台执行状态
     FByteCount: Cardinal;      // 接收字节数
+
     {$IFDEF TRANSMIT_FILE}     // TransmitFile 发送模式
     FTask: TTransmitObject;    // 待发送数据描述
     FTaskExists: Boolean;      // 存在任务
@@ -138,6 +140,7 @@ type
     procedure InterTransmit;   // 发送数据
     procedure InterFreeRes; virtual; abstract; // 释放发送资源
     {$ENDIF}
+
     procedure ClearResources; virtual; abstract;
     procedure Clone(Source: TBaseSocket);  // 克隆（转移资源）
     procedure DoWork(AWorker: TBaseWorker; ASender: TBaseTaskSender);  // 业务线程调用入口
@@ -151,6 +154,7 @@ type
     // 保护以下方法，防止在应用层被误用
     function CheckTimeOut(ANowTickCount: Cardinal): Boolean;  // 超时检查
     function Lock(PushMode: Boolean): Integer;  // 工作前加锁
+    procedure ToBackground(AMaster: TBaseSocket); virtual; // 设为后台资源
     procedure PostRecv; virtual;  // 投递接收
     procedure PostEvent(IOKind: TIODataType); virtual; abstract; // 投放事件
     procedure TryClose;  // 尝试关闭
@@ -160,6 +164,7 @@ type
     procedure Close; override;  // 关闭
   public
     property Active: Boolean read GetActive;
+    property Background: Boolean read FBackground;  // 后台执行模式
     property BufferPool: TIODataPool read GetBufferPool;
     property Complete: Boolean read FComplete;
     property LinkNode: PLinkRec read FLinkNode;
@@ -273,6 +278,7 @@ type
     procedure InterCloseSocket(Sender: TObject); override;
     procedure PostEvent(IOKind: TIODataType); override;
     procedure SocketError(IOKind: TIODataType); override;
+    procedure ToBackground(AMaster: TBaseSocket); override;
   public
     destructor Destroy; override;
   public
@@ -354,6 +360,7 @@ type
     procedure ExecuteWork; override;
     procedure InternalPing;
     procedure PostEvent(IOKind: TIODataType); override;
+    procedure ToBackground(AMaster: TBaseSocket); override;
   public
     constructor Create(AObjPool: TIOCPSocketPool; ALinkNode: PLinkRec); override;
     destructor Destroy; override;
@@ -599,7 +606,7 @@ begin
   // FSocket 由客户端接入时分配
   //   见：TInIOCPServer.AcceptClient
   //       TIOCPSocketPool.CreateObjData
-  FObjPool := AObjPool; 
+  FObjPool := AObjPool;
   FLinkNode := ALinkNode;
   FUseTransObj := True;  
 end;
@@ -955,6 +962,11 @@ begin
     iocp_log.WriteLog(PROCEDURE_NAMES[IOKind] + PeerIPPort +
                       ',Error:' + IntToStr(FErrorCode) +
                       ',BusiThread:' + IntToStr(FWorker.ThreadIdx));
+end;
+
+procedure TBaseSocket.ToBackground(AMaster: TBaseSocket);
+begin
+  // Empty
 end;
 
 procedure TBaseSocket.TryClose;
@@ -1321,27 +1333,27 @@ const
   IO_FIRST_PACKET = True;  // 首数据包
   IO_SUBSEQUENCE  = False; // 后续数据包
 begin
-  // 接收数据 FRecvBuf
-
-  // 建资源
-  CreateResources;   
+  // 接收数据块 FRecvBuf 的内容
 
   {$IFNDEF DELPHI_7}
   {$REGION '+ 接收数据'}
   {$ENDIF}
-  
-  // 1. 接收数据
+
+  // 1 建资源
+  CreateResources;
+
+  // 1.1 接收数据
   FTickCount := GetTickCount;
-  
+
   case FReceiver.Complete of
-    IO_FIRST_PACKET:  // 1.1 首数据包，检查有效性 和 用户登录状态
+    IO_FIRST_PACKET:  // 1.2 首数据包，检查有效性 和 用户登录状态
       if (CheckMsgHead(FRecvBuf^.Data.buf) = False) then
         Exit;
-    IO_SUBSEQUENCE:   // 1.2 接收后续数据包
+    IO_SUBSEQUENCE:   // 1.3 接收后续数据包
       FReceiver.Receive(FRecvBuf^.Data.buf, FByteCount);
   end;
 
-  // 1.3 主体或附件接收完毕均进入应用层
+  // 1.4 主体或附件接收完毕均进入应用层
   FComplete := FReceiver.Complete and (FReceiver.Cancel = False);
 
   {$IFNDEF DELPHI_7}
@@ -1664,6 +1676,11 @@ begin
   if (IOKind in [ioDelete, ioPush, ioRefuse]) then  // 推送
     FResult.ActResult := arErrPush;
   inherited;
+end;
+
+procedure TIOCPSocket.ToBackground(AMaster: TBaseSocket);
+begin
+  //
 end;
 
 procedure TIOCPSocket.SetLogState(AEnvir: PEnvironmentVar);
@@ -2122,6 +2139,11 @@ begin
   FData := AData; // 引用地址
   FFrameSize := AFrameSize;  // 帧长度
   FFrameRecvSize := ARecvSize;  // 收到帧长度
+end;
+
+procedure TWebSocket.ToBackground(AMaster: TBaseSocket);
+begin
+  //
 end;
 
 { TSocketBroker }

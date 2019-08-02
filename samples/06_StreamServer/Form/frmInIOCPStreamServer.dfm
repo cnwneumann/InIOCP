@@ -14,7 +14,7 @@ object FormInIOCPStreamServer: TFormInIOCPStreamServer
   Position = poDesktopCenter
   Scaled = False
   OnCreate = FormCreate
-  PixelsPerInch = 96
+  PixelsPerInch = 120
   TextHeight = 12
   object Memo1: TMemo
     Left = 8

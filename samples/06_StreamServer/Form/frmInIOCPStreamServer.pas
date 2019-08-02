@@ -143,7 +143,7 @@ begin
 
   // 客户端例子用 TIdTCPClient，反馈的数据要支持其协议
   //   TIdTCPClient 不直接支持被动接收消息，例子的客户端无法正常显示
-  
+
 {  if (Socket.Role = crAdmin) then  // 用 Indy TCP Client 的格式返回信息
     InStreamManager1.Broadcast(Socket, '123 GET_STATE'#13#10)  // 广播，收集客户端消息
   else
@@ -152,6 +152,7 @@ begin
   // 可以先把设备发送来的数据保存到 Socket.Data 中
   Socket.SendData('123 RETURN OK'#13#10);
 
+  // ==================================
   // 有多种方式发送数据给客户端
 
   // 1. 发送内存块

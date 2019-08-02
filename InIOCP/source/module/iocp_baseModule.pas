@@ -24,6 +24,7 @@ type
   private
     { Private declarations }
     FOnApplyUpdates: TApplyUpdatesEvent;   // 用 Delta 数据更新
+    FOnBackground: TExecSQLEvent;          // 后台执行方法
     FOnExecQuery: TExecSQLEvent;           // 执行 SELECT-SQL，返回一个数据集
     FOnExecStoredProc: TExecSQLEvent;      // 执行存储过程，可能返回数据集
     FOnExecSQL: TExecSQLEvent;             // 执行 SQL 命令不返回数据集
@@ -48,6 +49,7 @@ type
     procedure WebSocketUpdates(JSON: TBaseJSON; Result: TResultJSON);
   published
     property OnApplyUpdates: TApplyUpdatesEvent read FOnApplyUpdates write FOnApplyUpdates;
+    property OnBackground: TExecSQLEvent read FOnBackground write FOnBackground;
     property OnExecQuery: TExecSQLEvent read FOnExecQuery write FOnExecQuery;
     property OnExecSQL: TExecSQLEvent read FOnExecSQL write FOnExecSQL;
     property OnExecStoredProcedure: TExecSQLEvent read FOnExecStoredProc write FOnExecStoredProc;
