@@ -34,7 +34,6 @@ type
     btnStoredProc2: TButton;
     edtIP: TEdit;
     edtPort: TEdit;
-    Button1: TButton;
     procedure btnConnectClick(Sender: TObject);
     procedure btnDisconnectClick(Sender: TObject);
     procedure btnLoginClick(Sender: TObject);
@@ -58,7 +57,8 @@ type
     procedure btnStoredProcClick(Sender: TObject);
     procedure btnStoredProc2Click(Sender: TObject);
     procedure FormCreate(Sender: TObject);
-    procedure Button1Click(Sender: TObject);
+    procedure InDBQueryClient1AfterLoadData(DataSet: TClientDataSet;
+      const TableName: string);
   private
     { Private declarations }
   public
@@ -91,21 +91,6 @@ begin
     ExecStoredProc('ExecuteStoredProc');
   end;
 
-end;
-
-procedure TFormInIOCPDbSvrClient.Button1Click(Sender: TObject);
-var
-  inQry: TInDBQueryClient;
-begin
-  inQry := TInDBQueryClient.Create(Self);
-  try
-    inQry.DBConnection := InDBConnection1;
-    InDBConnection1.ConnectionIndex := 1; // 可以不执行 InDBConnection1.Connect(1);
-    inQry.Params.SQL := 'SELECT * FROM tbl_xzqh';
-    inQry.ExecQuery;  // 新版不带参数
-  finally
-    inQry.Free;
-  end;
 end;
 
 procedure TFormInIOCPDbSvrClient.btnStoredProc2Click(Sender: TObject);
@@ -189,8 +174,8 @@ end;
 
 procedure TFormInIOCPDbSvrClient.btnDBUpdateClick(Sender: TObject);
 begin
-  // 更新必须设置属性：InDBQueryClient1.TableName
-  InDBQueryClient1.ApplyUpdates;     // 带参数可以临时更新其他数据表
+  // C/S 协议：更新远程数据表
+  InDBQueryClient1.ApplyUpdates;
 end;
 
 procedure TFormInIOCPDbSvrClient.btnSetDBConnectionClick(Sender: TObject);
@@ -236,7 +221,6 @@ end;
 procedure TFormInIOCPDbSvrClient.FormCreate(Sender: TObject);
 begin
   edtIP.Text := '127.0.0.1';    // GetLocalIP();   
-  iocp_utils.IniDateTimeFormat; // 设置日期时间格式
   MyCreateDir(InConnection1.LocalPath); // 下载文件存放路径
 end;
 
@@ -284,6 +268,13 @@ begin
       end;
   end;
 
+end;
+
+procedure TFormInIOCPDbSvrClient.InDBQueryClient1AfterLoadData(
+  DataSet: TClientDataSet; const TableName: string);
+begin
+  // 数据已经装载到 DataSet，数据集合对应的表名称为 TableName
+  // 此事件在 OnReturnResult 之前执行
 end;
 
 procedure TFormInIOCPDbSvrClient.InDBQueryClient1ReturnResult(Sender: TObject;

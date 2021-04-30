@@ -68,10 +68,10 @@ object FormInIOCPHttpServer: TFormInIOCPHttpServer
     OnClick = btnStopClick
   end
   inline FrameIOCPSvrInfo1: TFrameIOCPSvrInfo
-    Left = 22
-    Top = 2
-    Width = 684
-    Height = 251
+    Left = 23
+    Top = 3
+    Width = 683
+    Height = 250
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -18
@@ -79,10 +79,10 @@ object FormInIOCPHttpServer: TFormInIOCPHttpServer
     Font.Style = []
     ParentFont = False
     TabOrder = 3
-    ExplicitLeft = 22
-    ExplicitTop = 2
-    ExplicitWidth = 684
-    ExplicitHeight = 251
+    ExplicitLeft = 23
+    ExplicitTop = 3
+    ExplicitWidth = 683
+    ExplicitHeight = 250
     inherited Label3: TLabel
       Left = 412
       Top = 34
@@ -346,9 +346,6 @@ object FormInIOCPHttpServer: TFormInIOCPHttpServer
   end
   object InHttpDataProvider1: TInHttpDataProvider
     OnAccept = InHttpDataProvider1Accept
-    OnGet = InHttpDataProvider1Get
-    OnInvalidSession = InHttpDataProvider1InvalidSession
-    OnPost = InHttpDataProvider1Post
     OnReceiveFile = InHttpDataProvider1ReceiveFile
     RootDirectory = 'web_site'
     Left = 432

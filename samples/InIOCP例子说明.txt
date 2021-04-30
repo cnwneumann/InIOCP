@@ -6,11 +6,11 @@
 
  1     01_CertifyServer		认证服务、客户端/用户管理
  2     02_MessageServer		消息服务、消息推送
- 3     03_FileServer		文件服务
+ 3     03_FileServer		文件服务、免认证文件服务
  4     04_DatabaseServer	数据库服务
  5     05_CustomServer		自定义服务、远程函数服务
  6     06_StreamServer		原始数据流服务
- 7     07_ShortConnection	短连接应用
+ 7     07_ReuseSessionId	重用会话期
  8     08_NewFeatures		2.0新特性应用
  9     09_HttpServer		HTTP基本服务
 10     10_HttpServiceApp	HTTP服务程序
@@ -20,11 +20,10 @@
 
 20     20_WebSocketChat		WebSocekt服务
 21     21_WebSocketJSON		WebSocekt 的 InIOCP-JSON 消息封装
-22     22_WebSocketMsgPush	WebSocekt消息推送
+22     22_WebSocketMsgPush	WebSocekt消息推送、客户端 DLL
 
 23     23_ProxyServer	        代理服务
 24     24_ReverseProxy	        反向代理服务
-25     25_LANClientMgr          局域网客户端管理（重点）
 
 99     99_All-In-One		集成除代理外的其他功能的使用
 

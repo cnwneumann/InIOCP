@@ -24,11 +24,12 @@ type
     procedure InIOCPServer1Connect(Sender: TObject; Socket: TBaseSocket);
     procedure InIOCPServer1Disconnect(Sender: TObject; Socket: TBaseSocket);
     procedure InStreamManager1Receive(Socket: TStreamSocket;
-      const Data: PAnsiChar; Size: Cardinal);
+      const Data: PAnsiChar; Size: Cardinal; var Completed: Boolean);
     procedure InIOCPServer1DataReceive(Sender: TBaseSocket; Size: Cardinal);
   private
     { Private declarations }
     FAppDir: String;
+    procedure CopySocketData(ASocket: TStreamSocket; const ABuffers: PAnsiChar);
   public
     { Public declarations }
   end;
@@ -63,7 +64,7 @@ procedure TFormInIOCPStreamServer.FormCreate(Sender: TObject);
 begin
   // 本地路径
 //  Edit1.Text := GetLocalIp;
-  FAppDir := ExtractFilePath(Application.ExeName);     
+  FAppDir := ExtractFilePath(Application.ExeName);
   MyCreateDir(FAppDir + 'log');
 end;
 
@@ -111,19 +112,29 @@ begin
   // Socket 即将被关闭
 end;
 
+procedure TFormInIOCPStreamServer.CopySocketData(ASocket: TStreamSocket; const ABuffers: PAnsiChar);
+begin
+  // 复杂 ASocket.Data 内容
+  // 注：Data 类型、大小由用户定，复杂方法也自定义
+  // ABuffers 是由用户传入的空间。
+  // System.Move(ASocket.Data^, ABuffers^, 80);  // 用户定义的空间大小
+end;
+
 procedure TFormInIOCPStreamServer.InStreamManager1Receive(Socket: TStreamSocket;
-  const Data: PAnsiChar; Size: Cardinal);
+  const Data: PAnsiChar; Size: Cardinal; var Completed: Boolean);
 var
   S: String;
   i: Integer;
 //  Stream: TFileStream;
+//  Buffer: PAnsiChar;
 begin
   // 重大调整，新版增加流服务管理器 TInStreamManager，在本事件处理收到的数据
 
   // 收到一个数据包（未必接收完毕）
-  // Socket: 是 TStreamSocket!
-  //   Data: 数据
-  //   Size：数据长度
+  //    Socket: 是 TStreamSocket!
+  //      Data: 数据
+  //      Size：数据长度
+  // Completed: 是否接收完毕（默认为 True，完毕时要设为 True）
 
   // 把数据转为 String 显示
   SetString(S, Data, Size);
@@ -170,6 +181,11 @@ begin
 
   // 5. 发送一个 Variant
 //  Socket.SendDataVar(Value);  
+
+
+  // 取某客户端的 Data!
+//  Buffer := GetMemory(80);
+//  InStreamManager1.GetClientData('CLIENT_1', Buffer, CopySocketData);
 
 end;
 

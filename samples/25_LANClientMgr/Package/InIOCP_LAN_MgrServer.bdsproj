@@ -129,7 +129,7 @@
 		</Linker>
 		<Directories>
 			<Directories Name="OutputDir">..\</Directories>
-			<Directories Name="UnitOutputDir">..\..\..\bin</Directories>
+			<Directories Name="UnitOutputDir">..\..\..\dcu</Directories>
 			<Directories Name="PackageDLLOutputDir"></Directories>
 			<Directories Name="PackageDCPOutputDir"></Directories>
 			<Directories Name="SearchPath">$(BDS)\Lib\Debug\Indy10;$(BDS)\lib\Debug;..\form;..\ThirdCodes;..\ThirdCodes\ZeosDBO\component;..\ThirdCodes\ZeosDBO\core;..\ThirdCodes\ZeosDBO\dbc;..\ThirdCodes\ZeosDBO\parsesql;..\ThirdCodes\ZeosDBO\plain;..\..\..\InIOCP\package;..\..\..\InIOCP\source;..\..\..\InIOCP\source\zlib;..\..\..\InIOCP\source\frame;..\..\..\InIOCP\source\module;..\..\..\InIOCP\memMgr\fastmm;..\..\..\InIOCP\memMgr\scalemm2</Directories>

@@ -129,11 +129,11 @@
 		</Linker>
 		<Directories>
 			<Directories Name="OutputDir">..\</Directories>
-			<Directories Name="UnitOutputDir">..\..\..\bin</Directories>
+			<Directories Name="UnitOutputDir">..\..\..\dcu</Directories>
 			<Directories Name="PackageDLLOutputDir"></Directories>
 			<Directories Name="PackageDCPOutputDir"></Directories>
 			<Directories Name="SearchPath">$(BDS)\Lib\Debug\Indy10;$(BDS)\lib\Debug;..\form;..\module;..\..\..\InIOCP\package;..\..\..\InIOCP\source;..\..\..\InIOCP\source\zlib;..\..\..\InIOCP\source\frame;..\..\..\InIOCP\source\module;..\..\..\InIOCP\memMgr\fastmm;..\..\..\InIOCP\memMgr\scalemm2</Directories>
-			<Directories Name="Packages">vcl;rtl;vclx;vclactnband;dbrtl;vcldb;dsnap;dsnapcon;bdertl;teeUI;teedb;tee;adortl;dbxcds;dbexpress;DbxCommonDriver;IndyCore;IndySystem;IndyProtocols;xmlrtl;inet;IntrawebDB_90_100;Intraweb_90_100;VclSmp;vclie;websnap;webdsnap;inetdbbde;inetdbxpress;soaprtl;FIBPlus2007;dacvcl105;dac105;uniGUI11VCL;uniGUI11m;SynEdit_R2007;pubCtrls;EhLib110;db422d2006r;rs_ctrls;dvlInIOCP;dclInIOCP</Directories>
+			<Directories Name="Packages">vcl;rtl;vclx;vclactnband;dbrtl;vcldb;dsnap;dsnapcon;bdertl;teeUI;teedb;tee;adortl;dbxcds;dbexpress;DbxCommonDriver;IndyCore;IndySystem;IndyProtocols;xmlrtl;inet;IntrawebDB_90_100;Intraweb_90_100;VclSmp;vclie;websnap;webdsnap;inetdbbde;inetdbxpress;soaprtl;FIBPlus2007;dacvcl105;dac105;uniGUI11VCL;uniGUI11m;SynEdit_R2007;pubCtrls;EhLib110;db422d2006r;rs_ctrls;dvlInIOCP</Directories>
 			<Directories Name="Conditionals"></Directories>
 			<Directories Name="DebugSourceDirs"></Directories>
 			<Directories Name="UsePackages">False</Directories>
@@ -157,7 +157,7 @@
 			<VersionInfo Name="MajorVer">1</VersionInfo>
 			<VersionInfo Name="MinorVer">0</VersionInfo>
 			<VersionInfo Name="Release">7094</VersionInfo>
-			<VersionInfo Name="Build">-30029</VersionInfo>
+			<VersionInfo Name="Build">35534</VersionInfo>
 			<VersionInfo Name="Debug">False</VersionInfo>
 			<VersionInfo Name="PreRelease">False</VersionInfo>
 			<VersionInfo Name="Special">False</VersionInfo>
@@ -169,7 +169,7 @@
 		<VersionInfoKeys>
 			<VersionInfoKeys Name="CompanyName"></VersionInfoKeys>
 			<VersionInfoKeys Name="FileDescription">InIOCP_all_in_one</VersionInfoKeys>
-			<VersionInfoKeys Name="FileVersion">1.0.7094.-30029</VersionInfoKeys>
+			<VersionInfoKeys Name="FileVersion">1.0.7094.35534</VersionInfoKeys>
 			<VersionInfoKeys Name="InternalName"></VersionInfoKeys>
 			<VersionInfoKeys Name="LegalCopyright"></VersionInfoKeys>
 			<VersionInfoKeys Name="LegalTrademarks"></VersionInfoKeys>
@@ -180,9 +180,12 @@
 			<VersionInfoKeys Name="ProgramID">com.embarcadero.InIOCP_all_in_one</VersionInfoKeys>
 		</VersionInfoKeys>
 		<Excluded_Packages>
+      
+      
+      
+      
       <Excluded_Packages Name="$(BDS)\bin\dcloffice2k100.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
       <Excluded_Packages Name="$(BDS)\bin\dclofficexp100.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
-      <Excluded_Packages Name="D:\My Documents\RAD Studio\Projects\bpl\dclunidac120.bpl">Devart Universal Data Access Components</Excluded_Packages>
     </Excluded_Packages>
 		<buildevents/>
 	</Delphi.Personality>

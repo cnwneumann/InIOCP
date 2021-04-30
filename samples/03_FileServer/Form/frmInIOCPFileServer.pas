@@ -77,7 +77,6 @@ procedure TFormInIOCPFileServer.FormCreate(Sender: TObject);
 begin
   // 准备工作路径
   FAppDir := ExtractFilePath(Application.ExeName);
-  iocp_utils.IniDateTimeFormat;    // 设置日期时间格式
     
   // 客户端数据存放路径（2.0改名称）
   iocp_Varis.gUserDataPath := FAppDir + 'client_data\';

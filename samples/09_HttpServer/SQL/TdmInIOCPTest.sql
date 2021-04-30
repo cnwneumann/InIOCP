@@ -15,8 +15,7 @@ FROM tbl_xzqh
 [Select_tbl_xzqh2]
 
 SELECT code, detail
-FROM tbl_xzqh
-WHERE code<:code
+FROM tbl_xzqh WHERE code<:code
 
 [Select_tbl_xzqh4]
 

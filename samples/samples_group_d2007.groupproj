@@ -1,6 +1,6 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
-        <ProjectGuid>{1A14CB10-1EA0-493C-A038-9D97379243E6}</ProjectGuid>
+        <ProjectGuid>{FE98199E-5C79-444C-8024-0922B213FC9D}</ProjectGuid>
     </PropertyGroup>
     <ItemGroup>
         <Projects Include="..\InIOCP\package\dclInIOCP.dproj">
@@ -34,6 +34,9 @@
             <Dependencies/>
         </Projects>
         <Projects Include="06_StreamServer\Package\InIOCPStreamServer.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="06_StreamServer\Package\InIOCPStreamClient.dproj">
             <Dependencies/>
         </Projects>
         <Projects Include="07_ShortConnection\Package\InIOCPShortConnection.dproj">
@@ -79,6 +82,12 @@
             <Dependencies/>
         </Projects>
         <Projects Include="13_InLog\Package\InIOCPInLog.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="14_Background\Package\InIOCPDBServerBackground.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="14_Background\Package\inIOCPDbSvrClientBackground.dproj">
             <Dependencies/>
         </Projects>
         <Projects Include="25_LANClientMgr\Package\InIOCP_LAN_MgrServer.dproj">
@@ -196,6 +205,15 @@
     </Target>
     <Target Name="InIOCPStreamServer:Make">
         <MSBuild Projects="06_StreamServer\Package\InIOCPStreamServer.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="InIOCPStreamClient">
+        <MSBuild Projects="06_StreamServer\Package\InIOCPStreamClient.dproj"/>
+    </Target>
+    <Target Name="InIOCPStreamClient:Clean">
+        <MSBuild Projects="06_StreamServer\Package\InIOCPStreamClient.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="InIOCPStreamClient:Make">
+        <MSBuild Projects="06_StreamServer\Package\InIOCPStreamClient.dproj" Targets="Make"/>
     </Target>
     <Target Name="InIOCPShortConnection">
         <MSBuild Projects="07_ShortConnection\Package\InIOCPShortConnection.dproj"/>
@@ -332,6 +350,24 @@
     <Target Name="InIOCPInLog:Make">
         <MSBuild Projects="13_InLog\Package\InIOCPInLog.dproj" Targets="Make"/>
     </Target>
+    <Target Name="InIOCPDBServerBackground">
+        <MSBuild Projects="14_Background\Package\InIOCPDBServerBackground.dproj"/>
+    </Target>
+    <Target Name="InIOCPDBServerBackground:Clean">
+        <MSBuild Projects="14_Background\Package\InIOCPDBServerBackground.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="InIOCPDBServerBackground:Make">
+        <MSBuild Projects="14_Background\Package\InIOCPDBServerBackground.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="inIOCPDbSvrClientBackground">
+        <MSBuild Projects="14_Background\Package\inIOCPDbSvrClientBackground.dproj"/>
+    </Target>
+    <Target Name="inIOCPDbSvrClientBackground:Clean">
+        <MSBuild Projects="14_Background\Package\inIOCPDbSvrClientBackground.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="inIOCPDbSvrClientBackground:Make">
+        <MSBuild Projects="14_Background\Package\inIOCPDbSvrClientBackground.dproj" Targets="Make"/>
+    </Target>
     <Target Name="InIOCP_LAN_MgrServer">
         <MSBuild Projects="25_LANClientMgr\Package\InIOCP_LAN_MgrServer.dproj"/>
     </Target>
@@ -360,13 +396,13 @@
         <MSBuild Projects="25_LANClientMgr\Package\InIOCP_LAN_Client.dproj" Targets="Make"/>
     </Target>
     <Target Name="Build">
-        <CallTarget Targets="dclInIOCP;InIOCP_all_in_one;InIOCPCertifyServer;InIOCPMessageServer;InIOCPPushMessage;InIOCPFileServer;inIOCPFileSvrClient;InIOCPDBServer;inIOCPDbSvrClient;InIOCPCustomServer;InIOCPStreamServer;InIOCPShortConnection;InIOCPNewFeatures;InIOCPHttpServer;InIOCPHTTPService;InIOCPWebQueryScores;InIOCPWebSocketChat;InIOCPWebSocketJSON;InIOCPWebSocketDBClient;InIOCPWebSocketMsgServer;InIOCPWebSocketMsgClient;InIOCPProxyServer;InIOCPReverseProxy;InIOCPOutProxyServer;InIOCPDoubleServer;InIOCPInLog;InIOCP_LAN_MgrServer;InIOCP_LAN_Admin;InIOCP_LAN_Client"/>
+        <CallTarget Targets="dclInIOCP;InIOCP_all_in_one;InIOCPCertifyServer;InIOCPMessageServer;InIOCPPushMessage;InIOCPFileServer;inIOCPFileSvrClient;InIOCPDBServer;inIOCPDbSvrClient;InIOCPCustomServer;InIOCPStreamServer;InIOCPStreamClient;InIOCPShortConnection;InIOCPNewFeatures;InIOCPHttpServer;InIOCPHTTPService;InIOCPWebQueryScores;InIOCPWebSocketChat;InIOCPWebSocketJSON;InIOCPWebSocketDBClient;InIOCPWebSocketMsgServer;InIOCPWebSocketMsgClient;InIOCPProxyServer;InIOCPReverseProxy;InIOCPOutProxyServer;InIOCPDoubleServer;InIOCPInLog;InIOCPDBServerBackground;inIOCPDbSvrClientBackground;InIOCP_LAN_MgrServer;InIOCP_LAN_Admin;InIOCP_LAN_Client"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="dclInIOCP:Clean;InIOCP_all_in_one:Clean;InIOCPCertifyServer:Clean;InIOCPMessageServer:Clean;InIOCPPushMessage:Clean;InIOCPFileServer:Clean;inIOCPFileSvrClient:Clean;InIOCPDBServer:Clean;inIOCPDbSvrClient:Clean;InIOCPCustomServer:Clean;InIOCPStreamServer:Clean;InIOCPShortConnection:Clean;InIOCPNewFeatures:Clean;InIOCPHttpServer:Clean;InIOCPHTTPService:Clean;InIOCPWebQueryScores:Clean;InIOCPWebSocketChat:Clean;InIOCPWebSocketJSON:Clean;InIOCPWebSocketDBClient:Clean;InIOCPWebSocketMsgServer:Clean;InIOCPWebSocketMsgClient:Clean;InIOCPProxyServer:Clean;InIOCPReverseProxy:Clean;InIOCPOutProxyServer:Clean;InIOCPDoubleServer:Clean;InIOCPInLog:Clean;InIOCP_LAN_MgrServer:Clean;InIOCP_LAN_Admin:Clean;InIOCP_LAN_Client:Clean"/>
+        <CallTarget Targets="dclInIOCP:Clean;InIOCP_all_in_one:Clean;InIOCPCertifyServer:Clean;InIOCPMessageServer:Clean;InIOCPPushMessage:Clean;InIOCPFileServer:Clean;inIOCPFileSvrClient:Clean;InIOCPDBServer:Clean;inIOCPDbSvrClient:Clean;InIOCPCustomServer:Clean;InIOCPStreamServer:Clean;InIOCPStreamClient:Clean;InIOCPShortConnection:Clean;InIOCPNewFeatures:Clean;InIOCPHttpServer:Clean;InIOCPHTTPService:Clean;InIOCPWebQueryScores:Clean;InIOCPWebSocketChat:Clean;InIOCPWebSocketJSON:Clean;InIOCPWebSocketDBClient:Clean;InIOCPWebSocketMsgServer:Clean;InIOCPWebSocketMsgClient:Clean;InIOCPProxyServer:Clean;InIOCPReverseProxy:Clean;InIOCPOutProxyServer:Clean;InIOCPDoubleServer:Clean;InIOCPInLog:Clean;InIOCPDBServerBackground:Clean;inIOCPDbSvrClientBackground:Clean;InIOCP_LAN_MgrServer:Clean;InIOCP_LAN_Admin:Clean;InIOCP_LAN_Client:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="dclInIOCP:Make;InIOCP_all_in_one:Make;InIOCPCertifyServer:Make;InIOCPMessageServer:Make;InIOCPPushMessage:Make;InIOCPFileServer:Make;inIOCPFileSvrClient:Make;InIOCPDBServer:Make;inIOCPDbSvrClient:Make;InIOCPCustomServer:Make;InIOCPStreamServer:Make;InIOCPShortConnection:Make;InIOCPNewFeatures:Make;InIOCPHttpServer:Make;InIOCPHTTPService:Make;InIOCPWebQueryScores:Make;InIOCPWebSocketChat:Make;InIOCPWebSocketJSON:Make;InIOCPWebSocketDBClient:Make;InIOCPWebSocketMsgServer:Make;InIOCPWebSocketMsgClient:Make;InIOCPProxyServer:Make;InIOCPReverseProxy:Make;InIOCPOutProxyServer:Make;InIOCPDoubleServer:Make;InIOCPInLog:Make;InIOCP_LAN_MgrServer:Make;InIOCP_LAN_Admin:Make;InIOCP_LAN_Client:Make"/>
+        <CallTarget Targets="dclInIOCP:Make;InIOCP_all_in_one:Make;InIOCPCertifyServer:Make;InIOCPMessageServer:Make;InIOCPPushMessage:Make;InIOCPFileServer:Make;inIOCPFileSvrClient:Make;InIOCPDBServer:Make;inIOCPDbSvrClient:Make;InIOCPCustomServer:Make;InIOCPStreamServer:Make;InIOCPStreamClient:Make;InIOCPShortConnection:Make;InIOCPNewFeatures:Make;InIOCPHttpServer:Make;InIOCPHTTPService:Make;InIOCPWebQueryScores:Make;InIOCPWebSocketChat:Make;InIOCPWebSocketJSON:Make;InIOCPWebSocketDBClient:Make;InIOCPWebSocketMsgServer:Make;InIOCPWebSocketMsgClient:Make;InIOCPProxyServer:Make;InIOCPReverseProxy:Make;InIOCPOutProxyServer:Make;InIOCPDoubleServer:Make;InIOCPInLog:Make;InIOCPDBServerBackground:Make;inIOCPDbSvrClientBackground:Make;InIOCP_LAN_MgrServer:Make;InIOCP_LAN_Admin:Make;InIOCP_LAN_Client:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>

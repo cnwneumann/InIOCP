@@ -6,11 +6,11 @@ uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, StdCtrls, fmIOCPSvrInfo, iocp_managers, iocp_base,
   http_objects, iocp_server, iocp_sockets, iocp_wsClients, DB, DBClient, Grids,
-  DBGrids, ExtCtrls;
+  DBGrids, ExtCtrls, iocp_clientBase;
 
 type
   TFormInIOCPWsDBClient = class(TForm)
-    InWSConnection1: TInWSConnection;
+    InWSConnection1: TInWSConnection;          
     btnConnect: TButton;
     btnSend: TButton;
     btnDBQuery: TButton;

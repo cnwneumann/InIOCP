@@ -4,6 +4,15 @@ interface
 
 {$Include smmOptions.inc}
 
+const
+  /// alloc memory blocks with 64 memory items each time
+  //  64 = 1 shl 6, therefore any multiplication compiles into nice shl opcode
+  C_ARRAYSIZE         = 32;  //32 instead of 64 -> smaller overhead
+  /// Maximum index of 256 bytes granularity Small blocks
+  MAX_SMALLMEMBLOCK   = 8;
+  /// 0 - 2048 bytes
+  C_MAX_SMALLMEM_SIZE = MAX_SMALLMEMBLOCK * 256; //=2048;
+
 type
   {$if CompilerVersion <= 20}
   // from Delphi 6 up to Delphi 2007
@@ -83,6 +92,7 @@ type
                        record {$ELSE} object {$ifend}
     FOtherThreadFreedMemory: PBaseFreeMemHeader;
     FOtherThreadFreeLock: Boolean;
+    FOtherThreadFreeLockRecursion: NativeUInt;
 
     FThreadId: NativeUInt;
     FThreadTerminated: Boolean;
@@ -104,6 +114,7 @@ type
     Filler4: Int32;  //extra offset so we have 8 bytes again
     {$ENDIF}
     FOtherThreadFreeLock: NativeInt;
+    FOtherThreadFreeLockRecursion: NativeUInt;
 
     FThreadId: NativeUInt;
     FThreadTerminated: NativeInt;

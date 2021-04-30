@@ -226,19 +226,27 @@ object FormInIOCPWsJSON: TFormInIOCPWsJSON
   end
   object Button3: TButton
     Left = 480
-    Top = 312
+    Top = 178
     Width = 75
     Height = 25
     Caption = #28165#31354
     TabOrder = 4
     OnClick = Button3Click
   end
+  object Button4: TButton
+    Left = 480
+    Top = 234
+    Width = 75
+    Height = 25
+    Caption = 'Test'
+    TabOrder = 5
+    OnClick = Button4Click
+  end
   object InIOCPServer1: TInIOCPServer
     HttpDataProvider = InHttpDataProvider1
     IOCPManagers.DatabaseManager = InDatabaseManager1
     ServerAddr = 'localhost'
     ServerPort = 80
-    StartParams.TimeOut = 0
     ThreadOptions.BusinessThreadCount = 4
     ThreadOptions.PushThreadCount = 4
     ThreadOptions.WorkThreadCount = 2

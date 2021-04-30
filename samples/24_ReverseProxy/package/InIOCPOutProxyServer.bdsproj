@@ -129,7 +129,7 @@
 		</Linker>
 		<Directories>
 			<Directories Name="OutputDir">..\</Directories>
-			<Directories Name="UnitOutputDir">..\..\..\bin</Directories>
+			<Directories Name="UnitOutputDir">..\..\..\dcu</Directories>
 			<Directories Name="PackageDLLOutputDir"></Directories>
 			<Directories Name="PackageDCPOutputDir"></Directories>
 			<Directories Name="SearchPath">$(BDS)\Lib\Debug\Indy10;$(BDS)\lib\Debug;..\form;..\..\..\InIOCP\package;..\..\..\InIOCP\source;..\..\..\InIOCP\source\zlib;..\..\..\InIOCP\source\frame;..\..\..\InIOCP\source\module;..\..\..\InIOCP\memMgr\fastmm;..\..\..\InIOCP\memMgr\scalemm2</Directories>
@@ -176,8 +176,9 @@
 			<VersionInfoKeys Name="OriginalFilename"></VersionInfoKeys>
 			<VersionInfoKeys Name="ProductName">InIOCPOutProxyServer</VersionInfoKeys>
 			<VersionInfoKeys Name="ProductVersion">1.0.0.0</VersionInfoKeys>
-			<VersionInfoKeys Name="Comments"></VersionInfoKeys>  <VersionInfoKeys Name="ProgramID">com.embarcadero.InIOCPOutProxyServer</VersionInfoKeys>
-    </VersionInfoKeys>
+			<VersionInfoKeys Name="Comments"></VersionInfoKeys>
+			<VersionInfoKeys Name="ProgramID">com.embarcadero.InIOCPOutProxyServer</VersionInfoKeys>
+		</VersionInfoKeys>
 		<Excluded_Packages>
       <Excluded_Packages Name="$(BDS)\Bin\dclib100.bpl">Borland InterBase Express Components</Excluded_Packages>
       <Excluded_Packages Name="$(BDS)\bin\dcloffice2k100.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>

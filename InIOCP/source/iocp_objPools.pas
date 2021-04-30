@@ -11,8 +11,7 @@ uses
   {$IFDEF DELPHI_XE7UP}
   Winapi.Windows, System.Classes, System.SysUtils, {$ELSE}
   Windows, Classes, SysUtils, {$ENDIF}
-  iocp_api, iocp_base, iocp_lists, iocp_utils,
-  iocp_baseObjs;
+  iocp_api, iocp_base, iocp_lists, iocp_utils, iocp_baseObjs;
 
 type
 
@@ -94,7 +93,8 @@ type
     constructor Create(AObjectType: TObjectType; ASize: Integer);
   public
     function Clone(Source: TObject): TObject;
-    procedure GetSockets(List: TInList; IngoreSocket: TObject = nil; AdminType: Boolean = False);
+    procedure GetSockets(List: TInList; IngoreSocket: TObject = nil;
+                         AdminType: Boolean = False; Group: string = '');
   end;
 
   // ===================== 收、发内存管理 类 =====================
@@ -138,12 +138,14 @@ type
     function Modify(const Key: AnsiString; Value: Pointer): Boolean; {$IFDEF USE_INLINE} inline; {$ENDIF}
     function ValueOf(const Key: AnsiString): Pointer; {$IFDEF USE_INLINE} inline; {$ENDIF}
     function ValueOf2(const Key: AnsiString): Pointer; {$IFDEF USE_INLINE} inline; {$ENDIF}
+    function ValueOf3(const Key: AnsiString; var Item: PPHashItem): Pointer; {$IFDEF USE_INLINE} inline; {$ENDIF}
 
     procedure Add(const Key: AnsiString; Value: Pointer); {$IFDEF USE_INLINE} inline; {$ENDIF}
     procedure Clear;
     procedure Lock; {$IFDEF USE_INLINE} inline; {$ENDIF}
     procedure UnLock; {$IFDEF USE_INLINE} inline; {$ENDIF}
     procedure Remove(const Key: AnsiString); {$IFDEF USE_INLINE} inline; {$ENDIF}
+    procedure Remove2(Item: PPHashItem); {$IFDEF USE_INLINE} inline; {$ENDIF}
 
     procedure Scan(var Dest: Pointer; CallEvent: TScanListEvent); overload;
     procedure Scan(CallEvent: TScanHashEvent); overload;
@@ -603,16 +605,16 @@ end;
 constructor TIOCPSocketPool.Create(AObjectType: TObjectType; ASize: Integer);
 begin
   case AObjectType of
-    otBroker:        // 代理 
-      FSocketClass := TSocketBroker;
-    otSocket:        // TIOCPSocket
+    otIOCPSocket:    // TIOCPSocket
       FSocketClass := TIOCPSocket;
     otHttpSocket:    // THttpSocket
       FSocketClass := THttpSocket;
     otStreamSocket:  // TStreamSocket
       FSocketClass := TStreamSocket;
-    otWebSocket:
+    otWebSocket:     // TWebSocket
       FSocketClass := TWebSocket;
+    otIOCPBroker:    // 代理
+      FSocketClass := TSocketBroker;
     else
       raise Exception.Create('TBaseSocket 类型错误.');
   end;
@@ -627,20 +629,20 @@ begin
   ALinkNode^.Data := TBaseSocketClass(FSocketClass).Create(Self, ALinkNode);
 end;
 
-procedure TIOCPSocketPool.GetSockets(List: TInList; IngoreSocket: TObject; AdminType: Boolean);
+procedure TIOCPSocketPool.GetSockets(List: TInList; IngoreSocket: TObject;
+  AdminType: Boolean; Group: string);
 var
   PNode: PLinkRec;
 begin
   // 推送时，取接收过数据的全部节点
-  // 不能推送给未投放 WSARecv 成功 Socket，否则异常，CPU 大涨
   FLock.Acquire;
   try
     PNode := FFirstNode;
     while (PNode <> Nil) do  // 遍历在用表
     begin
-      if (PNode^.Data <> IngoreSocket) and (
-         (AdminType = False) or (TIOCPSocket(PNode^.Data).Role >= crAdmin)) then
-         List.Add(PNode^.Data);
+      if (PNode^.Data <> IngoreSocket) and  // 不是要忽略的对象
+        TBaseSocketRef(PNode^.Data).GetObjectState(Group, AdminType) then  // 可接受推送
+        List.Add(PNode^.Data);
       PNode := PNode^.Next;
     end;
   finally
@@ -812,6 +814,20 @@ begin
   end;
 end;
 
+procedure TStringHash.Remove2(Item: PPHashItem);
+var
+  P: PHashItem;
+begin
+  P := Item^;
+  if Assigned(p) then
+  begin
+    Item^ := P^.Next;   // 断开 p
+    FreeItemData(P);    // 增加
+    Dispose(P);         // 删除 p
+    Dec(FCount);
+  end;
+end;
+
 procedure TStringHash.Scan(var Dest: Pointer; CallEvent: TScanListEvent);
 var
   i: Integer;
@@ -900,6 +916,18 @@ begin
     Result := Nil;
 end;
 
+function TStringHash.ValueOf3(const Key: AnsiString; var Item: PPHashItem): Pointer;
+var
+  P: PHashItem;
+begin
+  Item := Find(Key);
+  P := Item^;
+  if Assigned(P) then
+    Result := P^.Value
+  else
+    Result := Nil;
+end;
+
 { TPreventAttack }
 
 function TPreventAttack.CheckAttack(const PeerIP: String; MSecond, InterCount: Integer): Boolean;
@@ -952,13 +980,16 @@ var
   Item: PAttackInfo;
 begin
   // 减少 IP 引用次数
-  Lock;
-  try
-    Item := Self.ValueOf2(PeerIP);
-    if Assigned(Item) and (Item^.Count > 0) then
-      Dec(Item^.Count);
-  finally
-    UnLock;
+  if (PeerIP <> '') then
+  begin
+    Lock;
+    try
+      Item := Self.ValueOf2(PeerIP);
+      if Assigned(Item) and (Item^.Count > 0) then
+        Dec(Item^.Count);
+    finally
+      UnLock;
+    end;
   end;
 end;
 
@@ -969,5 +1000,7 @@ begin
 end;
 
 end.
+
+
 
 

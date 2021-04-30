@@ -7,7 +7,7 @@
         <TargetedPlatforms>1</TargetedPlatforms>
         <AppType>Application</AppType>
         <FrameworkType>VCL</FrameworkType>
-        <ProjectVersion>18.5</ProjectVersion>
+        <ProjectVersion>18.7</ProjectVersion>
         <Platform Condition="'$(Platform)'==''">Win32</Platform>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
@@ -96,7 +96,6 @@
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
         <DCCReference Include="..\..\..\inIocp\memMgr\scalemm2\ScaleMM2.pas"/>
-        <DCCReference Include="..\ThirdCodes\DESCrypt.pas"/>
         <DCCReference Include="..\..\..\InIOCP\source\module\iocp_baseModule.pas">
             <Form>InIOCPDataModule</Form>
             <DesignClass>TDataModule</DesignClass>

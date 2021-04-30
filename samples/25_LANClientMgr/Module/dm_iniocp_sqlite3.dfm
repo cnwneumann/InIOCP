@@ -6,10 +6,6 @@ object dmInIOCPSQLite3: TdmInIOCPSQLite3
   OnExecQuery = InIOCPDataModuleExecQuery
   OnExecSQL = InIOCPDataModuleExecSQL
   OnExecStoredProcedure = InIOCPDataModuleExecStoredProcedure
-  OnHttpExecQuery = InIOCPDataModuleHttpExecQuery
-  OnHttpExecSQL = InIOCPDataModuleHttpExecSQL
-  OnWebSocketQuery = InIOCPDataModuleWebSocketQuery
-  OnWebSocketUpdates = InIOCPDataModuleWebSocketUpdates
   Height = 229
   Width = 531
   object DataSetProvider1: TDataSetProvider

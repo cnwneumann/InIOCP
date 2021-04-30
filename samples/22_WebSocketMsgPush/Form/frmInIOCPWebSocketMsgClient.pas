@@ -4,23 +4,25 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls, ExtCtrls, iocp_base, iocp_wsClients;
+  Dialogs, StdCtrls, ExtCtrls, iocp_base, iocp_wsClients, iocp_clientBase;
 
 type
   TFormInIOCPWsJSONMsgClient = class(TForm)
     Button1: TButton;
     Memo1: TMemo;
-    Timer1: TTimer;
+    Timer1: TTimer;                         
     Panel1: TPanel;
-    InWSConnection1: TInWSConnection;
     chkShowMsgs: TCheckBox;
+    lbEditGroup: TLabeledEdit;
+    InWSConnection1: TInWSConnection;
+    Button2: TButton;
     procedure Button1Click(Sender: TObject);
     procedure InWSConnection1ReceiveData(Sender: TObject; const Msg: string);
     procedure InWSConnection1ReceiveMsg(Sender: TObject; Msg: TJSONResult);
     procedure Timer1Timer(Sender: TObject);
-    procedure FormCreate(Sender: TObject);
     procedure InWSConnection1AfterConnect(Sender: TObject);
     procedure InWSConnection1ReturnResult(Sender: TObject; Result: TJSONResult);
+    procedure Button2Click(Sender: TObject);
   private
     { Private declarations }
     FCount: Integer;
@@ -37,21 +39,23 @@ implementation
 
 procedure TFormInIOCPWsJSONMsgClient.Button1Click(Sender: TObject);
 begin
-  Timer1.Enabled := not Timer1.Enabled;
-  InWSConnection1.Active := not InWSConnection1.Active;
-end;
-
-procedure TFormInIOCPWsJSONMsgClient.FormCreate(Sender: TObject);
-begin
   InWSConnection1.ServerAddr := '127.0.0.1'; // 'localhost';
   InWSConnection1.ServerPort := 80; // '12302';
-  InWSConnection1.Active := True;
+  InWSConnection1.Active := not InWSConnection1.Active;
+  Timer1.Enabled := not Timer1.Enabled;
+end;
+
+procedure TFormInIOCPWsJSONMsgClient.Button2Click(Sender: TObject);
+begin
+  // 测试智多星 WebSocket 协议
+  InWSConnection1.ServerAddr := '127.0.0.1'; // 'localhost';
+  InWSConnection1.ServerPort := 80; // '12302';
+  InWSConnection1.Active := not InWSConnection1.Active;
 end;
 
 procedure TFormInIOCPWsJSONMsgClient.InWSConnection1AfterConnect(
   Sender: TObject);
 begin
-  Timer1.Enabled := InWSConnection1.Active;
   if InWSConnection1.Active then
   begin
     Memo1.Lines.Clear;
@@ -71,7 +75,7 @@ procedure TFormInIOCPWsJSONMsgClient.InWSConnection1ReceiveMsg(Sender: TObject; 
 begin
   // 收到 InIOCP-JSON 消息（被动接收）
   if chkShowMsgs.Checked then
-    Memo1.Lines.Add('收到:' + Msg.S['msg']);
+    Memo1.Lines.Add('收到:' + Msg.S['group'] + ',' + Msg.S['msg']);
 end;
 
 procedure TFormInIOCPWsJSONMsgClient.InWSConnection1ReturnResult(Sender: TObject; Result: TJSONResult);
@@ -90,7 +94,10 @@ begin
   with InWSConnection1.JSON do
   begin
     Action := 33;  // 如果连接 InIOCPWebSocketJSON，可以同时测试广播 和 数据库查询
-    S['msg'] := '客户端消息，在服务端广播 ' + Copy(Text_msg, 1, FCount);
+    S['group'] := lbEditGroup.Text;  // 分组（群）
+    S['user'] := 'user_' + IntToHex(Integer(InWSConnection1), 4);
+    S['msg'] := '广播消息,"分组:+"' + Copy(Text_msg, 1, FCount);
+    Memo1.Lines.Add(Text);  // 新版的 Text 属性为读写
     Post;
   end;
 end;

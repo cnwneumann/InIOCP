@@ -14,11 +14,9 @@ type
     procedure ServiceStart(Sender: TService; var Started: Boolean);
     procedure ServiceStop(Sender: TService; var Stopped: Boolean);
     procedure InHttpDataProvider1Get(Sender: TObject; Request: THttpRequest;
-      Respone: THttpRespone);
+      Response: THttpResponse);
     procedure InHttpDataProvider1Post(Sender: TObject; Request: THttpRequest;
-      Respone: THttpRespone);
-    procedure InHttpDataProvider1InvalidSession(Sender: TObject;
-      Request: THttpRequest; Respone: THttpRespone);
+      Response: THttpResponse);
   private
     { Private declarations }
     FWebSitePath: String;
@@ -48,27 +46,17 @@ begin
 end;
 
 procedure TInIOCP_HTTP_Service.InHttpDataProvider1Get(Sender: TObject;
-  Request: THttpRequest; Respone: THttpRespone);
+  Request: THttpRequest; Response: THttpResponse);
 begin
   // URI要与磁盘的文件对应
   if Request.URI = '/' then
-    Respone.TransmitFile(FWebSitePath + 'index.htm')
+    Response.TransmitFile(FWebSitePath + 'index.htm')
   else  // 调用函数时要单独判断
-    Respone.TransmitFile(FWebSitePath + Request.URI);
-end;
-
-procedure TInIOCP_HTTP_Service.InHttpDataProvider1InvalidSession(
-  Sender: TObject; Request: THttpRequest; Respone: THttpRespone);
-begin
-  // 请求带 Session，但 Session 无效时调用此事件
-  if (Request.URI = '/ajax/login.htm') then
-    Respone.TransmitFile(FWebSitePath + '\ajax\login.htm')
-  else
-    Respone.SetContent(http_base.HTTP_INVALID_SESSION);
+    Response.TransmitFile(FWebSitePath + Request.URI);
 end;
 
 procedure TInIOCP_HTTP_Service.InHttpDataProvider1Post(Sender: TObject;
-  Request: THttpRequest; Respone: THttpRespone);
+  Request: THttpRequest; Response: THttpResponse);
 begin
   // Post：已经接收完毕，调用此事件
   //   此时：Request.Complete = True
@@ -77,14 +65,14 @@ begin
     if (Request.Params.AsString['user_name'] <> '') and
       (Request.Params.AsString['user_password'] <> '') then   // 登录成功
     begin
-      Respone.CreateSession;  // 生成 Session！
-      Respone.TransmitFile(FWebSitePath + 'ajax\ajax.htm');
+      Response.CreateSession;  // 生成 Session！
+      Response.TransmitFile(FWebSitePath + 'ajax\ajax.htm');
     end else
-      Respone.Redirect('ajax/login.htm');  // 重定位到登录页面
+      Response.Redirect('ajax/login.htm');  // 重定位到登录页面
   end else
   begin
-    Respone.SetContent('<html><body>In-IOCP HTTP 服务！<br>提交成功！<br>');
-    Respone.AddContent('<a href="' + Request.URI + '">返回</a><br></body></html>');
+    Response.SetContent('<html><body>In-IOCP HTTP 服务！<br>提交成功！<br>');
+    Response.AddContent('<a href="' + Request.URI + '">返回</a><br></body></html>');
   end;
 end;
 

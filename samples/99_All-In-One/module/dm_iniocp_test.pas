@@ -25,8 +25,8 @@ type
     InSQLManager1: TInSQLManager;
     procedure InIOCPDataModuleCreate(Sender: TObject);
     procedure InIOCPDataModuleDestroy(Sender: TObject);
-    procedure InIOCPDataModuleApplyUpdates(Params: TReceiveParams;
-      out ErrorCount: Integer; AResult: TReturnResult);
+    procedure InIOCPDataModuleApplyUpdates(AParams: TReceiveParams;
+      AResult: TReturnResult; out ErrorCount: Integer);
     procedure InIOCPDataModuleExecQuery(AParams: TReceiveParams;
       AResult: TReturnResult);
     procedure InIOCPDataModuleExecSQL(AParams: TReceiveParams;
@@ -34,12 +34,12 @@ type
     procedure InIOCPDataModuleExecStoredProcedure(AParams: TReceiveParams;
       AResult: TReturnResult);
     procedure InIOCPDataModuleHttpExecQuery(Sender: TObject;
-      Request: THttpRequest; Respone: THttpRespone);
+      Request: THttpRequest; Response: THttpResponse);
     procedure InIOCPDataModuleHttpExecSQL(Sender: TObject;
-      Request: THttpRequest; Respone: THttpRespone);
-    procedure InIOCPDataModuleWebSocketQuery(Sender: TObject; JSON: TBaseJSON;
+      Request: THttpRequest; Response: THttpResponse);
+    procedure InIOCPDataModuleWebSocketQuery(Sender: TObject; JSON: TReceiveJSON;
       Result: TResultJSON);
-    procedure InIOCPDataModuleWebSocketUpdates(Sender: TObject; JSON: TBaseJSON;
+    procedure InIOCPDataModuleWebSocketUpdates(Sender: TObject; JSON: TReceiveJSON;
       Result: TResultJSON);
   private
     { Private declarations }
@@ -58,7 +58,7 @@ type
 implementation
 
 uses
-  iocp_Varis, iocp_utils;
+  iocp_Varis, iocp_utils, iocp_msgPacks;
 
 {$R *.dfm}
 
@@ -75,8 +75,8 @@ begin
   end;  }
 end;
 
-procedure TdmInIOCPTest.InIOCPDataModuleApplyUpdates(Params: TReceiveParams;
-  out ErrorCount: Integer; AResult: TReturnResult);
+procedure TdmInIOCPTest.InIOCPDataModuleApplyUpdates(AParams: TReceiveParams;
+  AResult: TReturnResult; out ErrorCount: Integer);
 begin
   // 用 DataSetPrivoder.Delta 更新
 
@@ -90,13 +90,14 @@ begin
       //   2. 以后字段为 Delta 数据，可能有多个，本例子只有一个。
 
       // 参考：TBaseMessage.LoadFromVariant
-      //  Params.Fields[0]：用户名 _UserName
-      //  Params.Fields[1].Name：字段名称，对应数据表名称
-      //  Params.Fields[1].AsVariant：Delta 数据
+      //  Params.Fields[0]：用户分组 __UserGroup
+      //  Params.Fields[1]：用户名 __UserName
+      //  Params.Fields[2].Name：字段名称，对应数据表名称
+      //  Params.Fields[2].AsVariant：Delta 数据
 
       // 执行父类的更新方法
       // 用一组 TDataSetProvider 更新，本例子只有一个
-      InterApplyUpdates([DataSetProvider1], Params, ErrorCount);
+      InterApplyUpdates([DataSetProvider1], AParams, ErrorCount);
       
     finally
       if ErrorCount = 0 then
@@ -194,13 +195,23 @@ begin
     end;
   end;
 
-  // 新版改进：
-  //   把一组数据集转换为流，返回给客户端，执行结果为 arOK
-  // AResult.LoadFromVariant([数据集a, 数据集b, 数据集c], ['数据表a', '数据表b', '数据表c']);
-  //   数据表n 是 数据集n 对应的数据表名称，用于更新
-  // 如果有多个数据集，第一个为主表
+  // 两种方法返回数据集：
+
+  // 一、LoadFromVariant 改进：
+  // 参数：[数据集a, 数据集b, 数据集c], ['数据表a', '数据表b', '数据表c'])
+  //  1. 数据表n 是 数据集n 对应的数据表名称
+  //  2. 不更新数据表时第 2 参数可设为 [] 或表名称为空
+  //  3. 如果有多个数据集，第一个为主表
+
+  AResult.LoadFromVariant([DataSetProvider1], ['tbl_xzqh']);  // [] 或 [''] 则为只读
+
+  // 二、如果查询的结果比较大，为避免分配大量内存，
+  // 可以先把数据存到文件，再发送文件，此时速度比第上面方法稍慢，
+  // 第2、3参数含义与 LoadFromVariant 的相同：
   
-  AResult.LoadFromVariant([DataSetProvider1], ['tbl_xzqh']);
+//  iocp_msgPacks.SaveToMessageFile('temp\aaa.dat', [DataSetProvider1], ['tbl_xzqh']);
+//  AResult.LoadFromFile('temp\aaa.dat');  // dat 文件不会被压缩，要手动释放
+
   AResult.ActResult := arOK;
 
   FQuery.Active := False;   // 关闭
@@ -248,29 +259,6 @@ begin
     Raise;    // 基类有异常处理，要 Raise
   end;
 
-  { //AParams.SaveToFile()
-    with FExecSQL do
-    begin // 参数赋值
-        // aparams.fields[0] = username;
-        // aparams.fields[1] = sqlText;
-        // aparams.fields[-1] = hasParams;
-        for i:= 0 to Parameters.Count - 1 do
-        begin
-            st_name := Parameters[i].Name;
-            if aparams.Fields[i].VarType = etString then
-               Parameters.ParamByName(st_name).Value := AParams.AsString[st_name]
-            else if aparams.Fields[i].VarType = etInteger then
-                 parameters.ParamByName(st_name).Value := aParams.AsInteger[st_name]
-            else if aparams.Fields[i].VarType = etStream then
-                 parameters.ParamByName(st_name).LoadFromStream(AParams.AsStream[st_name], ftBlob);
-        end;
-
-      //  Parameters.ParamByName('picutre').LoadFromStream(AParams.AsStream['picture'], ftBlob);
-     //   Parameters.ParamByName('code').Value := AParams.AsString['code'];
-
-        Execute;
-    end; }
-
 end;
 
 procedure TdmInIOCPTest.InIOCPDataModuleExecStoredProcedure(
@@ -298,7 +286,7 @@ begin
 end;
 
 procedure TdmInIOCPTest.InIOCPDataModuleHttpExecQuery(Sender: TObject;
-  Request: THttpRequest; Respone: THttpRespone);
+  Request: THttpRequest; Response: THttpResponse);
 var
   i: Integer;
   SQLName: String;
@@ -312,33 +300,44 @@ begin
       // Http 的 Request.Params 没有预设 sql, sqlName 属性
       SQLName := Request.Params.AsString['SQL'];
 
-      if (FCurrentSQLName <> SQLName) then   // 名称改变，重设 SQL
+      // 数据库操作：SQL 名称改变，重设 SQL
+      if (FCurrentSQLName <> SQLName) then
       begin
         SQL.Clear;
         SQL.Add(InSQLManager1.GetSQL(SQLName));
         FCurrentSQLName := SQLName;
       end;
 
-      // 用 Request.ConectionState 或 Respone.ConectionState
-      // 检查连接状态是否正常, 不正常无需再查询发送
-      if Request.SocketState then  // 旧版：ConnectionState
+      // 可以用 Request.SocketState 或 Respone.SocketState
+      // 检查连接状态是否正常, 不正常无需再查询发送：
+      // if Request.SocketState then
+
+      // 通用一点的赋值方法：
+      // Select xxx from ttt where code=:code and no=:no and datetime=:datetime
+
+      if (FCurrentSQLName = 'Select_tbl_xzqh2') then
       begin
-        // 通用一点的赋值方法：
-        // Select xxx from ttt where code=:code and no=:no and datetime=:datetime
+        // 用 ab.exe 大并发测试
+        Parameters.Items[0].Value := 110102;  // 带参数 code
+        Active := True;
+        // ab.exe 不支持分块传输，不能用 Respone.SendJSON(FQuery)
+        SQLName := iocp_utils.DataSetToJSON(FQuery);
+        Response.SendJSON(SQLName);
+      end else
+      begin
+        // 参数赋值
         for i := 0 to Parameters.Count - 1 do
           Parameters.Items[i].Value := Request.Params.AsString[Parameters.Items[i].Name];
-        Active := True;
-      end;
 
-      // 转换全部记录为 JSON，用 Respone 返回
-      //   小数据集可用：
-      //      Respone.CharSet := hcsUTF8;  // 指定字符集
-      //      Respone.SendJSON(iocp_utils.DataSetToJSON(FQuery, Respone.CharSet))
-      //   推荐用 Respone.SendJSON(FQuery)，分块发送
-      // 见：iocp_utils 单元 DataSetToJSON、LargeDataSetToJSON、InterDataSetToJSON
-      if Request.SocketState then
-      begin
-        Respone.SendJSON(FQuery);  // 用默认字符集 gb2312
+        Active := True;
+
+        // 转换全部记录为 JSON，用 Respone 返回
+        // 1. 小数据集发送：
+        //     Response.SendJSON(iocp_utils.DataSetToJSON(FQuery))
+        // 2. 数据量大时推荐用 Response.SendJSON(FQuery) 分块发送!
+        // 见：iocp_utils 单元 DataSetToJSON、LargeDataSetToJSON、InterDataSetToJSON
+
+        Response.SendJSON(FQuery);  // 用默认字符集 gb2312
 //        Respone.SendJSON(FQuery, hcsUTF8);  // 转为 UTF-8 字符集
       end;
 
@@ -351,12 +350,13 @@ begin
 end;
 
 procedure TdmInIOCPTest.InIOCPDataModuleHttpExecSQL(Sender: TObject;
-  Request: THttpRequest; Respone: THttpRespone);
+  Request: THttpRequest; Response: THttpResponse);
 begin
   // Http 服务：在这里执行 SQL 命令，用 Respone 返回结果
 end;
 
-procedure TdmInIOCPTest.InIOCPDataModuleWebSocketQuery(Sender: TObject; JSON: TBaseJSON; Result: TResultJSON);
+procedure TdmInIOCPTest.InIOCPDataModuleWebSocketQuery(Sender: TObject;
+  JSON: TReceiveJSON; Result: TResultJSON);
 begin
   // 执行 WebSocket 的操作
   FQuery.SQL.Text := 'SELECT * FROM tbl_xzqh';
@@ -380,11 +380,27 @@ begin
 
   // C. 用以下方法返回不带字段描述信息的 JSON 给客户端：
   // Result.DataSet := FQuery;  // 发送完毕会自动关闭 FQuery
-  
+
+  // 后台执行，可以参考例子 14，如：
+
+{  if (JSON.Socket.Background = False) then
+   begin
+     // 加入后台执行
+     AddToBackground(JSON.Socket);
+     Result.S['result'] := '后台执行';
+     Result.Action := JSON.Action;
+   end else
+   begin
+     // 正式执行...，结束后唤醒：
+     Result.S['result'] := '后台执行完毕';
+     Result.Action := JSON.Action;     
+     Wakeup(JSON.Socket);
+   end;  }
+     
 end;
 
 procedure TdmInIOCPTest.InIOCPDataModuleWebSocketUpdates(Sender: TObject;
-  JSON: TBaseJSON; Result: TResultJSON);
+  JSON: TReceiveJSON; Result: TResultJSON);
 var
   ErrorCount: Integer;
 begin

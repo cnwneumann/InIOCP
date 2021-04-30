@@ -1,9 +1,2 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<BorlandProject>
-	<Transactions>
-    <Transaction>2019-04-12 22:40:50.765.pas,D:\My Documents\RAD Studio\Projects\Unit9.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\12_DoubleServer\Form\frmDoubleServer.pas</Transaction>
-    <Transaction>2019-04-12 22:40:50.765.dfm,D:\My Documents\RAD Studio\Projects\Unit9.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\12_DoubleServer\Form\frmDoubleServer.dfm</Transaction>
-    <Transaction>2019-04-12 22:41:04.312.bdsproj,D:\My Documents\RAD Studio\Projects\Project2.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\12_DoubleServer\Package\DoubleServer.bdsproj</Transaction>
-    <Transaction>2019-04-12 22:56:30.312.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\12_DoubleServer\Package\DoubleServer.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\12_DoubleServer\Package\InIOCPDoubleServer.bdsproj</Transaction>
-  </Transactions>
-</BorlandProject>
+<BorlandProject/>

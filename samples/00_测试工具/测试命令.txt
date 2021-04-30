@@ -1,13 +1,17 @@
-ab -n 10000 -c 1000 -k -r http://127.0.0.1:8000/hello
-ab -n 10000 -c 1000 -k -r http://127.0.0.1:800/hello
-ab -n 10000 -c 1000 -k -r http://127.0.0.1:80/
-
-ab -n 50000 -c 1000 -k -r http://127.0.0.1:80/hello
-ab -n 10000 -c 1000 -k -r http://127.0.0.1:80/
+// 测试 HTTP 协议，返回"helloworld"，例：99_All-In-One
 
 ab -n 10000 -c 1000 -k -r http://127.0.0.1:8000/hello
-ab -n 10000 -c 1000 -k -r http://127.0.0.1:80/
-
 ab -n 10000 -c 1000 -k -r http://127.0.0.1:800/hello
 ab -n 10000 -c 1000 -k -r http://127.0.0.1/hello
-ab -n 1000 -c 1000 -k -r http://127.0.0.1/hello
+
+ab -n 100000 -c 1000 -k -r http://192.168.1.196:800/hello
+
+// 测试 HTTP 协议，服务端查询数据库，返回少量数据集，例：99_All-In-One
+// ab.exe 不支持参数列表符号"&"，不支持分块发送。
+
+ab -n 1 -c 1 -k -r http://127.0.0.1/ajax/query_xzqh.pas?SQL=Select_tbl_xzqh2
+ab -n 100000 -c 1000 -k -r http://127.0.0.1/ajax/query_xzqh.pas?SQL=Select_tbl_xzqh2
+
+// 测试 HTTP 协议，查询考试成绩，例：11_WebQueryScores
+
+ab -n 100000 -c 1000 -k -r http://127.0.0.1:80/queryScores.do?exam_no=123458222

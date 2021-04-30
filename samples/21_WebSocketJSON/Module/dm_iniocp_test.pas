@@ -23,10 +23,10 @@ type
     DataSetProvider1: TDataSetProvider;
     procedure InIOCPDataModuleCreate(Sender: TObject);
     procedure InIOCPDataModuleDestroy(Sender: TObject);
-    procedure InIOCPDataModuleWebSocketQuery(Sender: TObject; JSON: TBaseJSON;
-      Result: TResultJSON);
-    procedure InIOCPDataModuleWebSocketUpdates(Sender: TObject; JSON: TBaseJSON;
-      Result: TResultJSON);
+    procedure InIOCPDataModuleWebSocketUpdates(Sender: TObject;
+      JSON: TReceiveJSON; Result: TResultJSON);
+    procedure InIOCPDataModuleWebSocketQuery(Sender: TObject;
+      JSON: TReceiveJSON; Result: TResultJSON);
   private
     { Private declarations }
     FConnection: TADOConnection;
@@ -99,7 +99,7 @@ begin
 end;
 
 procedure TdmInIOCPTest.InIOCPDataModuleWebSocketQuery(Sender: TObject;
-  JSON: TBaseJSON; Result: TResultJSON);
+  JSON: TReceiveJSON; Result: TResultJSON);
 begin
   // 执行 WebSocket 的操作
   FQuery.SQL.Text := 'SELECT * FROM tbl_xzqh';
@@ -123,11 +123,28 @@ begin
 
   // C. 用以下方法返回不带描述信息的 JSON 给客户端：
   // Result.DataSet := FQuery;  // 发送完毕会自动关闭 FQuery
-  
+
+  // 后台执行，可以参考例子 14，如：
+
+{  if (JSON.Socket.Background = False) then
+   begin
+     // 加入后台执行
+     AddToBackground(JSON.Socket);
+     Result.S['_table'] := '_background';  // 标志
+     Result.Action := JSON.Action;
+   end else
+   begin
+     // 正式执行...，结束后唤醒：
+     DataSetProvider1.Data
+     Result.S['_table'] := 'tbl_xzqh';  // 更新的表名
+     Result.Action := JSON.Action;
+     Wakeup(JSON.Socket);
+   end;  } 
+
 end;
 
 procedure TdmInIOCPTest.InIOCPDataModuleWebSocketUpdates(Sender: TObject;
-  JSON: TBaseJSON; Result: TResultJSON);
+  JSON: TReceiveJSON; Result: TResultJSON);
 var
   ErrorCount: Integer;
 begin

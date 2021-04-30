@@ -235,10 +235,7 @@ procedure GZDecompressFile(const inFileName, outFolder: String;
 
 procedure GZDecompressFile(const inFileName, outFolder: String); overload;
 
-implementation
-
-uses
-  ZLibExApi;
+{** 从 implementation 内移到外面，给 iocp_lib 引用 ***********************************************}
 
 const
   GZ_ZLIB_WINDOWBITS = -15;
@@ -255,6 +252,12 @@ const
   GZ_EXTRA_MAX     = 2;
   GZ_EXTRA_FASTEST = 4;
 
+implementation
+
+uses
+  ZLibExApi;
+
+const
   SGZInvalid = 'Invalid GZStream operation!';
 
 {$IFNDEF Version6Plus}

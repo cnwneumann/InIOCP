@@ -8,11 +8,11 @@ unit iocp_zlib;
 interface
 
 uses
-  Classes, SysUtils, ZLibExApi;
+  Classes, SysUtils, DateUtils, ZLibEx, ZLibExApi, ZLibExGZ;
 
-type
+ type
 
-  TZCompressionLevel = (
+   TZipLevel = (    // = TZCompressionLevel
     zcNone,
     zcFastest,
     zcDefault,
@@ -28,50 +28,15 @@ type
     zcLevel9
   );
 
-  TZStrategy = (
-    zsDefault,
-    zsFiltered,
-    zsHuffman,
-    zsRLE,
-    zsFixed
-  );
-
-  TZFlush = (
-    zfNoFlush,
-    zfPartialFlush,
-    zfSyncFlush,
-    zfFullFlush,
-    zfFinish,
-    zfBlock,
-    zfTrees
-  );
-
-  PGZHeader = ^TGZHeader;
-  TGZHeader = packed record
-    Id1       : Byte;
-    Id2       : Byte;
-    Method    : Byte;
-    Flags     : Byte;
-    Time      : Cardinal;
-    ExtraFlags: Byte;
-    OS        : Byte;
-  end;
-
-  PGZTrailer = ^TGZTrailer;
-  TGZTrailer = packed record
-    Crc : Longint;
-    Size: Cardinal;
-  end;
-
 // Zip：尝试压缩一段内存到 outBuffer
 function TryZCompress(const inBuffer: Pointer; inSize: Integer;
                       const outBuffer: Pointer; var outSize: Integer;
-                      Level: TZCompressionLevel): Boolean;
+                      Level: TZipLevel): Boolean;
 
 // Zip：压缩一段内存到 outBuffer
 procedure ZCompress(const inBuffer: Pointer; inSize: Integer;
                     out outBuffer: Pointer; out outSize: Integer;
-                    Level: TZCompressionLevel);
+                    Level: TZipLevel);
 
 // Zip：解压一段内存到 outBuffer（估算长度 outEstimate）
 procedure ZDecompress(const inBuffer: Pointer; inSize: Integer;
@@ -80,7 +45,7 @@ procedure ZDecompress(const inBuffer: Pointer; inSize: Integer;
 
 // Zip：压缩流
 procedure ZCompressStream(inStream, outStream: TStream;
-                          level: TZCompressionLevel = zcDefault);
+                          level: TZipLevel = zcDefault);
 
 // Zip：解压流
 procedure ZDecompressStream(inStream, outStream: TStream);
@@ -90,7 +55,7 @@ procedure ZDecompressStream(inStream, outStream: TStream);
 // GZip：压缩一段内存到 outBuffer
 procedure GZCompress(const inBuffer: Pointer; inSize: Integer;
                      out outBuffer: Pointer; out outSize: Integer;
-                     Level: TZCompressionLevel);
+                     Level: TZipLevel);
 
 // GZip：压缩文件、流
 procedure GZCompressFile(const SourceFileName, TargetFileName: String);
@@ -101,56 +66,6 @@ procedure GZDecompressStream(inStream, outStream: TStream; var FileName: String)
 
 implementation
 
-const
-
-  ZLevels: Array [TZCompressionLevel] of Integer = (
-    Z_NO_COMPRESSION,       // zcNone
-    Z_BEST_SPEED,           // zcFastest
-    Z_DEFAULT_COMPRESSION,  // zcDefault
-    Z_BEST_COMPRESSION,     // zcMax
-    1,                      // zcLevel1
-    2,                      // zcLevel2
-    3,                      // zcLevel3
-    4,                      // zcLevel4
-    5,                      // zcLevel5
-    6,                      // zcLevel6
-    7,                      // zcLevel7
-    8,                      // zcLevel8
-    9                       // zcLevel9
-  );
-
-  ZStrategies: Array [TZStrategy] of Integer = (
-    Z_DEFAULT_STRATEGY,     // zsDefault
-    Z_FILTERED,             // zsFiltered
-    Z_HUFFMAN_ONLY,         // zsHuffman
-    Z_RLE,                  // zsRLE
-    Z_FIXED                 // zsFixed
-  );
-    
-  ZFlushes: Array [TZFlush] of Integer = (
-    Z_NO_FLUSH,             // zfNoFlush
-    Z_PARTIAL_FLUSH,        // zfPartialFlush
-    Z_SYNC_FLUSH,           // zfSyncFlush
-    Z_FULL_FLUSH,           // zfFullFlush
-    Z_FINISH,               // zfFinish
-    Z_BLOCK,                // zfBlock
-    Z_TREES                 // zfTrees
-  );
-
-  GZ_ZLIB_WINDOWBITS = -15;
-  GZ_ZLIB_MEMLEVEL   = 9;
-
-  GZ_ASCII_TEXT  = $01;
-  GZ_HEADER_CRC  = $02;
-  GZ_EXTRA_FIELD = $04;
-  GZ_FILENAME    = $08;
-  GZ_COMMENT     = $10;
-  GZ_RESERVED    = $E0;
-    
-  GZ_EXTRA_DEFAULT = 0;
-  GZ_EXTRA_MAX     = 2;
-  GZ_EXTRA_FASTEST = 4;
-
 function ZCompressCheck(code: Integer): Integer;
 begin
   result := code;
@@ -160,7 +75,7 @@ end;
 
 function ZDecompressCheck(code: Integer; raiseBufferError: Boolean = True): Integer;
 begin
-  Result := code;
+  result := code;
   if code < 0 then
     if (code <> Z_BUF_ERROR) or raiseBufferError then
       raise Exception.Create('解压异常');
@@ -357,7 +272,7 @@ end;
 
 function TryZCompress(const inBuffer: Pointer; inSize: Integer;
                       const outBuffer: Pointer; var outSize: Integer;
-                      Level: TZCompressionLevel): Boolean;
+                      Level: TZipLevel): Boolean;
 var
   TempBuffer: Pointer;
   ZipSize: Integer;
@@ -388,13 +303,13 @@ end;
 
 procedure ZCompress(const inBuffer: Pointer; inSize: Integer;
                     out outBuffer: Pointer; out outSize: Integer;
-                    Level: TZCompressionLevel);
+                    Level: TZipLevel);
 var
   zStream: TZStreamRec;
 begin
   FillChar(zStream, SizeOf(TZStreamRec), 0);
 
-  ZCompressCheck(deflateInit_(zStream, ZLevels[level], ZLIB_VERSION, SizeOf(TZStreamRec)));
+  ZCompressCheck(deflateInit_(zStream, ZLevels[TZCompressionLevel(level)], ZLIB_VERSION, SizeOf(TZStreamRec)));
 
   ZInternalCompress(zStream, inBuffer, inSize, outBuffer, outSize);
 end;
@@ -411,13 +326,13 @@ begin
   ZInternalDecompress(zStream, inBuffer, inSize, outBuffer, outSize, outEstimate);
 end;
 
-procedure ZCompressStream(inStream, outStream: TStream; level: TZCompressionLevel);
+procedure ZCompressStream(inStream, outStream: TStream; level: TZipLevel);
 var
   zStream: TZStreamRec;
 begin
   FillChar(zStream, SizeOf(TZStreamRec), 0);
 
-  ZCompressCheck(deflateInit_(zStream, ZLevels[level], ZLIB_VERSION, SizeOf(TZStreamRec)));
+  ZCompressCheck(deflateInit_(zStream, ZLevels[TZCompressionLevel(level)], ZLIB_VERSION, SizeOf(TZStreamRec)));
 
   ZInternalCompressStream(zStream, inStream, outStream);
 end;
@@ -435,7 +350,7 @@ end;
 
 procedure GZCompress(const inBuffer: Pointer; inSize: Integer;
                      out outBuffer: Pointer; out outSize: Integer;
-                     Level: TZCompressionLevel);
+                     Level: TZipLevel);
 var
   header : TGZHeader;
   trailer: TGZTrailer;
@@ -446,18 +361,19 @@ begin
   //  （压缩后的空间可能变大）
 
   // 1. 准备头
-  FillChar(header, SizeOf(TGZHeader), 0);
+//  FillChar(header, SizeOf(TGZHeader), 0);   // 优化删除
 
   header.Id1 := $1F;
   header.Id2 := $8B;
   header.Method := Z_DEFLATED;
 
   header.ExtraFlags := GZ_EXTRA_DEFAULT;
-  header.OS := 0;
   header.Flags := 0;
-
+  header.OS := 0;
+  header.Time := 0;
+  
   // 2. 计算 CRC32
-  FillChar(trailer, SizeOf(TGZTrailer), 0);
+//  FillChar(trailer, SizeOf(TGZTrailer), 0);  // 优化删除
 
   trailer.Crc := crc32(0, inBuffer^, inSize);
   trailer.Size := inSize;
@@ -466,7 +382,7 @@ begin
   FillChar(zStream, SizeOf(TZStreamRec), 0);
 
   // .. 初始化
-  ZCompressCheck(deflateInit2_(zStream, ZLevels[Level], Z_DEFLATED,
+  ZCompressCheck(deflateInit2_(zStream, ZLevels[TZCompressionLevel(level)], Z_DEFLATED,
                  GZ_ZLIB_WINDOWBITS, GZ_ZLIB_MEMLEVEL, Z_DEFAULT_STRATEGY,
                  ZLIB_VERSION, SizeOf(TZStreamRec)));
 
@@ -518,21 +434,23 @@ var
   position : Int64;
   nilString: String;
 begin
-  FillChar(header, SizeOf(TGZHeader), 0);
+//  FillChar(header, SizeOf(TGZHeader), 0);  // 优化删除
 
   header.Id1 := $1F;
   header.Id2 := $8B;
   header.Method := Z_DEFLATED;
 
   header.ExtraFlags := GZ_EXTRA_DEFAULT;
-  header.OS := 0;
-  header.Flags := 0;
-  header.Time := 0;
 
   if (Length(FileName) > 0) then
-    header.Flags := header.Flags or GZ_FILENAME;
+    header.Flags := 0 or GZ_FILENAME
+  else
+    header.Flags := 0;
 
-  FillChar(trailer, SizeOf(TGZTrailer), 0);
+  header.OS := 0;
+  header.Time := 0;  // DateTimeToUnix(Now);
+
+//  FillChar(trailer, SizeOf(TGZTrailer), 0);  // 优化删除
 
   trailer.Crc := 0;
   position := inStream.Position;
@@ -546,7 +464,7 @@ begin
 
   inStream.Position := position;
 
-  trailer.Size := inStream.Size - inStream.Position;
+  trailer.Size := inStream.Size - inStream.Position;  // mark
 
   outStream.Write(header, SizeOf(TGZHeader));
 
@@ -559,8 +477,8 @@ begin
 
   // .. 压缩
   FillChar(zStream, SizeOf(TZStreamRec), 0);
-
-  ZCompressCheck(deflateInit2_(zStream, ZLevels[zcDefault], Z_DEFLATED,
+                                                  
+  ZCompressCheck(deflateInit2_(zStream, ZLevels[TZCompressionLevel(zcDefault)], Z_DEFLATED,
                  GZ_ZLIB_WINDOWBITS, GZ_ZLIB_MEMLEVEL, Z_DEFAULT_STRATEGY,
                  ZLIB_VERSION, SizeOf(TZStreamRec)));
 

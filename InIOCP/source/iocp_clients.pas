@@ -1,5 +1,5 @@
 (*
- * iocp c/s 服务客户端对象类
+ * iocp c/s 协议客户端组件类
  *)
 unit iocp_clients;
 
@@ -9,148 +9,85 @@ interface
 
 uses
   {$IFDEF DELPHI_XE7UP}
-  Winapi.Windows, System.Classes, System.SysUtils, Vcl.ExtCtrls, System.Variants,
-  Data.DB, Datasnap.DSIntf, Datasnap.DBClient, VCL.Forms, {$ELSE}
+  Winapi.Windows, System.Classes, System.SysUtils, Vcl.ExtCtrls,
+  System.Variants, Data.DB, Datasnap.DSIntf, Datasnap.DBClient, VCL.Forms, {$ELSE}
   Windows, Classes, SysUtils, ExtCtrls, Variants, DB, DSIntf, DBClient, Forms, {$ENDIF}
-  iocp_Winsock2, iocp_base, iocp_utils, iocp_lists, iocp_senders, iocp_receivers,
-  iocp_baseObjs, iocp_msgPacks, MidasLib;    // 使用时请加单元引用 MidasLib！
+  iocp_zlib, iocp_Winsock2, iocp_base, iocp_utils, iocp_lists, iocp_senders,
+  iocp_receivers, iocp_clientBase, iocp_baseObjs, iocp_msgPacks;
+//  MidasLib;    // 使用时请加单元引用 MidasLib！
 
 type
 
-  // =================== IOCP 客户端 类 ===================
+  // ============= IOCP 客户端 类 =============
 
   TSendThread = class;
-
   TRecvThread = class;
-
   TPostThread = class;
 
   TClientParams = class;
-
   TResultParams = class;
+  TInBaseClient = class;
 
-  // ============ 客户端组件 基类 ============
-  // 不能直接使用
-
-  // 被动接收事件
-  TPassvieEvent = procedure(Sender: TObject; Message: TResultParams) of object;
-
-  // 结果返回事件
-  TReturnEvent = procedure(Sender: TObject; Result: TResultParams) of object;
-
-  TBaseClientObject = class(TComponent)
-  protected
-    FOnReceiveMsg: TPassvieEvent;   // 被动接收消息事件
-    FOnReturnResult: TReturnEvent;  // 处理返回值事件
-    procedure HandleFeedback(Result: TResultParams); virtual;
-    procedure HandlePushedMsg(Msg: TResultParams); virtual;
-  published
-    property OnReturnResult: TReturnEvent read FOnReturnResult write FOnReturnResult;
-  end;
-
-  // ============ 客户端连接 ============
+  // ============ C/S 协议客户端连接 ============
 
   // 加入任务事件
   TAddWorkEvent = procedure(Sender: TObject; Msg: TClientParams) of object;
 
-  // 消息收发事件
-  TRecvSendEvent = procedure(Sender: TObject; MsgId: TIOCPMsgId; MsgSize, CurrentSize: TFileSize) of object;
+  // 被动接收事件
+  TPassvieEvent = procedure(Sender: TObject; Msg: TResultParams) of object;
 
-  // 异常事件
-  TConnectionError = procedure(Sender: TObject; const Msg: string) of object;
+  // 结果返回事件
+  TReturnEvent  = procedure(Sender: TObject; Result: TResultParams) of object;
 
-  TInConnection = class(TBaseClientObject)
+  TInConnection = class(TBaseConnection)
   private
-    FSocket: TSocket;          // 套接字
-    FTimer: TTimer;            // 定时器
-
-    FSendThread: TSendThread;  // 发送线程
-    FRecvThread: TRecvThread;  // 接收线程
-    FPostThread: TPostThread;  // 投放线程
-
-    FRecvCount: Cardinal;      // 共收到
-    FSendCount: Cardinal;      // 共发送
-
-    FLocalPath: string;        // 下载文件的本地存放路径
-    FUserName: string;         // 登录的用户名（子组件用）
-    FServerAddr: string;       // 服务器地址
-    FServerPort: Word;         // 服务端口
-
-    FActive: Boolean;          // 开关/连接状态
     FActResult: TActionResult; // 服务器反馈结果
-    FAutoConnected: Boolean;   // 是否自动连接
     FCancelCount: Integer;     // 取消任务数
-    FLogined: Boolean;         // 登录状态
     FMaxChunkSize: Integer;    // 续传的每次最大传输长度
 
-    FErrorcode: Integer;       // 异常代码
-    FErrMsg: string;           // 异常消息
+    FErrorMsg: String;         // 服务端异常信息
+    FUserGroup: string;        // 用户分组（子组件用）
+    FUserName: string;         // 登录的用户名（子组件用）
 
     FReuseSessionId: Boolean;  // 凭证重用（短连接时,下次免登录）
     FRole: TClientRole;        // 权限
     FSessionId: Cardinal;      // 凭证/对话期 ID
-  private
-    FAfterConnect: TNotifyEvent;     // 连接后
-    FAfterDisconnect: TNotifyEvent;  // 断开后
-    FBeforeConnect: TNotifyEvent;    // 连接前
-    FBeforeDisconnect: TNotifyEvent; // 断开前
+
+    // ======================
+
     FOnAddWork: TAddWorkEvent;       // 加入任务事件
-    FOnDataReceive: TRecvSendEvent;  // 消息接收事件
-    FOnDataSend: TRecvSendEvent;     // 消息发出事件
-    FOnError: TConnectionError;      // 异常事件
+    FOnReceiveMsg: TPassvieEvent;    // 被动接收消息事件
+    FOnReturnResult: TReturnEvent;   // 处理返回值事件
   private
-    function GetActive: Boolean;
-    procedure CreateTimer;
-    procedure DoServerError(Result: TResultParams);
-    procedure DoThreadFatalError;
+    function GetLogined: Boolean;
+    procedure ShowServerError(Msg: TResultParams);
     procedure HandleMsgHead(Result: TResultParams);
-    procedure InternalOpen;
-    procedure InternalClose;
-    procedure ReceiveProgress;
-    procedure SendProgress;
-    procedure SetActive(Value: Boolean);
+    procedure HandleFeedback(Result: TResultParams);
+    procedure HandlePushedMsg(Msg: TResultParams);
     procedure SetMaxChunkSize(Value: Integer);
-    procedure TimerEvent(Sender: TObject);
-    procedure TryDisconnect;
   protected
-    procedure HandleFeedback(Result: TResultParams); override;
-    procedure Loaded; override;
+    procedure DoServerError; override;
+    procedure InterBeforeConnect; override;
+    procedure InterAfterConnect; override;  // 初始化资源
+    procedure InterAfterDisconnect; override;  // 释放资源
   public
     constructor Create(AOwner: TComponent); override;
-    destructor Destroy; override;
     procedure CancelAllWorks;                 // 取消全部任务
     procedure CancelWork(MsgId: TIOCPMsgId);  // 取消任务
-    procedure PauseWork(MsgId: TIOCPMsgId);   // 暂停任务
   public
     property ActResult: TActionResult read FActResult;
     property CancelCount: Integer read FCancelCount;
-    property Errorcode: Integer read FErrorcode;
-    property Logined: Boolean read FLogined;
-    property RecvCount: Cardinal read FRecvCount;
-    property SendCount: Cardinal read FSendCount;
+    property Logined: Boolean read GetLogined;
     property SessionId: Cardinal read FSessionId;
-    property Socket: TSocket read FSocket;
+    property UserGroup: string read FUserGroup;
     property UserName: string read FUserName;
   published
-    property Active: Boolean read GetActive write SetActive default False;
-    property AutoConnected: Boolean read FAutoConnected write FAutoConnected default False;
-    property LocalPath: string read FLocalPath write FLocalPath;
     property MaxChunkSize: Integer read FMaxChunkSize write SetMaxChunkSize default MAX_CHUNK_SIZE;
     property ReuseSessionId: Boolean read FReuseSessionId write FReuseSessionId default False;
-    property ServerAddr: string read FServerAddr write FServerAddr;
-    property ServerPort: Word read FServerPort write FServerPort default DEFAULT_SVC_PORT;
   published
-    property AfterConnect: TNotifyEvent read FAfterConnect write FAfterConnect;
-    property AfterDisconnect: TNotifyEvent read FAfterDisconnect write FAfterDisconnect;
-    property BeforeConnect: TNotifyEvent read FBeforeConnect write FBeforeConnect;
-    property BeforeDisconnect: TNotifyEvent read FBeforeDisconnect write FBeforeDisconnect;
     property OnAddWork: TAddWorkEvent read FOnAddWork write FOnAddWork;
-    
-    // 接收被动消息/推送消息事件
-    property OnReceiveMsg: TPassvieEvent read FOnReceiveMsg write FOnReceiveMsg;
-    property OnDataReceive: TRecvSendEvent read FOnDataReceive write FOnDataReceive;
-    property OnDataSend: TRecvSendEvent read FOnDataSend write FOnDataSend;
-    property OnError: TConnectionError read FOnError write FOnError;
+    property OnReceiveMsg: TPassvieEvent read FOnReceiveMsg write FOnReceiveMsg; // 接收被动消息/推送消息事件
+    property OnReturnResult: TReturnEvent read FOnReturnResult write FOnReturnResult;
   end;
 
   // ============ 客户端收到的数据包/变量表 ============
@@ -158,9 +95,11 @@ type
   TResultParams = class(TReceivePack)
   protected
     procedure CreateAttachment(const ALocalPath: string); override;
+  public
+    property PeerIPPort;
   end;
 
-  // ============ TInBaseClient 内置的消息包 ============
+  // ============ TInBaseClient 的消息包 ============
 
   TClientParams = class(TBaseMessage)
   private
@@ -186,7 +125,7 @@ type
     property VarCount: Cardinal read FVarCount;
     property ZipLevel: TZipLevel read FZipLevel write FZipLevel;
   public
-    // 其他常用属性（读写）
+    // 客户端常用其他属性（读写）
     property Connection: Integer read GetConnection write SetConnection;
     property Directory: string read GetDirectory write SetDirectory;
     property FileName: string read GetFileName write SetFileName;
@@ -203,15 +142,15 @@ type
   end;
 
   // ============ 用户自由定义发送的消息包 ============
-  // 增加 Post 方法
 
   TMessagePack = class(TClientParams)
   private
-    FThread: TSendThread;         // 发送线程
     procedure InternalPost(AAction: TActionType);
+    procedure InitMessage(AConnection: TInConnection);
   public
-    constructor Create(AOwner: TBaseClientObject);
-    procedure Post(AAction: TActionType);
+    constructor Create(AOwner: TInConnection); overload;
+    constructor Create(AOwner: TInBaseClient); overload;
+    procedure Post(AAction: TActionType);  // 增加 Post 方法
   end;
 
   // ============ 客户端组件 基类 ============
@@ -220,24 +159,29 @@ type
   TListFileEvent = procedure(Sender: TObject; ActResult: TActionResult;
                              No: Integer; Result: TCustomPack) of object;
 
-  TInBaseClient = class(TBaseClientObject)
+  TInBaseClient = class(TComponent)
   private
-    FFileList: TStrings;          // 查询文件的列表
-    FParams: TClientParams;       // 待发送消息包（不要直接使用）
+    FConnection: TInConnection;    // 客户端连接
+    FFileList: TStrings;           // 查询文件的列表
+    FParams: TClientParams;        // 待发送消息包（不要直接使用）
+    FOnListFiles: TListFileEvent;  // 列离线消息文件
+    FOnReturnResult: TReturnEvent; // 处理返回值事件
     function CheckState(CheckLogIn: Boolean = True): Boolean;
     function GetParams: TClientParams;
     procedure InternalPost(Action: TActionType = atUnknown);
     procedure ListReturnFiles(Result: TResultParams);
     procedure SetConnection(const Value: TInConnection);
   protected
-    FConnection: TInConnection;   // 客户端连接
-    FOnListFiles: TListFileEvent; // 列离线消息文件
+    procedure HandleFeedback(Result: TResultParams); virtual;
+    procedure Notification(AComponent: TComponent; Operation: TOperation); override;
   protected
     property Connection: TInConnection read FConnection write SetConnection;
     property Params: TClientParams read GetParams;
+    property OnListFiles: TListFileEvent read FOnListFiles write FOnListFiles;
   public
     destructor Destroy; override;
-    procedure Notification(AComponent: TComponent; Operation: TOperation); override;
+  published
+    property OnReturnResult: TReturnEvent read FOnReturnResult write FOnReturnResult;
   end;
 
   // ============ 响应服务客户端 ============
@@ -259,7 +203,7 @@ type
 
   TInCertifyClient = class(TInBaseClient)
   private
-    FGroup: string;       // 分组（未用）
+    FGroup: string;       // 分组
     FUserName: string;    // 名称
     FPassword: string;    // 密码
   private
@@ -273,7 +217,7 @@ type
     procedure HandleMsgHead(Result: TResultParams);
     procedure HandleFeedback(Result: TResultParams); override;
   public
-    procedure Register(const AUserName, APassword: string; Role: TClientRole = crClient);
+    procedure Register(const AGroup, AUserName, APassword: string; Role: TClientRole = crClient);
     procedure GetUserState(const AUserName: string);
     procedure Modify(const AUserName, ANewPassword: string; Role: TClientRole = crClient);
     procedure Delete(const AUserName: string);
@@ -304,11 +248,10 @@ type
     procedure SendMsg(const Msg: string; const ToUserName: string = '');
   published
     property Connection;
-    property OnListFiles: TListFileEvent read FOnListFiles write FOnListFiles;
+    property OnListFiles;
   end;
 
   // ============ 文件传输客户端 ============
-  // 2.0 未实现文件推送代码
 
   TInFileClient = class(TInBaseClient)
   protected
@@ -323,7 +266,7 @@ type
     procedure Share(const AFileName, AUserNameList: string);
   published
     property Connection;
-    property OnListFiles: TListFileEvent read FOnListFiles write FOnListFiles;
+    property OnListFiles;
   end;
 
   // ============ 数据库连接客户端 ============
@@ -346,6 +289,8 @@ type
     FDBConnection: TInDBConnection;  // 数据库连接
     procedure SetDBConnection(const Value: TInDBConnection);
     procedure UpdateInConnection;
+  protected
+    procedure Notification(AComponent: TComponent; Operation: TOperation); override;
   public
     procedure ExecStoredProc(const ProcName: string);
   public
@@ -363,24 +308,32 @@ type
 
   // ============ 数据查询客户端 类 ============
 
+  TAfterLoadData = procedure(DataSet: TClientDataSet; const TableName: String) of object;
+
   TInDBQueryClient = class(TDBBaseClientObject)
   private
     FClientDataSet: TClientDataSet;  // 关联数据集
-    FSubClientDataSets: TList;  // 数据子表
-    FTableNames: TStrings; // 要更新的远程表名
-    FReadOnly: Boolean;    // 是否只读
+    FSubClientDataSets: TList;       // 数据子表
+    FTableNames: TStrings;           // 要更新的远程表名
+    FReadOnly: Boolean;              // 是否只读
+    FAfterLoadData: TAfterLoadData;  // 装载数据后事件
+    procedure LoadFromAttachment(Result: TResultParams);
+    procedure LoadFromField(Result: TBasePack; Action: TActionType);
   protected
     procedure HandleFeedback(Result: TResultParams); override;
+    procedure Notification(AComponent: TComponent; Operation: TOperation); override;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
     procedure AddClientDataSet(AClientDataSet: TClientDataSet);
     procedure ApplyUpdates;
     procedure ClearClientDataSets;
-    procedure ExecQuery;
+    procedure ExecQuery(Action: TActionType = atDBExecQuery);
+    procedure LoadFromFile(const FileName: String);
   public
     property ReadOnly: Boolean read FReadOnly;
   published
+    property AfterLoadData: TAfterLoadData read FAfterLoadData write FAfterLoadData;  
     property ClientDataSet: TClientDataSet read FClientDataSet write FClientDataSet;
   end;
 
@@ -408,128 +361,47 @@ type
 
   // =================== 发送线程 类 ===================
 
-  TMsgIdArray = array of TIOCPMsgId;
-
-  TSendThread = class(TCycleThread)
+  TSendThread = class(TBaseSendThread)
   private
-    FConnection: TInConnection; // 连接
-    FLock: TThreadLock;         // 线程锁
-    FSender: TClientTaskSender; // 消息发送器
-
-    FCancelIds: TMsgIdArray;    // 待取消的消息编号数组
-    FMsgList: TInList;          // 待发消息包列表
-    FMsgPack: TClientParams;    // 当前发送消息包
-
-    FMsgId: TFileSize;          // 当前消息 Id
-    FTotalSize: TFileSize;      // 当前消息总长度
-    FCurrentSize: TFileSize;    // 当前发出数
-
-    FGetFeedback: Integer;      // 收到服务器反馈
-    FWaitState: Integer;        // 等待反馈状态
-    FWaitSemaphore: THandle;    // 等待服务器反馈的信号灯
-
-    function GetCount: Integer;
-    function GetWork: Boolean;
-    function GetWorkState: Boolean;
-    function InCancelArray(MsgId: TIOCPMsgId): Boolean;
-    procedure AddCancelMsgId(MsgId: TIOCPMsgId);
-    procedure ClearMsgList;
-    procedure KeepWaiting;
-    procedure IniWaitState;
-    procedure InternalSend;
-    procedure OnDataSend(DataType: TMessageDataType; OutSize: Integer);
-    procedure OnSendError(Sender: TObject);
-    procedure ServerReturn;
-    procedure WaitForFeedback;
+    FMsgPack: TClientParams;   // 当前发送消息包
   protected
-    procedure AfterWork; override;
-    procedure DoMethod; override;
+    function ChunkRequest(Msg: TBasePackObject): Boolean; override;
+    procedure InterSendMsg(RecvThread: TBaseRecvThread); override;
   public
-    constructor Create(AConnection: TInConnection);
-    procedure AddWork(Msg: TClientParams);
-    procedure CancelWork(MsgId: TIOCPMsgId);
-    procedure ClearAllWorks(var ACount: Integer);
-  public
-    property Count: Integer read GetCount;
+    procedure AddWork(Msg: TBasePackObject); override;
+    procedure ServerFeedback(Accept: Boolean); override;
   end;
 
-  // =================== 推送结果的线程 类 ===================
+  // =================== 投放结果的线程 类 ===================
   // 保存接收到的消息到列表，逐一塞进应用层
 
-  TPostThread = class(TCycleThread)
+  TPostThread = class(TBasePostThread)
   private
-    FConnection: TInConnection; // 连接
-    FLock: TThreadLock;         // 线程锁
-
-    FResults: TInList;          // 收到的消息列表
-    FResult: TResultParams;     // 收到的当前消息
-    FResultEx: TResultParams;   // 等待附件发送结果的消息
-
-    FMsgPack: TClientParams;    // 当前发送消息
-    FOwner: TBaseClientObject;  // 当前发送消息所有者
-
-    procedure ExecInMainThread;
-    procedure HandleMessage(Result: TReceivePack);
+    FMsg: TResultParams;       // 从列表取的首消息
+    FMsgEx: TResultParams;     // 等待附件发送结果的消息
+    procedure DoInMainThread;
   protected
-    procedure AfterWork; override;
-    procedure DoMethod; override;
+    procedure HandleMessage(Msg: TBasePackObject); override;
   public
-    constructor Create(AConnection: TInConnection);
-    procedure Add(Result: TReceivePack);
-    procedure SetMsgPack(AMsgPack: TClientParams);
+    procedure Add(Msg: TBasePackObject); override;  
   end;
 
   // =================== 接收线程 类 ===================
 
-  TRecvThread = class(TThread)
-  private
-    FConnection: TInConnection; // 连接
-    FRecvBuf: TWsaBuf;          // 接收缓存
-    FOverlapped: TOverlapped;   // 重叠结构
-
-    FReceiver: TClientReceiver; // 数据接收器
-    FRecvMsg: TReceivePack;     // 当前消息
-
-    FMsgId: TFileSize;          // 当前消息 Id
-    FTotalSize: TFileSize;      // 当前消息长度
-    FCurrentSize: TFileSize;    // 当前消息收到的长度
-
-    procedure HandleDataPacket; // 处理收到的数据包
-    procedure OnDataReceive(Result: TReceivePack; DataType: TMessageDataType;
-                            ReceiveCount: TFileSize; AttachFinished: Boolean);
-    procedure OnError(Result: TReceivePack);
+  TRecvThread = class(TBaseRecvThread)
   protected
-    procedure Execute; override;
+    procedure HandleDataPacket; override; // 处理收到的数据包
+    procedure OnDataReceive(Msg: TBasePackObject; Part: TMessagePart; RecvCount: Cardinal); override;
   public
     constructor Create(AConnection: TInConnection);
-    procedure Stop;
+    procedure Reset;
+    procedure SetLocalPath(const Path: string);    
   end;
 
 implementation
 
 uses
   http_base, iocp_api, iocp_wsExt;
-
-// var
-//  ExtrMsg: TStrings;
-//  FDebug: TStrings;
-//  FStream: TMemoryStream;
-
-{ TBaseClientObject }
-
-procedure TBaseClientObject.HandleFeedback(Result: TResultParams);
-begin
-  // 处理服务器返回的消息
-  if Assigned(FOnReturnResult) then
-    FOnReturnResult(Self, Result);
-end;
-
-procedure TBaseClientObject.HandlePushedMsg(Msg: TResultParams);
-begin
-  // 接到推送消息（被动收到其他客户端消息）
-  if Assigned(FOnReceiveMsg) then
-    FOnReceiveMsg(Self, Msg);
-end;
 
 { TInConnection }
 
@@ -540,8 +412,8 @@ begin
   begin
     FSendThread.ClearAllWorks(FCancelCount);
     FSendThread.Activate;
-    if Assigned(FOnError) then
-      FOnError(Self, '取消 ' + IntToStr(FCancelCount) + ' 个任务.');
+    if Assigned(OnError) then
+      OnError(Self, '取消 ' + IntToStr(FCancelCount) + ' 个任务.');
   end;
 end;
 
@@ -550,73 +422,49 @@ begin
   // 取消指定消息号的任务
   if Assigned(FSendThread) and (MsgId > 0) then
   begin
-    FSendThread.CancelWork(MsgId);  // 找发送线程
-    if Assigned(FOnError) then
-      FOnError(Self, '取消任务，消息标志: ' + IntToStr(MsgId));
+    FSendThread.CancelWork(MsgId);
+    if Assigned(OnError) then
+      OnError(Self, '取消任务，消息标志: ' + IntToStr(MsgId));
   end;
 end;
 
 constructor TInConnection.Create(AOwner: TComponent);
 begin
   inherited;
-  IniDateTimeFormat;
-
-  FAutoConnected := False;  // 不自动连接
   FMaxChunkSize := MAX_CHUNK_SIZE;
   FReuseSessionId := False;
-
-  FSessionId := INI_SESSION_ID;  // 初始凭证
-  FServerPort := DEFAULT_SVC_PORT;
-  FSocket := INVALID_SOCKET;  // 无效 Socket
 end;
 
-procedure TInConnection.CreateTimer;
-begin
-  // 建定时器
-  FTimer := TTimer.Create(Self);
-  FTimer.Enabled := False;
-  FTimer.Interval := 80;
-  FTimer.OnTimer := TimerEvent;
-end;
-
-destructor TInConnection.Destroy;
-begin
-  SetActive(False);
-  inherited;
-end;
-
-procedure TInConnection.DoServerError(Result: TResultParams);
+procedure TInConnection.DoServerError;
 begin
   // 收到异常数据，或反馈异常
-  //  （在主线程调用执行，此时通讯是正常的）
   try
-    FActResult := Result.ActResult;
-    if Assigned(FOnError) then
+    if Assigned(OnError) then
       case FActResult of
         arOutDate:
-          FOnError(Self, '服务器：凭证/认证过期.');
+          OnError(Self, '服务器：凭证/认证过期.');
         arDeleted:
-          FOnError(Self, '服务器：当前用户被管理员删除，断开连接.');
+          OnError(Self, '服务器：当前用户被管理员删除，断开连接.');
         arRefuse:
-          FOnError(Self, '服务器：拒绝服务，断开连接.');
+          OnError(Self, '服务器：拒绝服务，断开连接.');
         arTimeOut:
-          FOnError(Self, '服务器：超时退出，断开连接.');
+          OnError(Self, '服务器：超时退出，断开连接.');
         arErrAnalyse:
-          FOnError(Self, '服务器：解析变量异常.');
+          OnError(Self, '服务器：解析变量异常.');
         arErrBusy:
-          FOnError(Self, '服务器：系统繁忙，放弃任务.');
+          OnError(Self, '服务器：系统繁忙，放弃任务.');
         arErrHash:
-          FOnError(Self, '服务器：校验异常.');
+          OnError(Self, '服务器：校验异常.');
         arErrHashEx:
-          FOnError(Self, '客户端：校验异常.');
+          OnError(Self, '客户端：校验异常.');
         arErrInit:  // 收到异常数据
-          FOnError(Self, '客户端：接收初始化异常，断开连接.');
+          OnError(Self, '客户端：接收初始化异常，断开连接.');
         arErrPush:
-          FOnError(Self, '服务器：推送消息异常.');
+          OnError(Self, '服务器：推送消息异常.');
         arErrUser:  // 不传递 SessionId 的反馈
-          FOnError(Self, '服务器：用户未登录或非法.');
+          OnError(Self, '服务器：未登录或非法用户.');
         arErrWork:  // 服务端执行任务异常
-          FOnError(Self, '服务器：' + Result.Msg);
+          OnError(Self, '服务器：' + FErrorMsg);
       end;
   finally
     if (FActResult in [arDeleted, arRefuse, arTimeOut, arErrInit]) then
@@ -624,223 +472,70 @@ begin
   end;
 end;
 
-procedure TInConnection.DoThreadFatalError;
+function TInConnection.GetLogined: Boolean;
 begin
-  // 收发时出现致命异常/停止
-  try
-    if Assigned(FOnError) then
-      if (FActResult = arErrNoAnswer) then
-        FOnError(Self, '客户端：服务器无应答.')
-      else
-      if (FErrorCode > 0) then
-        FOnError(Self, '客户端：' + GetWSAErrorMessage(FErrorCode))
-      else
-      if (FErrorCode = -1) then
-        FOnError(Self, '客户端：发送异常.')
-      else
-      if (FErrorCode = -2) then  // 特殊编码
-        FOnError(Self, '客户端：用户取消操作.')
-      else
-        FOnError(Self, '客户端：' + FErrMsg);
-  finally
-    if not FSendThread.FSender.Stoped then
-      FTimer.Enabled := True;  // 自动断开
+  Result := FActive and (FSessionId > 0);
+end;
+
+procedure TInConnection.InterAfterConnect;
+begin
+  // 已经连接成功
+
+  // 发送数据线程（在前）
+  FSendThread := TSendThread.Create(Self, True);
+  FSendThread.Resume;
+
+  // 提交消息线程
+  FPostThread := TPostThread.Create(Self);
+  FPostThread.Resume;
+
+  // 接收数据线程（在后）
+  FRecvThread := TRecvThread.Create(Self);
+  FRecvThread.Resume;
+end;
+
+procedure TInConnection.InterAfterDisconnect;
+begin
+  // 父类自动释放各线程
+  // 短连接：保留凭证，下次免登录
+  if not FReuseSessionId then
+  begin
+    FSessionId := 0;
+    FRole := crUnknown;
   end;
 end;
 
-function TInConnection.GetActive: Boolean;
+procedure TInConnection.InterBeforeConnect;
 begin
-  if (csDesigning in ComponentState) or (csLoading in ComponentState) then
-    Result := FActive
-  else
-    Result := (FSocket <> INVALID_SOCKET) and FActive;
+  FInitFlag := IOCP_SOCKET_FLAG; // 客户端标志
 end;
 
 procedure TInConnection.HandleFeedback(Result: TResultParams);
 begin
+  // 处理服务器返回的消息
   HandleMsgHead(Result);
-  inherited;
+  if Assigned(FOnReturnResult) then
+    FOnReturnResult(Self, Result);
 end;
 
 procedure TInConnection.HandleMsgHead(Result: TResultParams);
 begin
   // 处理登录、登出结果
   case Result.Action of
-    atUserLogin:
-      begin  // SessionId > 0 即成功
-        FSessionId := Result.SessionId;
-        FLogined := (FSessionId > INI_SESSION_ID);
-        FRole := Result.Role;
-      end;
-    atUserLogout:
-      begin
-      // 短连接，重用凭证时 -> 保留 FSessionId
-        FLogined := False;
-        if not FReuseSessionId then
-        begin
-          FSessionId := INI_SESSION_ID;
-          FRole := crUnknown;
-        end;
-      end;
+    atUserLogin: begin  // SessionId > 0 即成功
+      FSessionId := Result.SessionId;
+      FRole := Result.Role;
+    end;
+    atUserLogout:  // 登出，处理 FSessionId
+      InterAfterDisconnect;
   end;
 end;
 
-procedure TInConnection.InternalClose;
+procedure TInConnection.HandlePushedMsg(Msg: TResultParams);
 begin
-  // 断开连接
-  if not (csDestroying in ComponentState) then
-    if Assigned(FBeforeDisConnect) then
-      FBeforeDisConnect(Self);
-
-  if (FSocket <> INVALID_SOCKET) then
-  begin
-    // 关闭 Socket
-    ShutDown(FSocket, SD_BOTH);
-    CloseSocket(FSocket);
-
-    FActive := False;
-    FSocket := INVALID_SOCKET;
-    FLogined := False;
-
-    // 短连接：保留凭证，下次免登录
-    if not FReuseSessionId then
-      FSessionId := INI_SESSION_ID;
-
-    // 释放接收线程
-    if Assigned(FRecvThread) then
-    begin
-      FRecvThread.Terminate;  // 100 毫秒后退出
-      FRecvThread := nil;
-    end;
-
-    // 投放线程
-    if Assigned(FPostThread) then
-    begin
-      FPostThread.Stop;
-      FPostThread := nil;
-    end;
-
-    // 释放发送线程
-    if Assigned(FSendThread) then
-    begin
-      FSendThread.Stop;
-      FSendThread.FSender.Stoped := True;
-      FSendThread.ServerReturn;
-      FSendThread := nil;
-    end;
-
-    // 释放定时器
-    if Assigned(FTimer) then
-    begin
-      FTimer.Free;
-      FTimer := nil;
-    end;
-  end;
-
-  if not (csDestroying in ComponentState) then
-    if Assigned(FAfterDisconnect) then
-      FAfterDisconnect(Self);
-end;
-
-procedure TInConnection.InternalOpen;
-begin
-  // 创建 WSASocket，连接到服务器
-  if not (csDestroying in ComponentState) then
-    if Assigned(FBeforeConnect) then
-      FBeforeConnect(Self);
-
-  FActive := False;
-  if (FSocket = INVALID_SOCKET) then
-  begin
-    // 新建 Socket
-    FSocket := WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, nil, 0, WSA_FLAG_OVERLAPPED);
-    if iocp_utils.ConnectSocket(FSocket, FServerAddr, FServerPort) then  // 连接成功
-    begin
-      // 定时器
-      CreateTimer;
-
-      // 心跳
-      iocp_wsExt.SetKeepAlive(FSocket);
-
-      // 立刻发送 IOCP_SOCKET_FLAG，服务端转为 TIOCPSocet
-      iocp_Winsock2.Send(FSocket, IOCP_SOCKET_FLAG[1], IOCP_SOCKET_FLEN, 0);
-
-      // 投放线程
-      FPostThread := TPostThread.Create(Self);
-
-      // 收发线程
-      FSendThread := TSendThread.Create(Self);
-      FRecvThread := TRecvThread.Create(Self);
-
-      FPostThread.Resume;
-      FSendThread.Resume;
-      FRecvThread.Resume;
-
-      // 收发数
-      FRecvCount := 0;
-      FSendCount := 0;
-            
-      FActive := True;
-    end else
-    begin
-      ShutDown(FSocket, SD_BOTH);
-      CloseSocket(FSocket);
-      FSocket := INVALID_SOCKET;
-    end;
-  end;
-
-  if not (csDestroying in ComponentState) then
-    if FActive and Assigned(FAfterConnect) then
-      FAfterConnect(Self)
-    else
-    if not FActive and Assigned(FOnError) then
-      FOnError(Self, '无法连接到服务器.');
-
-end;
-
-procedure TInConnection.Loaded;
-begin
-  inherited;
-  // 装载后，FActive -> 打开
-  if FActive and not (csDesigning in ComponentState) then
-    InternalOpen;
-end;
-
-procedure TInConnection.PauseWork(MsgId: TIOCPMsgId);
-begin
-  // 暂停任务
-  CancelWork(MsgId);  // 无实质性的暂停，任务被取消
-end;
-
-procedure TInConnection.ReceiveProgress;
-begin
-  // 显示接收进程
-  if Assigned(FOnDataReceive) then
-    FOnDataReceive(Self, FRecvThread.FMsgId,
-                   FRecvThread.FTotalSize, FRecvThread.FCurrentSize);
-end;
-
-procedure TInConnection.SendProgress;
-begin
-  // 显示发送进程（主体、附件各一次 100%）
-  if Assigned(FOnDataSend) then  // 用 FMsgSize
-    FOnDataSend(Self, FSendThread.FMsgId,
-                FSendThread.FTotalSize, FSendThread.FCurrentSize);
-end;
-
-procedure TInConnection.SetActive(Value: Boolean);
-begin
-  if Value <> FActive then
-  begin
-    if (csDesigning in ComponentState) or (csLoading in ComponentState) then
-      FActive := Value
-    else
-    if Value and not FActive then
-      InternalOpen
-    else
-    if not Value and FActive then
-      InternalClose;
-  end;
+  // 接到推送消息（被动收到其他客户端消息）
+  if Assigned(FOnReceiveMsg) then
+    FOnReceiveMsg(Self, Msg);
 end;
 
 procedure TInConnection.SetMaxChunkSize(Value: Integer);
@@ -851,21 +546,11 @@ begin
     FMaxChunkSize := MAX_CHUNK_SIZE;
 end;
 
-procedure TInConnection.TimerEvent(Sender: TObject);
+procedure TInConnection.ShowServerError(Msg: TResultParams);
 begin
-  // 被删除、超时、拒绝服务等触发
-  FTimer.Enabled := False;
-  InternalClose;  // 断开连接
-end;
-
-procedure TInConnection.TryDisconnect;
-begin
-  // 服务器关闭时，尝试关闭客户端
-  if Assigned(FTimer) then
-  begin
-    FTimer.OnTimer := TimerEvent;
-    FTimer.Enabled := True;
-  end;
+  FActResult := Msg.ActResult;
+  FErrorMsg := Msg.Msg;
+  DoServerError;
 end;
 
 { TResultParams }
@@ -883,7 +568,7 @@ begin
     Msg := TCustomPack.Create;
 
     try
-      Msg.Initialize(InfFileName);
+      Msg.LoadFromFile(InfFileName);
 
       if (Msg.Count = 2) { 开始只有 2 个字段 } or (
          (Msg.AsInt64['_FileSize'] <> GetFileSize) or
@@ -921,11 +606,11 @@ begin
   // CreateStream 前读取断点下载信息
 
   // 存放路径：FConnection.FLocalPath
-  InfFileName := FConnection.FLocalPath + GetFileName + '.download';
+  InfFileName := FConnection.LocalPath + GetFileName + '.download';
   Msg := TCustomPack.Create;
 
   try
-    Msg.Initialize(InfFileName);
+    Msg.LoadFromFile(InfFileName);
 
     if (Msg.Count = 0) then
     begin
@@ -981,7 +666,7 @@ begin
 
   try
     // 读续传资源
-    Msg.Initialize(InfFileName);
+    Msg.LoadFromFile(InfFileName);
 
     if (Msg.Count = 0) or // 无资源（第一次）
        (Msg.AsInt64['_FileSize'] <> AsInt64['_FileSize']) or
@@ -1059,16 +744,20 @@ var
   MsgFileName: string;
 begin
   // 使用续传信息文件的 MsgId
-  if (FAction = atFileDownChunk) then
-    MsgFileName := FileName + '.download'
+
+  if (FAction = atFileUpChunk) then
+    MsgFileName := FAttachFileName + '.upload'
   else
-    MsgFileName := FAttachFileName + '.upload';
+  if (LocalPath <> '') then  // 资源文件的本地路径
+    MsgFileName := AddBackslash(LocalPath) + FileName + '.download'
+  else
+    MsgFileName := AddBackslash(FConnection.LocalPath) + FileName + '.download';
 
   if FileExists(MsgFileName) then
   begin
     Msg := TCustomPack.Create;
     try
-      Msg.Initialize(MsgFileName);
+      Msg.LoadFromFile(MsgFileName);
       FMsgId := Msg.AsInt64['_msgId'];
     finally
       Msg.Free;
@@ -1085,25 +774,31 @@ end;
 
 { TMessagePack }
 
-constructor TMessagePack.Create(AOwner: TBaseClientObject);
+constructor TMessagePack.Create(AOwner: TInConnection);
 begin
   if (AOwner = nil) then  // 不能为 nil
-    raise Exception.Create('消息 Owner 不能为空.');
+    raise Exception.Create('Owner 不能为空.');
   inherited Create(AOwner);
-  if (AOwner is TInConnection) then
-    FConnection := TInConnection(AOwner)
-  else begin
-    if (AOwner is TDBBaseClientObject) then
-      TDBBaseClientObject(AOwner).UpdateInConnection;
-    FConnection := TInBaseClient(AOwner).FConnection;
-  end;
-  if Assigned(FConnection) then
-  begin
-    if not FConnection.FActive and FConnection.FAutoConnected then
-      FConnection.InternalOpen;
-    SetUserName(FConnection.FUserName);  // 默认加入用户名
-    FThread := FConnection.FSendThread;
-  end;
+  InitMessage(TInConnection(AOwner));
+end;
+
+constructor TMessagePack.Create(AOwner: TInBaseClient);
+begin
+  if (AOwner = nil) then  // 不能为 nil
+    raise Exception.Create('Owner 不能为空.');
+  inherited Create(AOwner);
+  if (AOwner is TDBBaseClientObject) then
+    TDBBaseClientObject(AOwner).UpdateInConnection;
+  InitMessage(TInBaseClient(AOwner).FConnection);
+end;
+
+procedure TMessagePack.InitMessage(AConnection: TInConnection);
+begin
+  FConnection := AConnection;
+  if not FConnection.Active and FConnection.AutoConnected then
+    FConnection.Active := True;
+  SetUserGroup(FConnection.FUserGroup); // 默认加入分组
+  SetUserName(FConnection.FUserName);   // 默认加入用户名
 end;
 
 procedure TMessagePack.InternalPost(AAction: TActionType);
@@ -1111,7 +806,7 @@ var
   sErrMsg: string;
 begin
   // 提交消息
-  if Assigned(FThread) then
+  if Assigned(FConnection.FSendThread) then
   begin
     FAction := AAction; // 操作
     if (FAction in [atTextPush, atTextBroadcast]) and (Size > BROADCAST_MAX_SIZE) then
@@ -1119,15 +814,15 @@ begin
     else
     if Error then
       sErrMsg := '设置变量异常.'
-    else
-      FThread.AddWork(Self); // 加消息到发生线程
+    else  // 加消息到发送线程
+      FConnection.FSendThread.AddWork(Self);
   end else
     sErrMsg := '未连接到服务器.';
 
   if (sErrMsg <> '') then
   try
-    if Assigned(FConnection.FOnError) then
-      FConnection.FOnError(Self, sErrMsg)
+    if Assigned(FConnection.OnError) then
+      FConnection.OnError(Self, sErrMsg)
     else
       raise Exception.Create(sErrMsg);
   finally
@@ -1137,8 +832,11 @@ end;
 
 procedure TMessagePack.Post(AAction: TActionType);
 begin
-  if (AAction = atUserLogin) then  // 登录
-    FConnection.FUserName := UserName;
+  if (AAction = atUserLogin) then  // 登录，更新连接的用户信息
+  begin
+    FConnection.FUserGroup := GetUserGroup;
+    FConnection.FUserName := GetUserName;
+  end;
   InternalPost(AAction);  // 提交消息
 end;
 
@@ -1157,22 +855,22 @@ begin
   else
   if not FConnection.Active then
   begin
-    if FConnection.FAutoConnected then
-      FConnection.InternalOpen;
+    if FConnection.AutoConnected then
+      FConnection.Active := True;
     if not FConnection.Active then
       Error := '错误：连接服务器失败.';
   end else
-  if CheckLogIn and (FConnection.FSessionId = 0) then
+  if CheckLogIn and not FConnection.Logined then
     Error := '错误：客户端未登录.';
 
   if (Error = '') then
-    Result := not CheckLogIn or (FConnection.FSessionId > 0)
+    Result := not CheckLogIn or FConnection.Logined
   else begin
     Result := False;
     if Assigned(FParams) then
       FreeAndNil(FParams);
-    if Assigned(FConnection.FOnError) then
-      FConnection.FOnError(Self, Error)
+    if Assigned(FConnection.OnError) then
+      FConnection.OnError(Self, Error)
     else
       raise Exception.Create(Error);
   end;
@@ -1192,25 +890,34 @@ begin
   //    第一次调用时要先用 Params 建实例，不要用 FParams。
   if not Assigned(FParams) then
     FParams := TClientParams.Create(Self);
-  if Assigned(FConnection) then
+  if Assigned(FConnection) and
+    (FParams.FConnection <> FConnection) then
   begin
     FParams.FConnection := FConnection;
     FParams.FSessionId := FConnection.FSessionId;
-    FParams.UserName := FConnection.FUserName;  // 默认加入用户名
+    FParams.UserGroup := FConnection.FUserGroup; // 默认加入分组
+    FParams.UserName := FConnection.FUserName;   // 默认加入用户名
   end;
   Result := FParams;
+end;
+
+procedure TInBaseClient.HandleFeedback(Result: TResultParams);
+begin
+  // 处理服务器返回的消息
+  if Assigned(FOnReturnResult) then
+    FOnReturnResult(Self, Result);
 end;
 
 procedure TInBaseClient.InternalPost(Action: TActionType);
 begin
   // 加消息到发送线程
   if Assigned(FParams) then
-  try
-    FParams.FAction := Action;  // 设置操作
-    FConnection.FSendThread.AddWork(FParams);
-  finally
-    FParams := Nil;  // 清空
-  end;
+    try
+      FParams.FAction := Action;  // 设置操作
+      FConnection.FSendThread.AddWork(FParams);
+    finally
+      FParams := Nil;  // 清空
+    end;
 end;
 
 procedure TInBaseClient.ListReturnFiles(Result: TResultParams);
@@ -1227,7 +934,7 @@ begin
       if Assigned(FOnListFiles) then
         FOnListFiles(Self, arEmpty, 0, Nil);
   else
-    try          // 列出文件、一个文件一条记录
+    try  // 列出文件、一个文件一条记录
       try
         for i := 1 to Result.Count do
         begin
@@ -1248,8 +955,8 @@ begin
           FFileList := nil;
       end;
     except
-      if Assigned(FConnection.FOnError) then
-        FConnection.FOnError(Self, 'TInBaseClient.ListReturnFiles读数据流异常.');
+      if Assigned(FConnection.OnError) then
+        FConnection.OnError(Self, 'TInBaseClient.ListReturnFiles读数据流异常.');
     end;
   end;
 end;
@@ -1296,7 +1003,7 @@ function TInCertifyClient.GetLogined: Boolean;
 begin
   // 取登录状态
   if Assigned(FConnection) then
-    Result := FConnection.FLogined
+    Result := FConnection.FActive and (FConnection.FSessionId > 0)
   else
     Result := False;
 end;
@@ -1318,7 +1025,7 @@ begin
   case Result.Action of
     atUserLogin:   // SessionId > 0 即成功
       if Assigned(FOnCertify) then
-        FOnCertify(Self, atUserLogin, FConnection.FLogined);
+        FOnCertify(Self, atUserLogin, FConnection.Logined);
     atUserLogout:
       if Assigned(FOnCertify) then
         FOnCertify(Self, atUserLogout, True);
@@ -1353,8 +1060,8 @@ begin
   except
     on E: Exception do
     begin
-      if Assigned(FConnection.FOnError) then
-        FConnection.FOnError(Self, 'TInCertifyClient.InterListClients, ' + E.Message);
+      if Assigned(FConnection.OnError) then
+        FConnection.OnError(Self, 'TInCertifyClient.InterListClients, ' + E.Message);
     end;
   end;
 end;
@@ -1379,12 +1086,16 @@ begin
   // 登录
   if CheckState(False) then  // 不用检查登录状态
   begin
-    Params.UserName := FUserName;
+    Params.UserGroup := FGroup;
+    FParams.UserName := FUserName;
     FParams.Password := FPassword;
     FParams.ReuseSessionId := FConnection.ReuseSessionId;
-    FConnection.FUserName := FUserName;  // 更新
+
+    // 更新连接的用户信息
+    FConnection.FUserGroup := FGroup;
+    FConnection.FUserName := FUserName;  
+
     InternalPost(atUserLogin);
-    ;
   end;
 end;
 
@@ -1417,12 +1128,13 @@ begin
     InternalPost(atUserQuery);
 end;
 
-procedure TInCertifyClient.Register(const AUserName, APassword: string; Role: TClientRole);
+procedure TInCertifyClient.Register(const AGroup, AUserName, APassword: string; Role: TClientRole);
 begin
   // 注册用户（管理员）
   if CheckState() and (FConnection.FRole >= crAdmin) and (FConnection.FRole >= Role) then
   begin
     Params.ToUser := AUserName;  // 2.0 用 ToUser
+    FParams.UserGroup := AGroup;
     FParams.Password := APassword;
     FParams.Role := Role;
     InternalPost(atUserRegister);
@@ -1629,6 +1341,13 @@ begin
   end;
 end;
 
+procedure TDBBaseClientObject.Notification(AComponent: TComponent; Operation: TOperation);
+begin
+  inherited;
+  if (AComponent = FDBConnection) and (Operation = opRemove) then
+    FDBConnection := nil;  // 关联的 TInDBConnection 组件被删除
+end;
+
 procedure TDBBaseClientObject.SetDBConnection(const Value: TInDBConnection);
 begin
   if (FDBConnection <> Value) then
@@ -1718,56 +1437,24 @@ begin
   inherited;
 end;
 
-procedure TInDBQueryClient.ExecQuery;
+procedure TInDBQueryClient.ExecQuery(Action: TActionType = atDBExecQuery);
 begin
   // SQL 赋值时已经判断 Action 类型，见：THeaderPack.SetSQL
-  UpdateInConnection;  // 更新 FConnection
-  if CheckState() and Assigned(FParams) then
+  if (Action in [atDBExecQuery, atDBExecStoredProc]) then
   begin
-    FParams.FTarget := FDBConnection.FConnectionIndex;  // 对应的数模编号
-    if (FParams.SQLName <> '') then  // 可能设 SQLName
-      InternalPost(atDBExecQuery)
-    else
-      InternalPost(FParams.Action);
+    UpdateInConnection;  // 更新 FConnection
+    if CheckState() and Assigned(FParams) then
+    begin
+      FParams.FTarget := FDBConnection.FConnectionIndex;  // 对应的数模编号
+      if (Action <> atDBExecStoredProc) then
+        InternalPost(Action)
+      else
+        InternalPost(FParams.Action);
+    end;
   end;
 end;
 
 procedure TInDBQueryClient.HandleFeedback(Result: TResultParams);
-
-  procedure LoadResultDataSets;
-  var
-    i: Integer;
-    XDataSet: TClientDataSet;
-    DataField: TVarField;
-  begin
-    // 装载查询结果
-    
-    // 是否只读
-    FReadOnly := Result.Action = atDBExecStoredProc;
-
-    // Result 可能包含多个数据集，字段：1,2,3
-
-    FTableNames.Clear;
-    for i := 0 to Result.VarCount - 1 do
-    begin
-      if (i = 0) then  // 主数据表
-        XDataSet := FClientDataSet
-      else
-        XDataSet := FSubClientDataSets[i - 1];
-
-      XDataSet.DisableControls;
-      try
-        DataField := Result.Fields[i];  // 取字段 1,2,3
-        FTableNames.Add(DataField.Name);  // 保存数据表名称
-
-        XDataSet.Data := DataField.AsVariant;  // 数据赋值
-        XDataSet.ReadOnly := FReadOnly;
-      finally
-        XDataSet.EnableControls;
-      end;
-    end;
-  end;
-
   procedure MergeChangeDataSets;
   var
     i: Integer;
@@ -1780,22 +1467,117 @@ procedure TInDBQueryClient.HandleFeedback(Result: TResultParams);
         if (ChangeCount > 0) then
           MergeChangeLog;
   end;
-
 begin
   try
     if (Result.ActResult = arOK) then
       case Result.Action of
         atDBExecQuery,       // 1. 查询数据
         atDBExecStoredProc:  // 2. 存储过程返回结果
-          if Assigned(FClientDataSet) and (Result.VarCount > 0) and
-            (Integer(Result.VarCount) = FSubClientDataSets.Count + 1) then
-            LoadResultDataSets;
+          if Assigned(FClientDataSet) then
+            if Assigned(Result.Attachment) then
+              LoadFromAttachment(Result)
+            else
+            if (Result.VarCount > 0) and
+              (Integer(Result.VarCount) = Result.AsInteger['__VarCount']) then
+              LoadFromField(Result, Result.Action);
         atDBApplyUpdates:    // 3. 更新
           MergeChangeDataSets;  // 合并本地的更新内容
       end;
   finally
     inherited HandleFeedback(Result);
   end;
+end;
+
+procedure TInDBQueryClient.LoadFromAttachment(Result: TResultParams);
+var
+  MsgPack: TBasePack;
+  FileName: String;
+begin
+  // 读入附件流的数据集信息
+
+  // 先关闭附件流
+  FileName := Result.Attachment.FileName;
+  Result.Attachment.Close;
+
+  // 读入附件流
+  MsgPack := TBasePack.Create;
+  
+  try
+    MsgPack.LoadFromFile(FileName);
+    LoadFromField(MsgPack, Result.Action);
+  finally
+    MsgPack.Free;
+  end;
+end;
+
+procedure TInDBQueryClient.LoadFromFile(const FileName: String);
+var
+  Data: TResultParams;
+begin
+  // 从文件读入数据
+  Data := TResultParams.Create;
+  try
+    Data.LoadFromFile(FileName);
+    LoadFromField(Data, Data.Action);
+  finally
+    Data.Free;
+  end;
+end;
+
+procedure TInDBQueryClient.LoadFromField(Result: TBasePack; Action: TActionType);
+var
+  i, k: Integer;
+  XDataSet: TClientDataSet;
+  DataField: TVarField;
+  NoTableName: Boolean;
+begin
+  // 装载查询结果
+
+  // Result 可能包含多个数据集
+  FTableNames.Clear;
+    
+  k := -1;
+  FReadOnly := (Action = atDBExecStoredProc); // 是否只读
+
+  for i := 0 to Result.Count - 1 do // 包含 AsInteger['__Variable_Count']
+  begin
+    DataField := Result.Fields[i];  // 取字段 1,2,3
+    if (DataField.VarType = etVariant) then
+    begin
+      Inc(k);
+      if (k = 0) then  // 主数据表
+        XDataSet := FClientDataSet
+      else
+        XDataSet := FSubClientDataSets[k - 1];
+
+      XDataSet.DisableControls;
+      try
+        FTableNames.Add(DataField.Name);  // 保存数据表名称
+        XDataSet.Data := DataField.AsVariant;  // 数据赋值
+        NoTableName := (Pos('__@DATASET', DataField.Name) = 1);
+        if NoTableName then  // 不能更新的
+          XDataSet.ReadOnly := True
+        else
+          XDataSet.ReadOnly := FReadOnly;  // 是否只读
+      finally
+        XDataSet.EnableControls;
+      end;
+
+      // 执行装载后事件
+      if Assigned(FAfterLoadData) then
+        if NoTableName then
+          FAfterLoadData(XDataSet, '')
+        else
+          FAfterLoadData(XDataSet, DataField.Name);
+    end;
+  end;
+end;
+
+procedure TInDBQueryClient.Notification(AComponent: TComponent; Operation: TOperation);
+begin
+  inherited;
+  if (AComponent = FClientDataSet) and (Operation = opRemove) then
+    FClientDataSet := nil;  // 关联的 FClientDataSet 组件被删除
 end;
 
 { TInCustomClient }
@@ -1821,457 +1603,150 @@ begin
   end;
 end;
 
-// ================== 发送线程 ==================
-
 { TSendThread }
 
-procedure TSendThread.AddCancelMsgId(MsgId: TIOCPMsgId);
+procedure TSendThread.AddWork(Msg: TBasePackObject);
 var
-  i: Integer;
-  Exists: Boolean;
-begin
-  // 加入待取消的消息编号 MsgId
-  Exists := False;
-  if (FCancelIds <> nil) then
-    for i := 0 to High(FCancelIds) do
-      if (FCancelIds[i] = MsgId) then
-      begin
-        Exists := True;
-        Break;
-      end;
-  if (Exists = False) then
-  begin
-    SetLength(FCancelIds, Length(FCancelIds) + 1);
-    FCancelIds[High(FCancelIds)] := MsgId;
-  end;
-end;
-
-procedure TSendThread.AddWork(Msg: TClientParams);
-
-  procedure ClearArrayMsgId;
-  var
-    i: Integer;
-  begin
-    // 清除任务数组内的消息编号 MsgId
-    if (FCancelIds <> nil) then
-      for i := 0 to High(FCancelIds) do
-        if (FCancelIds[i] = Msg.MsgId) then
-        begin
-          FCancelIds[i] := 0;  // 清除过滤
-          Break;
-        end;
-  end;
-
+  CSMsg: TClientParams;
 begin
   // 加消息到任务列表
 
-  //   Msg 是动态生成，不会重复投放
-  if (Msg.FAction in FILE_CHUNK_ACTIONS) then
-    Msg.ModifyMessageId;  // 续传，修改 MsgId
+  // Msg 是动态生成，不会重复投放
+  CSMsg := TClientParams(Msg);
 
-  if Assigned(FConnection.FOnAddWork) then
-    FConnection.FOnAddWork(Self, Msg);
+  if (CSMsg.FAction in FILE_CHUNK_ACTIONS) then  // 续传，修改 MsgId
+    CSMsg.ModifyMessageId;
 
-  FLock.Acquire;
-  try
-    if (Msg.FState = msDefault) then
-      ClearArrayMsgId;
-    FMsgList.Add(Msg);
-  finally
-    FLock.Release;
-  end;
+  if Assigned(TInConnection(FConnection).FOnAddWork) then
+    TInConnection(FConnection).FOnAddWork(Self, CSMsg);
 
-  Activate;  // 激活线程
+  inherited;
 end;
 
-procedure TSendThread.AfterWork;
+function TSendThread.ChunkRequest(Msg: TBasePackObject): Boolean;
 begin
-  // 停止线程，释放资源
-  SetLength(FCancelIds, 0);
-  CloseHandle(FWaitSemaphore);
-  ClearMsgList;
-  FMsgList.Free;
-  FLock.Free;
-  FSender.Free;
+  Result := (TClientParams(Msg).Action in [atFileDownChunk, atFileUpChunk]);
 end;
 
-constructor TSendThread.Create(AConnection: TInConnection);
-begin
-  inherited Create;
-  // 信号灯
-  FWaitSemaphore := CreateSemaphore(Nil, 0, 1, Nil);
-
-  FConnection := AConnection;
-  FLock := TThreadLock.Create; // 锁
-  FMsgList := TInList.Create;  // 待发任务表
-
-  FSender := TClientTaskSender.Create;   // 任务发送器
-  FSender.Socket := FConnection.Socket;  // 发送套接字
-
-  FSender.AfterSend := OnDataSend;  // 发出事件
-  FSender.OnError := OnSendError;  // 发出异常事件
-end;
-
-procedure TSendThread.CancelWork(MsgId: TIOCPMsgId);
-var
-  i: Integer;
-  Msg: TClientParams;
-begin
-  // 取消发送编号为 MsgId 的消息
-  FLock.Acquire;
-  try
-    // 1. 把 MsgId 加入数组
-    AddCancelMsgId(MsgId);
-
-    // 2. 还在列表的消息
-    for i := 0 to FMsgList.Count - 1 do
-    begin
-      Msg := FMsgList.Items[i];
-      if (Msg.FMsgId = MsgId) then
-      begin
-        Msg.FState := msCancel;
-        Break;
-      end;
-    end;
-    
-    // 3. 正在发送的消息（断点传输时再返回时取消）
-    // 下载大文件时，服务端不断发送数据，客户端只能断开连接
-    if Assigned(FMsgPack) and (FMsgPack.FMsgId = MsgId) then
-    begin
-      FMsgPack.FState := msCancel;
-      if not (FMsgPack.Action in FILE_CHUNK_ACTIONS) then
-      begin
-        FSender.Stoped := True;
-        ServerReturn;
-      end;
-    end;
-
-  finally
-    FLock.Release;
-  end;
-
-end;
-
-procedure TSendThread.ClearAllWorks(var ACount: Integer);
-begin
-  // 先清空待发消息（不影响接受数据）
-  FLock.Acquire;
-  try
-    ACount := FMsgList.Count;  // 取消数
-    if Assigned(FMsgPack) then
-    begin
-      Inc(ACount);
-      FMsgPack.FState := msCancel;
-      FSender.Stoped := True;  // 停止
-      ServerReturn;  // 忽略等待
-    end;
-    ClearMsgList;
-  finally
-    FLock.Release;
-  end;
-end;
-
-procedure TSendThread.ClearMsgList;
-var
-  i: Integer;
-begin
-  // 释放列表的全部消息
-  for i := 0 to FMsgList.Count - 1 do
-    TClientParams(FMsgList.PopFirst).Free;
-  if Assigned(FMsgPack) then
-    FMsgPack.Free;
-end;
-
-procedure TSendThread.DoMethod;
-begin
-  // 循环执行任务
-
-  // 当作有任务状态
-  InterlockedExchange(FGetFeedback, 1);
-
-  // 未停止，取任务成功 -> 发送
-  while not Terminated and
-        FConnection.FActive and GetWork() do
-    try
-      InternalSend;  // 发送
-    except
-      on E: Exception do
-      begin
-        FConnection.FErrMsg := E.Message;
-        FConnection.FErrorcode := GetLastError;
-        Synchronize(FConnection.DoThreadFatalError);
-      end;
-    end;
-
-  // 检查是否有反馈：FGetFeedback > 0
-  if (InterlockedDecrement(FGetFeedback) < 0) then  // 服务端无应答
-  begin
-    FConnection.FActResult := arErrNoAnswer;
-    Synchronize(FConnection.DoThreadFatalError);  // 调用 Synchronize（不同线程）
-  end;
-
-end;
-
-function TSendThread.GetCount: Integer;
-begin
-  // 取任务数
-  FLock.Acquire;
-  try
-    Result := FMsgList.Count;
-  finally
-    FLock.Release;
-  end;
-end;
-
-function TSendThread.GetWork: Boolean;
-var
-  i: Integer;
-begin
-  // 从列表中取一个消息
-  FLock.Acquire;
-  try
-    if Terminated or (FMsgList.Count = 0) or Assigned(FMsgPack) then
-      Result := False
-    else begin
-      // 取未停止的任务
-      for i := 0 to FMsgList.Count - 1 do
-      begin
-        FMsgPack := TClientParams(FMsgList.PopFirst);  // 任务
-        if (FMsgPack.FState = msCancel) or InCancelArray(FMsgPack.FMsgId) then
-        begin
-          FMsgPack.Free;
-          FMsgPack := nil;
-        end else
-          Break;
-      end;
-      if Assigned(FMsgPack) then
-      begin
-        FConnection.FPostThread.SetMsgPack(FMsgPack);  // 当前消息
-        FSender.Stoped := False;  // 恢复
-        Result := True;
-      end else
-      begin
-        FConnection.FPostThread.SetMsgPack(nil);
-        Result := False;
-      end;
-    end;
-  finally
-    FLock.Release;
-  end;
-end;
-
-function TSendThread.GetWorkState: Boolean;
-begin
-  // 取工作状态：线程、发送器未停止
-  FLock.Acquire;
-  try
-    Result := (Terminated = False) and (FSender.Stoped = False);
-  finally
-    FLock.Release;
-  end;
-end;
-
-function TSendThread.InCancelArray(MsgId: TIOCPMsgId): Boolean;
-var
-  i: Integer;
-begin
-  // 检查是否要停止
-  FLock.Acquire;
-  try
-    Result := Assigned(FMsgPack) and
-             (FMsgPack.FMsgId = MsgId) and
-             (FMsgPack.FState = msCancel);
-    if (Result = False) and (FCancelIds <> nil) then
-      for i := 0 to High(FCancelIds) do
-        if (FCancelIds[i] = MsgId) then
-        begin
-          Result := True;
-          Break;
-        end;
-  finally
-    FLock.Release;
-  end;
-end;
-
-procedure TSendThread.IniWaitState;
-begin
-  // 初始化等待参数
-  InterlockedExchange(FGetFeedback, 0); // 未收到反馈
-  InterlockedExchange(FWaitState, 0); // 状态=0
-end;
-
-procedure TSendThread.InternalSend;
-
+procedure TSendThread.InterSendMsg(RecvThread: TBaseRecvThread);
   procedure SendMsgHeader;
   begin
     IniWaitState;  // 准备等待
 
     // 保存消息总长度
-    FMsgId := FMsgPack.MsgId;
-    FTotalSize := FMsgPack.GetMsgSize(False);
+    FTotalSize := FMsgPack.GetMsgSize;
 
     // 断点续传时要加位移
     if (FMsgPack.FAction in FILE_CHUNK_ACTIONS) then
-      FCurrentSize := FMsgPack.FOffset
+      FSendCount := FMsgPack.FOffset
     else
-      FCurrentSize := 0;
-      
+      FSendCount := 0;
+
     // 发送协议头+校验码+文件描述
     FMsgPack.LoadHead(FSender.Data);
 
-    FSender.DataType := mdtHead;  // 消息头
+    FSender.MsgPart := mdtHead;  // 消息头
     FSender.SendBuffers;
   end;
-
   procedure SendMsgEntity;
   begin
-    FSender.DataType := mdtEntity;  // 消息实体
+    FSender.MsgPart := mdtEntity;  // 消息实体
     FSender.Send(FMsgPack.FMain, FMsgPack.FDataSize, False);  // 不释放资源
   end;
-
   procedure SendMsgAttachment;
   begin
     // 发送附件数据(不关闭资源)
     IniWaitState;  // 准备等待
-    FSender.DataType := mdtAttachment;  // 消息附件
+    FSender.MsgPart := mdtAttachment;  // 消息附件
     if (FMsgPack.FAction = atFileUpChunk) then  // 断点续传
       FSender.Send(FMsgPack.FAttachment, FMsgPack.FAttachSize,
                    FMsgPack.FOffset, FMsgPack.FOffsetEnd, False)
     else
       FSender.Send(FMsgPack.FAttachment, FMsgPack.FAttachSize, False);
   end;
-
 begin
   // 执行发送任务, 与服务端方法类似
   //   见：TReturnResult.ReturnResult、TDataReceiver.Prepare
-  try
-    FSender.Owner := FMsgPack;  // 宿主
-    FMsgPack.FSessionId := FConnection.FSessionId; // 登录凭证
 
-    // 1. 本地路径
-    if (FMsgPack.LocalPath <> '') then
-      FConnection.FRecvThread.FReceiver.LocalPath := AddBackslash(FMsgPack.LocalPath)
-    else
-      FConnection.FRecvThread.FReceiver.LocalPath := AddBackslash(FConnection.FLocalPath);
+  FMsgPack := TClientParams(FSendMsg);
+  FMsgPack.FSessionId := TInConnection(FConnection).FSessionId; // 登录凭证
+  FSender.Owner := FMsgPack;  // 宿主
 
-    // 2. 准备数据流
-    FMsgPack.CreateStreams(False);  // 不清变量表
+  // 1. 本地路径
+  if (FMsgPack.LocalPath <> '') then
+    TRecvThread(RecvThread).SetLocalPath(AddBackslash(FMsgPack.LocalPath))
+  else
+    TRecvThread(RecvThread).SetLocalPath(AddBackslash(FConnection.LocalPath));
 
-    if not FMsgPack.Error then
-    begin
-      // 3. 发协议头
-      SendMsgHeader;
+  // 2. 准备数据流
+  FMsgPack.CreateStreams(False);  // 不清变量表
 
-      // 4. 主体数据（内存流）
-      if (FMsgPack.FDataSize > 0) then
-        SendMsgEntity;
-
-      // 5. 等待反馈
-      if GetWorkState then
-        WaitForFeedback;
-
-      // 6. 发送附件流
-      if (FMsgPack.FAttachSize > 0) and
-         (FMsgPack.FActResult = arAccept) then
-      begin
-        SendMsgAttachment;  // 6.1 发送
-        if GetWorkState then
-          WaitForFeedback;  // 6.2 等待反馈
-      end;
-    end;
-  finally
-    // 7. 释放！
-    FLock.Acquire;
-    try
-      FMsgPack.Free;
-      FMsgPack := nil;
-    finally
-      FLock.Release;
-    end;
-  end;
-end;
-
-procedure TSendThread.KeepWaiting;
-begin
-  // 继续等待: FWaitState = 1 -> +1
-  InterlockedIncrement(FGetFeedback); // 收到反馈
-  if (iocp_api.InterlockedCompareExchange(FWaitState, 2, 1) = 1) then  // 状态+
-    ReleaseSemaphore(FWaitSemaphore, 1, Nil);  // 触发
-end;
-
-procedure TSendThread.OnDataSend(DataType: TMessageDataType; OutSize: Integer);
-begin
-  // 数据成功发出，显示进程
-  Inc(FCurrentSize, OutSize);
-
-  // 是否显示发送进程:
-  // 只有消息头、没有附件流、是附件流 -> 显示
-  if (DataType = mdtHead) and (FMsgPack.FDataSize = 0) and (FMsgPack.AttachSize = 0) or
-     (DataType = mdtEntity) and (FMsgPack.AttachSize = 0) or
-     (DataType = mdtAttachment) then
-    Synchronize(FConnection.SendProgress);
-end;
-
-procedure TSendThread.OnSendError(Sender: TObject);
-begin
-  // 处理发送异常
-  if (GetWorkState = False) then  // 取消操作
+  if not FMsgPack.Error then
   begin
-    ServerReturn;  // 忽略等待
-    FConnection.FRecvThread.FReceiver.Reset;
+    // 3. 发协议头
+    SendMsgHeader;
+
+    // 4. 主体数据（内存流）
+    if (FMsgPack.FDataSize > 0) then
+      SendMsgEntity;
+
+    // 5. 等待反馈
+    if GetWorkState then
+      WaitForFeedback;
+
+    // 6. 发送附件流
+    if (FMsgPack.FAttachSize > 0) and
+       (FMsgPack.FActResult = arAccept) then
+    begin
+      SendMsgAttachment;  // 6.1 发送
+      if GetWorkState then
+        WaitForFeedback;  // 6.2 等待反馈
+    end;
   end;
-  FConnection.FErrorcode := TClientTaskSender(Sender).ErrorCode;
-  Synchronize(FConnection.DoThreadFatalError); // 线程同步
 end;
 
-procedure TSendThread.ServerReturn;
+procedure TSendThread.ServerFeedback(Accept: Boolean);
 begin
-  // 服务器反馈 或 忽略等待
-  //  1. 取消任务后收到反馈
-  //  2. 收到反馈，而未等待（单机反馈比等待早）
-  InterlockedIncrement(FGetFeedback); // 收到反馈
-  if (InterlockedDecrement(FWaitState) = 0) then  // 1->0
-    ReleaseSemaphore(FWaitSemaphore, 1, Nil);  // 信号量+1
-end;
-
-procedure TSendThread.WaitForFeedback;
-begin
-  // 等服务器反馈，等 WAIT_MILLISECONDS 毫秒
-  if (InterlockedIncrement(FWaitState) = 1) then
-    repeat
-      WaitForSingleObject(FWaitSemaphore, WAIT_MILLISECONDS);
-    until (InterlockedDecrement(FWaitState) <= 0);
+  // 因为是多线程，要先赋值 arAccept，后发信号，
+  // 否则，可能发送线程 FMsgPack.FActResult = arUnknown
+  if Accept then
+    FMsgPack.FActResult := arAccept;
+  inherited;
 end;
 
 { TPostThread }
 
-procedure TPostThread.Add(Result: TReceivePack);
+procedure TPostThread.Add(Msg: TBasePackObject);
+var
+  XMsg: TResultParams;
 begin
+  // Msg：是 TResultParams
   // 加一个消息到列表，激活线程
 
   // 1. 检查附件发送情况
-  if (Result.ActResult = arAccept) then   // 服务器接受请求
+  XMsg := TResultParams(Msg);
+
+  if (XMsg.ActResult = arAccept) then // 服务器接受请求
   begin
-    FMsgPack.FActResult := arAccept;      // FMsgPack 在等待
-    FResultEx := TResultParams(Result);   // 先保存反馈结果
-    FConnection.FSendThread.ServerReturn; // 唤醒
+    FMsgEx := XMsg;  // 先保存反馈结果
+    FSendThread.ServerFeedback(True); // 唤醒 -> 发送附件
   end else
   begin
     // 2. 投放入线程队列
-    // 刚连接时，可能立刻收到广播消息，
-    // 此时 FMsgPack=nil，未登录，一样投放
+    // 刚连接时，未登录，可能立刻收到广播消息，
+    // 此时 FSendThread.FMsgPack=nil，一样投放
     FLock.Acquire;
     try
-      if Assigned(FResultEx) and
-        (FResultEx.FMsgId = Result.MsgId) then // 发送附件后的反馈
+      if Assigned(FMsgEx) and
+        (FMsgEx.FMsgId = XMsg.MsgId) then // 发送附件后的反馈
       begin
-        Result.Free;         // 释放附近上传结果（无内容）
-        Result := FResultEx; // 使用真正的反馈消息（有内容）
-        FResultEx.FActResult := arOK;  // 修改结果 -> 成功
-        FResultEx := nil;    // 不用了
+        XMsg.Free;      // 释放附件上传结果（无内容）
+        XMsg := FMsgEx; // 使用真正的反馈消息（有内容）
+        FMsgEx.FActResult := arOK;  // 修改结果 -> 成功
+        FMsgEx := nil;  // 不引用了
       end;
       // 加入列表
-      FResults.Add(Result);
+      FMsgList.Add(XMsg);
     finally
       FLock.Release;
     end;
@@ -2280,99 +1755,63 @@ begin
   end;
 end;
 
-procedure TPostThread.AfterWork;
-var
-  i: Integer;
-begin
-  // 清除消息
-  for i := 0 to FResults.Count - 1 do
-    TResultParams(FResults.PopFirst).Free;
-  FLock.Free;
-  FResults.Free;
-  inherited;
-end;
-
-constructor TPostThread.Create(AConnection: TInConnection);
-begin
-  inherited Create;
-  FreeOnTerminate := True;
-  FConnection := AConnection;
-  FLock := TThreadLock.Create; // 锁
-  FResults := TInList.Create;  // 收到的消息列表
-end;
-
-procedure TPostThread.DoMethod;
-var
-  Result: TResultParams;
-begin
-  // 循环取出、处理收到的消息
-  while (Terminated = False) do
-  begin
-    FLock.Acquire;
-    try
-      Result := FResults.PopFirst;  // 取出第一个
-    finally
-      FLock.Release;
-    end;
-    if Assigned(Result) then
-      HandleMessage(Result) // 处理消息
-    else
-      Break;
-  end;
-end;
-
-procedure TPostThread.ExecInMainThread;
+procedure TPostThread.DoInMainThread;
 const
   SERVER_PUSH_EVENTS =[arDeleted, arRefuse { 不应该存在 }, arTimeOut];
   SELF_ERROR_RESULTS =[arOutDate, arRefuse { c/s 模式发出 }, arErrBusy,
                        arErrHash, arErrHashEx, arErrAnalyse, arErrPush,
                        arErrUser, arErrWork];
-
   function IsPushedMessage: Boolean;
   begin
     FLock.Acquire;
     try
-      Result := (FOwner = nil) or (FMsgPack = nil) or
-                (FResult.Owner <> LongWord(FOwner));
+      Result := (FSendMsg = nil) or
+                (FMsg.Owner <> FSendMsg.Owner) or
+                (FSendMsg.MsgId <> FMsg.MsgId); // 推送前 MsgId 被修改 
     finally
       FLock.Release;
     end;
   end;
-
   function IsFeedbackMessage: Boolean;
   begin
     FLock.Acquire;
     try
-      Result := (FMsgPack <> nil) and (FMsgPack.MsgId = FResult.MsgId);
+      Result := (FSendMsg <> nil) and (FSendMsg.MsgId = FMsg.MsgId);
     finally
       FLock.Release;
     end;
   end;
-
+var
+  AConnection: TInConnection;
 begin
   // 进入主线程，把消息提交给宿主
+  // 可能处理消息过程中被用户断开，此时要改变断开模式
+
+  AConnection := TInConnection(FConnection);
+  AConnection.FInMainThread := True;  // 进入主线程
 
   try
 
     if IsPushedMessage() then
 
-    {$IFNDEF DELPHI_7}
-    {$REGION '. 推送来的消息'}
-    {$ENDIF}
+      {$IFNDEF DELPHI_7}
+      {$REGION '. 推送来的消息'}
+      {$ENDIF}
 
-    try
-      if (FResult.ActResult in SERVER_PUSH_EVENTS) then
-      begin
-        // 3.4 服务器推送的消息
-        FConnection.DoServerError(FResult);
-      end else
-      begin
-        // 3.5 其他客户端推送的消息
-        FConnection.HandlePushedMsg(FResult);
-      end;
-    finally
-      FResult.Free;
-    end
+      try
+        if (FMsg.ActResult in SERVER_PUSH_EVENTS) then
+        begin
+          // 1.1 服务器推送的消息
+          AConnection.ShowServerError(FMsg);
+        end else
+        begin
+          // 1.2 其他客户端推送的消息
+          AConnection.HandlePushedMsg(FMsg);
+        end;
+      finally
+        FMsg.Free;
+        AConnection.FInMainThread := False;        
+      end
 
     {$IFNDEF DELPHI_7}
     {$ENDREGION}
@@ -2380,261 +1819,135 @@ begin
 
     else  // ====================================
 
-    {$IFNDEF DELPHI_7}
-    {$REGION '. 自己操作的反馈消息'}
-    {$ENDIF}
+      {$IFNDEF DELPHI_7}
+      {$REGION '. 自己操作的反馈消息'}
+      {$ENDIF}
 
-    try
-      // 允许不登录，更新本地的凭证
-      if (FConnection.FSessionId <> FResult.FSessionId) then
-        FConnection.FSessionId := FResult.FSessionId;
-
-      if (FResult.ActResult in SELF_ERROR_RESULTS) then
-      begin
-        // 3.1 反馈执行异常
-        FConnection.DoServerError(FResult);  // 传给连接
-      end else
-      if IsFeedbackMessage() then
-      begin
-        // 3.2 反馈正常结果
-        FOwner.HandleFeedback(FResult); // 传给客户端
-      end else
-      begin
-        // 3.3 MsgId 被服务端修改，自己推送的消息
-        FConnection.HandlePushedMsg(FResult)
+      try
+        // 允许不登录，更新本地的凭证
+        if (AConnection.FSessionId <> FMsg.FSessionId) then
+          AConnection.FSessionId := FMsg.FSessionId;
+        if (FMsg.ActResult in SELF_ERROR_RESULTS) then
+        begin
+          // 2.1 反馈执行异常
+          AConnection.ShowServerError(FMsg);
+        end else
+        if IsFeedbackMessage() then
+        begin
+          // 2.2 反馈正常结果
+          if (FMsg.Owner = AConnection) then
+            AConnection.HandleFeedback(FMsg)
+          else
+            TInBaseClient(FMsg.Owner).HandleFeedback(FMsg);
+        end;
+      finally
+        FMsg.Free;
+        if AConnection.FActive then  // 可能已关闭
+          AConnection.FSendThread.ServerFeedback;  // 唤醒
+        AConnection.FInMainThread := False;
       end;
-    finally
-      if FConnection.FActive and IsFeedbackMessage() then
-        FConnection.FSendThread.ServerReturn;  // 唤醒
-      FResult.Free;
-    end;
 
-    {$IFNDEF DELPHI_7}
-    {$ENDREGION}
-    {$ENDIF}
+      {$IFNDEF DELPHI_7}
+      {$ENDREGION}
+      {$ENDIF}
 
   except
     on E: Exception do
     begin
-      FConnection.FErrMsg := E.Message;
-      FConnection.FErrorcode := GetLastError;
-      FConnection.DoThreadFatalError;  // 在主线程，直接调用
+      AConnection.FErrorcode := GetLastError;
+      AConnection.DoClientError;  // 在主线程，直接调用
     end;
   end;
 
 end;
 
-procedure TPostThread.HandleMessage(Result: TReceivePack);
+procedure TPostThread.HandleMessage(Msg: TBasePackObject);
 var
-  StopAction, ReadInfDone: Boolean;
-  Msg: TMessagePack;
+  ReadInfDone: Boolean;
+  NewMsg: TMessagePack;
 begin
-  // 预处理消息
-  // 最后要提交到主线程执行，要检查断点续传的情况
+  // Msg：是 TResultParams
+  
+  // 消息预处理
+  // 要检查断点续传的情况，最后提交到主线程执行
 
-  FResult := TResultParams(Result);
-  StopAction := False;
+  FMsg := TResultParams(Msg);
 
-  if FConnection.FSendThread.InCancelArray(FResult.FMsgId) then
-  begin
-    FResult.Free;  // 操作被用户终止
-    StopAction := True;
-  end else
-  if (FResult.FAction in FILE_CHUNK_ACTIONS) then
+  if (FMsg.FAction in FILE_CHUNK_ACTIONS) then
   begin
     // 继续请求
-    Msg := TMessagePack.Create(TBaseClientObject(FResult.Owner));
-    Msg.FState := msAutoPost;  // 自动提交
+    if (FMsg.Owner = FConnection) then
+      NewMsg := TMessagePack.Create(TInConnection(FMsg.Owner))
+    else
+      NewMsg := TMessagePack.Create(TInBaseClient(FMsg.Owner));
 
-    Msg.FAction := atUnknown;  // 未知
-    Msg.FActResult := FResult.FActResult; // 发送附件后的反馈结果
-    Msg.FCheckType := FResult.FCheckType;
-    Msg.FZipLevel := FResult.FZipLevel;
+    NewMsg.FAction := atUnknown;  // 未知
+    NewMsg.FActResult := FMsg.FActResult;  // 发送附件后的反馈结果
+    NewMsg.FCheckType := FMsg.FCheckType;
+    NewMsg.FState := msAutoPost;  // 自动提交
+    NewMsg.FZipLevel := FMsg.FZipLevel;
 
-    if (FResult.FAction = atFileUpChunk) then
+    if (FMsg.FAction = atFileUpChunk) then
     begin
       // 断点上传，立刻打开本地文件，读文件信息
       //   见：TBaseMessage.LoadFromFile、TReceiveParams.CreateAttachment
-      Msg.LoadFromFile(FResult.GetAttachFileName, True);
-      ReadInfDone := not Msg.Error and Msg.ReadUploadInf(FResult);
+      NewMsg.LoadFromFile(FMsg.GetAttachFileName, True);
+      ReadInfDone := not NewMsg.Error and NewMsg.ReadUploadInf(FMsg);
     end else
     begin
       // 断点下载，设置下载文件，继续
       // FActResult 一般是正常，也可能校验异常
       //   见：TReturnResult.LoadFromFile、TResultParams.CreateAttachment
-      Msg.FileName := FResult.FileName;
-      ReadInfDone := Msg.ReadDownloadInf(FResult);
+      NewMsg.FileName := FMsg.FileName;
+      ReadInfDone := NewMsg.ReadDownloadInf(FMsg);
     end;
 
     if ReadInfDone then
-      Msg.Post(FResult.FAction)
-    else begin
-      Msg.Free;
-      FResult.Free;
-      StopAction := True;
-    end;
+      NewMsg.Post(FMsg.FAction)
+    else  // 续传完毕
+      NewMsg.Free;
   end;
 
-  if (StopAction = False) then
-    Synchronize(ExecInMainThread)  // 进入应用层
-  else
-    FConnection.FSendThread.ServerReturn;
+  // 进入业务层
+  Synchronize(DoInMainThread);  
 
-end;
-
-procedure TPostThread.SetMsgPack(AMsgPack: TClientParams);
-begin
-  // 设置当前消息（调用前已加锁）
-  FLock.Acquire;
-  try
-    FResultEx := nil;
-    FMsgPack := AMsgPack; // 当前发送消息包
-    if Assigned(FMsgPack) then
-      FOwner := TBaseClientObject(FMsgPack.Owner)  // 当前消息所有者
-    else
-      FOwner := nil;
-  finally
-    FLock.Release;
-  end;
-end;
-
-// ================== 接收线程 ==================
-
-// 使用 WSARecv 回调函数，效率高
-procedure WorkerRoutine(const dwError, cbTransferred: DWORD;
-  const lpOverlapped: POverlapped; const dwFlags: DWORD); stdcall;
-var
-  Thread: TRecvThread;
-  Connection: TInConnection;
-  ByteCount, Flags: DWORD;
-  ErrorCode: Cardinal;
-begin
-  // 不是主线程 ！
-  // 传入的 lpOverlapped^.hEvent = TInRecvThread
-
-  Thread := TRecvThread(lpOverlapped^.hEvent);
-  Connection := Thread.FConnection;
-
-  if (dwError <> 0) or (cbTransferred = 0) then // 断开或异常
-  begin
-    // 服务端关闭时 cbTransferred = 0, 要断开连接：2019-02-28
-    if (cbTransferred = 0) then
-    begin
-      Connection.FActive := False;  // 直接赋值
-      Thread.Synchronize(Connection.TryDisconnect); // 同步
-    end;
-    Exit;
-  end;
-
-  try
-    // 处理一个数据包
-    Thread.HandleDataPacket;
-  finally
-    // 继续执行 WSARecv，等待数据
-    FillChar(lpOverlapped^, SizeOf(TOverlapped), 0);
-    lpOverlapped^.hEvent := DWORD(Thread);  // 传递自己
-
-    ByteCount := 0;
-    Flags := 0;
-
-    // 收到数据时执行 WorkerRoutine
-    if (iocp_Winsock2.WSARecv(Connection.FSocket, @Thread.FRecvBuf, 1,
-        ByteCount, Flags, LPWSAOVERLAPPED(lpOverlapped), @WorkerRoutine) = SOCKET_ERROR) then
-    begin
-      ErrorCode := WSAGetLastError;
-      if (ErrorCode <> WSA_IO_PENDING) then
-      begin
-        Connection.FErrorcode := ErrorCode;
-        Thread.Synchronize(Connection.DoThreadFatalError); // 线程同步
-      end;
-    end;
-  end;
 end;
 
 { TRecvThread }
 
 constructor TRecvThread.Create(AConnection: TInConnection);
-{ var
-  i: Integer; }
-begin
-  inherited Create(True);
-  FreeOnTerminate := True;
-  FConnection := AConnection;
-
-  // 分配接收缓存
-  GetMem(FRecvBuf.buf, IO_BUFFER_SIZE_2);
-  FRecvBuf.len := IO_BUFFER_SIZE_2;
-
-  // 消息接收器，参数传 TResultParams
-  FReceiver := TClientReceiver.Create(TResultParams);
-
-  FReceiver.OnError := OnError;  // 校验异常事件
-  FReceiver.OnPost := FConnection.FPostThread.Add; // 投放方法
-  FReceiver.OnReceive := OnDataReceive; // 接收进程
-
-{  FDebug.LoadFromFile('recv\pn2.txt');
-  FStream.LoadFromFile('recv\recv2.dat');
-
-  for i := 0 to FDebug.Count - 1 do
-  begin
-    FOverlapped.InternalHigh := StrToInt(FDebug[i]);
-    if FOverlapped.InternalHigh = 93 then
-      FStream.Read(FRecvBuf.buf^, FOverlapped.InternalHigh)
-    else
-      FStream.Read(FRecvBuf.buf^, FOverlapped.InternalHigh);
-    HandleDataPacket;
-  end;
-
-  ExtrMsg.SaveToFile('msg.txt');    }
-
-end;
-
-procedure TRecvThread.Execute;
 var
-  ByteCount, Flags: DWORD;
+  AReceiver: TClientReceiver;
 begin
-  // 执行 WSARecv，等待数据
+  AReceiver := TClientReceiver.Create;
+  FRecvMsg := AReceiver.MsgPack;  // 首消息, TResultParams
 
-  try
-    FillChar(FOverlapped, SizeOf(TOverlapped), 0);
-    FOverlapped.hEvent := DWORD(Self);  // 传递自己
+  AReceiver.OnNewMsg := OnCreateMsgObject;
+  AReceiver.OnPost := AConnection.PostThread.Add;
+  AReceiver.OnReceive := OnDataReceive;
+  AReceiver.OnError := OnRecvError;
 
-    ByteCount := 0;
-    Flags := 0;
-
-    // 有数据传入时操作系统自动触发执行 WorkerRoutine
-    iocp_Winsock2.WSARecv(FConnection.FSocket, @FRecvBuf, 1,
-                          ByteCount, Flags, @FOverlapped, @WorkerRoutine);
-
-    while (Terminated = False) do  // 不断等待
-      if (SleepEx(100, True) = WAIT_IO_COMPLETION) then  // 不能用其他等待模式
-      begin
-        // Empty
-      end;
-  finally
-    FreeMem(FRecvBuf.buf);
-    FReceiver.Free;
-  end;
-
+  inherited Create(AConnection, AReceiver);
 end;
 
 procedure TRecvThread.HandleDataPacket;
+var
+  AConection: TInConnection;
+  Msg: TResultParams;
 begin
-  // 处理接收到的数据包
+  inherited;
+  // 处理接收到的数据包（在接收线程内）
 
-  // 接收字节总数
-  Inc(FConnection.FRecvCount, FOverlapped.InternalHigh);
+  AConection := TInConnection(FConnection);
+  Msg := TResultParams(FRecvMsg);
 
-//  FDebug.Add(IntToStr(FOverlapped.InternalHigh));
-//  FStream.Write(FRecvBuf.buf^, FOverlapped.InternalHigh);
-
-  if FReceiver.Complete then  // 1. 首包数据
+  if FReceiver.Completed then  // 1. 首包数据
   begin
     // 1.1 服务器同时开启 HTTP 服务时，可能反馈拒绝服务信息（HTTP协议）
     if MatchSocketType(FRecvBuf.buf, HTTP_VER) then
     begin
-      TResultParams(FReceiver.Owner).FActResult := arRefuse;
-      FConnection.DoServerError(TResultParams(FReceiver.Owner));
+      AConection.FActResult := arRefuse;
+      Synchronize(AConection.DoServerError);
       Exit;
     end;
 
@@ -2642,17 +1955,17 @@ begin
     if (FOverlapped.InternalHigh < IOCP_SOCKET_SIZE) or  // 长度太短
       (MatchSocketType(FRecvBuf.buf, IOCP_SOCKET_FLAG) = False) then // C/S 标志错误
     begin
-      TResultParams(FReceiver.Owner).FActResult := arErrInit;  // 初始化异常
-      FConnection.DoServerError(TResultParams(FReceiver.Owner));
+      AConection.FActResult := arErrInit;  // 初始化异常
+      Synchronize(AConection.DoServerError);
       Exit;
     end;
 
-    if (FReceiver.Owner.ActResult <> arAccept) then
+    if (Msg.ActResult <> arAccept) then
       FReceiver.Prepare(FRecvBuf.buf, FOverlapped.InternalHigh)  // 准备接收
     else begin
       // 上次允许接收附件，再次收到服务器接收完毕的反馈
-      TResultParams(FReceiver.Owner).FActResult := arOK; // 投放时改为 arAccept, 修改
-      FReceiver.PostMessage;  // 正式投放
+      Msg.FActResult := arOK; // 投放时改为 arAccept, 修改
+      TClientReceiver(FReceiver).PostMessage;  // 正式投放
     end;
 
   end else
@@ -2663,71 +1976,64 @@ begin
 
 end;
 
-procedure TRecvThread.OnError(Result: TReceivePack);
-begin
-  // 校验异常
-  TResultParams(Result).FActResult := arErrHashEx;
-end;
-
-procedure TRecvThread.OnDataReceive(Result: TReceivePack; DataType: TMessageDataType;
-   ReceiveCount: TFileSize; AttachFinished: Boolean);
+procedure TRecvThread.OnDataReceive(Msg: TBasePackObject; Part: TMessagePart; RecvCount: Cardinal);
+var
+  XMsg: TResultParams;
+  ShowProg: Boolean;
 begin
   // 显示接收进程
   // 主体是接收完毕才调用，只一次
-  case DataType of
+
+  // Msg 就是 FRecvMsg
+  XMsg := TResultParams(Msg);
+  ShowProg := False;  
+
+  case Part of
     mdtHead,
-    mdtEntity: begin
-      FRecvMsg := Result;
-      FMsgId := FRecvMsg.MsgId;
-      FTotalSize := FRecvMsg.GetMsgSize(True);
-      FCurrentSize := ReceiveCount;
-
-      // 切换到主线程, 执行一次
-      if (FRecvMsg.AttachSize = 0) then
-        Synchronize(FConnection.ReceiveProgress);
+    mdtEntity: begin  // 只调用一次
+      FTotalSize := XMsg.GetMsgSize;
+      FRecvCount := RecvCount;
+      ShowProg := (XMsg.AttachSize = 0); // 切换到主线程, 执行一次
     end;
-
     mdtAttachment: begin
-      // 已经全部下载完毕，断点传输时，
-      // 因为带消息描述，接收显示的数据长度未必 = 附件长度
-      if (FRecvMsg.Action in FILE_CHUNK_ACTIONS) then
+      // 已经全部下载完毕。
+      // 断点传输时，因为带消息描述，接收显示的数据长度未必 = 附件长度
+      if (XMsg.Action in FILE_CHUNK_ACTIONS) then
       begin
-        FCurrentSize := FRecvMsg.Offset + ReceiveCount;
+        FRecvCount := XMsg.Offset + RecvCount;
+        if (RecvCount = 0) and
+           (FRecvCount + TInConnection(FConnection).FMaxChunkSize >= FTotalSize) then
+          FRecvCount := FTotalSize;  // 传输完成
       end else
       begin
-        if (ReceiveCount = 0) then
-          FCurrentSize := FTotalSize
+        if (RecvCount = 0) then
+          FRecvCount := FTotalSize
         else
-          FCurrentSize := ReceiveCount;
+          FRecvCount := RecvCount;
       end;
-
-      // 发送者要继续等待、切换到主线程
-      FConnection.FSendThread.KeepWaiting;
-      Synchronize(FConnection.ReceiveProgress);
+      // 发送者要继续等待
+      TSendThread(FConnection.SendThread).KeepWaiting;
+      ShowProg := True; // 切换到主线程
     end;
   end;
+
+  if ShowProg then  // 显示进程
+    inherited;
 end;
 
-procedure TRecvThread.Stop;
+procedure TRecvThread.Reset;
 begin
-  inherited;
-  Sleep(10);
+  // 重置接收器环境
+  if Assigned(FReceiver) then
+    FReceiver.Reset;
 end;
 
-initialization
-//  ExtrMsg := TStringList.Create;
-//  FDebug := TStringList.Create;
-//  FStream := TMemoryStream.Create;
-
-
-
-finalization
-//  FDebug.SaveToFile('msid.txt');
-//  FStream.SaveToFile('recv2.dat');
-
-// ExtrMsg.Free;
-//  FStream.Free;
-//  FDebug.Free;
+procedure TRecvThread.SetLocalPath(const Path: string);
+begin
+  // 设置保存文件的本地路径
+  if Assigned(FReceiver) then
+    TClientReceiver(FReceiver).LocalPath := Path;
+end;
 
 end.
 

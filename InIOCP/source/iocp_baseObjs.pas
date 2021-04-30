@@ -40,13 +40,13 @@ type
 
   TCycleThread = class(TBaseThread)
   protected
-    FInHandle: Boolean;   // 内含信号灯
-    FSemaphore: THandle;  // 信号灯
+    FInnerHandle: Boolean; // 内含信号灯
+    FSemaphore: THandle;   // 信号灯
     procedure AfterWork; virtual; abstract;
-    procedure DoMethod; virtual; abstract;
+    procedure DoThreadMethod; virtual; abstract;
     procedure ExecuteWork; override;
   public
-    constructor Create(InHandle: Boolean = True);
+    constructor Create(InnerHandle: Boolean = True);
     destructor Destroy; override;
     procedure Activate; {$IFDEF USE_INLINE} inline; {$ENDIF}
     procedure Stop;
@@ -119,21 +119,21 @@ end;
 procedure TCycleThread.Activate;
 begin
   // 信号量+，激活线程
-  ReleaseSemapHore(FSemaphore, 8, Nil);
+  ReleaseSemapHore(FSemaphore, 8, Nil);  // 发几个信号量
 end;
 
-constructor TCycleThread.Create(InHandle: Boolean);
+constructor TCycleThread.Create(InnerHandle: Boolean);
 begin
   inherited Create(True);
   FreeOnTerminate := True;
-  FInHandle := InHandle;
-  if FInHandle then
+  FInnerHandle := InnerHandle;
+  if FInnerHandle then  // 内置信号灯
     FSemaphore := CreateSemapHore(Nil, 0, MaxInt, Nil);  // 信号最大值 = MaxInt
 end;
 
 destructor TCycleThread.Destroy;
 begin
-  if FInHandle then
+  if FInnerHandle then
     CloseHandle(FSemaphore);
   inherited;
 end;
@@ -144,12 +144,15 @@ begin
   try
     while (Terminated = False) do
       if (WaitForSingleObject(FSemaphore, INFINITE) = WAIT_OBJECT_0) then  // 等待信号灯
-        try
-          DoMethod;  // 执行子类方法
-        except
-          on E: Exception do
-            iocp_log.WriteLog(Self.ClassName + '->循环线程异常: ' + E.Message);
-        end;
+        if Terminated then
+          Break
+        else
+          try
+            DoThreadMethod;  // 执行子类方法
+          except
+            on E: Exception do
+              iocp_log.WriteLog(Self.ClassName + '->循环线程异常: ' + E.Message);
+          end;
   finally
     AfterWork;
   end;

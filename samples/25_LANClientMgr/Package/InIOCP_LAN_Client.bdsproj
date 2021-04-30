@@ -129,7 +129,7 @@
 		</Linker>
 		<Directories>
 			<Directories Name="OutputDir">..\</Directories>
-			<Directories Name="UnitOutputDir">..\..\..\bin</Directories>
+			<Directories Name="UnitOutputDir">..\..\..\dcu</Directories>
 			<Directories Name="PackageDLLOutputDir"></Directories>
 			<Directories Name="PackageDCPOutputDir"></Directories>
 			<Directories Name="SearchPath">$(BDS)\Lib\Debug\Indy10;$(BDS)\lib\Debug;..\form;..\..\..\InIOCP\package;..\..\..\InIOCP\source;..\..\..\InIOCP\source\zlib;..\..\..\InIOCP\source\frame;..\..\..\InIOCP\source\module;..\..\..\InIOCP\memMgr\fastmm;..\..\..\InIOCP\memMgr\scalemm2</Directories>
@@ -176,8 +176,9 @@
 			<VersionInfoKeys Name="OriginalFilename"></VersionInfoKeys>
 			<VersionInfoKeys Name="ProductName">InIOCP_LAN_Client</VersionInfoKeys>
 			<VersionInfoKeys Name="ProductVersion">1.0.0.0</VersionInfoKeys>
-			<VersionInfoKeys Name="Comments"></VersionInfoKeys>  <VersionInfoKeys Name="ProgramID">com.embarcadero.InIOCP_LAN_Client</VersionInfoKeys>
-    </VersionInfoKeys>
+			<VersionInfoKeys Name="Comments"></VersionInfoKeys>
+			<VersionInfoKeys Name="ProgramID">com.embarcadero.InIOCP_LAN_Client</VersionInfoKeys>
+		</VersionInfoKeys>
 		<Excluded_Packages>
       <Excluded_Packages Name="$(BDS)\bin\dclbde100.bpl">File d:\program files\codegear\rad studio\5.0\bin\dclbde100.bpl not found</Excluded_Packages>
       <Excluded_Packages Name="$(BDS)\Bin\dclib100.bpl">File d:\program files\codegear\rad studio\5.0\Bin\dclib100.bpl not found</Excluded_Packages>

@@ -129,7 +129,7 @@
 		</Linker>
 		<Directories>
 			<Directories Name="OutputDir">..\</Directories>
-			<Directories Name="UnitOutputDir">..\..\..\bin</Directories>
+			<Directories Name="UnitOutputDir">..\..\..\dcu</Directories>
 			<Directories Name="PackageDLLOutputDir"></Directories>
 			<Directories Name="PackageDCPOutputDir"></Directories>
 			<Directories Name="SearchPath">$(BDS)\Lib\Debug\Indy10;$(BDS)\lib\Debug;..\..\..\inIocp\package\;..\..\..\inIocp\source\;..\..\..\inIocp\source\zlib;..\..\..\inIocp\source\frame;..\..\..\inIocp\source\module;..\..\..\inIocp\memmgr\scaleMM2;..\..\..\inIocp\memmgr\fastMM;..\..\..\UniDac7.0\source;..\..\..\UniDac7.0\lib\delphi11;..\..\..\UniDac7.0\source\UniProviders\SQLite</Directories>

@@ -218,8 +218,8 @@ object FormInIOCPFileSvrClient: TFormInIOCPFileSvrClient
     TabOrder = 18
   end
   object Button3: TButton
-    Left = 435
-    Top = 457
+    Left = 431
+    Top = 458
     Width = 75
     Height = 25
     Caption = #27604#36739'MD5'
@@ -247,10 +247,10 @@ object FormInIOCPFileSvrClient: TFormInIOCPFileSvrClient
   object InConnection1: TInConnection
     LocalPath = 'temp\'
     ServerAddr = '127.0.0.1'
-    OnAddWork = InConnection1AddWork
     OnDataReceive = InConnection1DataReceive
     OnDataSend = InConnection1DataSend
     OnError = InConnection1Error
+    OnAddWork = InConnection1AddWork
     Left = 104
     Top = 104
   end

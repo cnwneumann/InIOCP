@@ -10,22 +10,19 @@
  *   3、停止日志线程：TLogThread.StopLog;
  *
  * 使用经验：
- *    1. 经 2 万并发测试表明，在实际应用环境下，分配的日志缓存不超 2 块，
- * 说明预设 1-2M 的日志缓存适合绝大多数中小应用。
- *    2. 用循环的方法写千万次，分配的日志缓存达几十兆，但实际应用不会
- * 有这种做法。
- *
+ *    1. 经 InIOCP 的 2 万并发测试表明，在实际应用环境下，分配的日志缓存
+ *       不超 2 块，说明预设 1-2M 的日志缓存适合绝大多数中小应用。
+ *    2. 用单线程循环的方法写千万次，分配的日志缓存达几十兆，但实际应用
+ *       不会有这种做法。
  *)
 unit iocp_log;
 
 interface
 
-{$I in_iocp.inc}        // 模式设置
-
 uses
-  {$IFDEF DELPHI_XE7UP}
+  {$IF CompilerVersion >= 26}
   Winapi.Windows, System.Classes, System.SyncObjs, System.SysUtils {$ELSE}
-  Windows, Classes, SyncObjs, SysUtils {$ENDIF};
+  Windows, Classes, SyncObjs, SysUtils {$IFEND};
 
 type
 
@@ -46,7 +43,7 @@ type
     FTail: PBufferNode;     // 尾节点
     FCurrent: PBufferNode;  // 当前节点
     FBuffers: PAnsiChar;    // 写入地址
-    FBufferSize: Integer;   // 缓存长度
+    FBufferSize: Integer;   // 缓存长度（日志文本长度不能大于此值）
     FSize: Integer;         // 写入的总长度
     procedure InterAdd;
   public
@@ -243,7 +240,8 @@ procedure TLogBuffers.Write(const Msg: PAnsiChar; MsgSize: Integer);
 begin
   // 写日志到缓存空间
   // 除了可能分配新的缓存块，没有分配其他内存
-  
+  // 注意：MsgSize > FBufferSize 说明日志太长！
+
   if (FCurrent^.len < MsgSize) then  // 包含：时间、回车换行的长度
     if Assigned(FCurrent^.next) then // 用后续缓存块
     begin
@@ -262,7 +260,7 @@ begin
   Inc(FBuffers, 2);
 
   // 日志内容
-  System.Move(Msg^, FBuffers^, MsgSize - 27);
+  System.Move(Msg^, FBuffers^, MsgSize - 27);  // 实际少 27 字节
   Inc(FBuffers, MsgSize - 27);
 
   // 回车换行
@@ -288,20 +286,21 @@ end;
 
 destructor TLogThread.Destroy;
 begin
+  DeleteCriticalSection(FSection);
   FMaster.Free;
   FSlave.Free;
-  DeleteCriticalSection(FSection);
   inherited;
 end;
 
 procedure TLogThread.Execute;
-  function CreateLogFile(var FileIndex: Integer): THandle;
+  function CreateLogFile(var FileIndex, TotalSize: Integer): THandle;
   begin
     // 建编号为 FileIndex 的日志文件
     Result := CreateFile(PChar(FLogPath + IntToStr(FileIndex) + '.log'),
-                         GENERIC_READ or GENERIC_WRITE, 0, nil, CREATE_ALWAYS,
-                         FILE_ATTRIBUTE_NORMAL, 0);
-    Inc(FileIndex);
+                         GENERIC_READ or GENERIC_WRITE, FILE_SHARE_READ,  // 共享读
+                         nil, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+    Inc(FileIndex);  // 编号+
+    TotalSize := 0;  // 大小清零
   end;
 var
   FileIndex: Integer;
@@ -310,19 +309,16 @@ var
   SaveBuffers: TLogBuffers;
 begin
   inherited;
-
-  // 开始工作
-  FWorking := True;
-
   // 建日志文件
-  FileIndex := 0;   // 文件编号
-  FileHandle := CreateLogFile(FileIndex);
 
-  TotalSize := 0;   // 日志文件大小
+  FileIndex := 0;   // 文件编号
+  FileHandle := CreateLogFile(FileIndex, TotalSize);
+
+  FWorking := True; // 开始工作
 
   while (Terminated = False) do
   begin
-    Sleep(28);  // 越小，日志文件越多，但内存块使用更少
+    Sleep(80);  // 越小，日志文件越多，但内存块使用更少
     
     EnterCriticalSection(FSection);
     try
@@ -340,13 +336,10 @@ begin
       Inc(TotalSize, SaveBuffers.FSize);  // 累计写入字节数（大概）
       SaveBuffers.Write(FileHandle);  // 写文件
       SaveBuffers.Reset;   // 重置
-
-      // 大于 5M，换新的日志文件
-      if (TotalSize >= 5242880) then
+      if (TotalSize >= 5242880) then  // 大于 5M，换新的日志文件
       begin
         CloseHandle(FileHandle);  // 关闭文件
-        FileHandle := CreateLogFile(FileIndex); // 建新文件
-        TotalSize := 0; // 清零
+        FileHandle := CreateLogFile(FileIndex, TotalSize); // 建新文件
       end;
     end;
   end;
@@ -417,7 +410,7 @@ begin
     else
       LogThread.FLogPath := LogPath;
     LogThread.FLogPath := LogThread.FLogPath +
-                          FormatDateTime('yyyy-mm-dd-hh-mm-ss-', now);
+                          FormatDateTime('yyyy-mm-dd-hh-mm-ss-', now);  // 前缀为启动时间
     LogThread.Resume;
   end;
 end;

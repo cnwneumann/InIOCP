@@ -5,7 +5,7 @@ interface
 {$Include smmOptions.inc}
 
 uses
-  smmTypes;
+  smmTypes, smmStatistics;
 
 type
   PLargeHeader           = ^TLargeHeader;
@@ -33,6 +33,15 @@ type
   TLargeBlockMemory = object
     OwnerManager: PLargeMemThreadManager;
     Size        : NativeUInt;
+    //PreviousMem,
+    //NextMem: PLargeBlockMemory;
+
+    {$IFDEF Align16Bytes}
+      {$ifndef CPUX64}
+      Filer1: Pointer;  // 16 bytes aligned for 32 bit compiler
+      Filer2: Pointer;
+      {$endif}
+    {$ENDIF}
   end;
 
   TLargeThreadManagerOffset = packed
@@ -45,6 +54,9 @@ type
   end;
 
   TLargeMemThreadManager = object
+  protected
+    //FFirstMem: PLargeBlockMemory;
+    FAllocCount, FAllocSize: NativeUInt;
   public
     SizeType   : TSizeType;
     OwnerThread: PBaseThreadManager;
@@ -56,6 +68,7 @@ type
     //function ReallocMem(aMemory: Pointer; aSize: NativeUInt): Pointer;
 
     procedure CheckMem(aMemory: Pointer = nil);
+    procedure DumpToFile(aFile: THandle; aTotalStats, aSingleStats: PThreadMemManagerStats);
 
     function GetMemWithHeader(aSize: NativeUInt) : Pointer;
     function FreeMemWithHeader(aMemory: Pointer): NativeInt;
@@ -76,6 +89,21 @@ begin
   { TODO -oAM : check if valid memory (large)}
 end;
 
+procedure TLargeMemThreadManager.DumpToFile(aFile: THandle; aTotalStats,
+  aSingleStats: PThreadMemManagerStats);
+begin
+  WriteToFile(aFile, 'TLargeMemThreadManager'#13#10);
+  WriteToFile(aFile, '- Alloc count: ');
+  WriteNativeUIntToStrBuf(aFile, FAllocCount);
+  WriteToFile(aFile, ', Alloc size: ');
+  WriteNativeUIntToStrBuf(aFile, FAllocSize);
+
+  Inc(aTotalStats.LargeMemoryStats.AllocCount, FAllocCount);
+  Inc(aTotalStats.LargeMemoryStats.AllocSize, FAllocSize);
+  Inc(aSingleStats.LargeMemoryStats.AllocCount, FAllocCount);
+  Inc(aSingleStats.LargeMemoryStats.AllocSize, FAllocSize);
+end;
+
 function TLargeMemThreadManager.FreeMem(aMemory: Pointer): NativeInt;
 var
   pblock: PLargeBlockMemory;
@@ -85,6 +113,8 @@ begin
   Result := 0;
   pblock := aMemory;
   Assert(pblock.Size > C_MAX_MEDIUMMEM_SIZE);
+  Dec(FAllocCount);
+  Dec(FAllocSize, pblock.Size);
 
   VirtualQuery(pblock, meminfo, SizeOf(meminfo));
   //1 big complete block?
@@ -116,6 +146,26 @@ var
   pblock : PLargeBlockMemory;
 begin
   pblock := PLargeBlockMemory(NativeUInt(aMemory) - SizeOf(TLargeBlockMemory) - SizeOf(TLargeHeader));
+
+  Dec(FAllocCount);
+  Dec(FAllocSize, pblock.Size);
+
+  {
+  if pblock.PreviousMem <> nil then
+    pblock.PreviousMem.NextMem := pblock.NextMem;
+  if pblock.NextMem <> nil then
+    pblock.NextMem.PreviousMem := pblock.PreviousMem;
+  if FFirstMem = pblock then
+  begin
+    FFirstMem := pblock.NextMem;
+    if FFirstMem <> nil then
+      FFirstMem.PreviousMem := nil;
+  end;
+
+  pblock.NextMem := nil;
+  pblock.PreviousMem := nil;
+  }
+
   Result := Self.FreeMem(pblock);
 end;
 
@@ -128,6 +178,9 @@ begin
 
   if Result = nil then
     System.Error(reOutOfMemory);
+
+  Inc(FAllocCount);
+  Inc(FAllocSize, aSize);
   //if NativeUInt(Result) > NativeUInt(1 shl 31) then        more than 2gb possible!
   //  System.Error(reInvalidPtr);
 end;
@@ -160,6 +213,28 @@ begin
   pheader.Size       := iAllocSize - SizeOf(TLargeBlockMemory) - SizeOf(TLargeHeader);
 
   Result := Pointer(NativeUInt(pheader) + SizeOf(TLargeHeader));
+
+  {$IFDEF SCALEMM_MAGICTEST}
+  Assert(pheader.Magic1 = 0);  //not in use!
+  pheader.Magic1 := 123456789; //mark in use
+  {$ENDIF}
+  Assert( NativeUInt(Result) AND 3 = 0);
+  {$IFDEF Align8Bytes}
+  Assert( NativeUInt(Result) AND 7 = 0);
+  {$ENDIF}
+  {$IFDEF Align16Bytes}
+  Assert( NativeUInt(Result) AND 15 = 0);
+  {$ENDIF}
+
+  Inc(FAllocCount);
+  Inc(FAllocSize, pblock.Size);
+  {
+  pblock.PreviousMem := nil;
+  pblock.NextMem := FFirstMem;
+  if FFirstMem <> nil then
+    FFirstMem.PreviousMem := pblock;
+  FFirstMem := pblock;
+  }
 end;
 
 procedure TLargeMemThreadManager.Init;
@@ -185,6 +260,7 @@ begin
   begin
     //iAllocSize := iAllocSize + (iAllocSize shr 2);       //add 1/4 extra  -> alread done!?
     iAllocSize := (iAllocSize + LargeBlockGranularity) and -LargeBlockGranularity; //round to 64k
+    Inc(FAllocSize, iAllocSize - pblock.Size);
 
     //try to expand current mem (in place)
     pnextblock := PLargeBlockMemory( NativeUInt(pblock) + pblock.Size );
@@ -222,7 +298,7 @@ begin
   else
   //too much downscale
   begin
-    Result := PThreadMemManager(Self.OwnerThread).GetMem(iAllocSize); //possible "medium" or "small" mem!
+    Result := PThreadMemManager(Self.OwnerThread).FastGetMem(iAllocSize); //possible "medium" or "small" mem!
     Move(aMemory^, Result^, aSize); // copy (use smaller new size)
     Self.FreeMem(pblock);
   end;
@@ -231,9 +307,11 @@ end;
 initialization
   {$IFDEF Align8Bytes}
   Assert( SizeOf(TLargeHeader) AND 7 = 0);
+  Assert( SizeOf(TLargeBlockMemory) AND 7 = 0);
   {$ENDIF}
   {$IFDEF Align16Bytes}
   Assert( SizeOf(TLargeHeader) AND 15 = 0);
+  Assert( SizeOf(TLargeBlockMemory) AND 15 = 0);
   {$ENDIF}
   Assert( SizeOf(TLargeHeader) = SizeOf(TBaseMemHeader) );
 

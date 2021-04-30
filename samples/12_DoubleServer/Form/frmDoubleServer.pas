@@ -16,7 +16,7 @@ type
     InHttpDataProvider1: TInHttpDataProvider;
     InHttpDataProvider2: TInHttpDataProvider;
     procedure InHttpDataProvider1Get(Sender: TObject; Request: THttpRequest;
-      Respone: THttpRespone);
+      Response: THttpResponse);
     procedure btn1Click(Sender: TObject);
     procedure Button2Click(Sender: TObject);
     procedure InIOCPServer2AfterOpen(Sender: TObject);
@@ -53,10 +53,10 @@ begin
 end;
 
 procedure TFormDblServer.InHttpDataProvider1Get(Sender: TObject; Request: THttpRequest;
-  Respone: THttpRespone);
+  Response: THttpResponse);
 begin
-  Respone.SetContent('<p>Hello World.</p>');
-  Respone.AddContent('<p>服务器时间：' + GetHttpGMTDateTime + '</p>');
+  Response.SetContent('<p>Hello World.</p>');
+  Response.AddContent('<p>服务器时间：' + GetHttpGMTDateTime + '</p>');
 end;
 
 procedure TFormDblServer.InIOCPServer1AfterOpen(Sender: TObject);

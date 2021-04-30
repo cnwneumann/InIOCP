@@ -1,9 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <BorlandProject>
 	<Transactions>
-    <Transaction>1899-12-30 00:00:00.000.dfm,D:\My Documents\RAD Studio\Projects\Unit8.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\13_HttpServiceApp\Form\svInIOCPService.dfm</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\13_HttpServiceApp\Package\InIOCPService.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\13_HttpServiceApp\Package\InIOCPHTTPService.bdsproj</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.bdsproj,D:\My Documents\RAD Studio\Projects\Project1.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\13_HttpServiceApp\Package\InIOCPService.bdsproj</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.pas,D:\My Documents\RAD Studio\Projects\Unit8.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\13_HttpServiceApp\Form\svInIOCPService.pas</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\13_HttpServiceApp\Package\InIOCPHTTPService.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\13_HttpServiceApp\Package\InIOCPService.bdsproj</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\13_HttpServiceApp\Package\InIOCPService.bdsproj=D:\My Documents\RAD Studio\Projects\Project1.bdsproj</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\13_HttpServiceApp\Form\svInIOCPService.dfm=D:\My Documents\RAD Studio\Projects\Unit8.dfm</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\13_HttpServiceApp\Form\svInIOCPService.pas=D:\My Documents\RAD Studio\Projects\Unit8.pas</Transaction>
   </Transactions>
 </BorlandProject>

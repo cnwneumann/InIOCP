@@ -14,11 +14,12 @@ type
     btnStart: TButton;
     btnStop: TButton;
     FrameIOCPSvrInfo1: TFrameIOCPSvrInfo;
+    Memo1: TMemo;
     procedure FormCreate(Sender: TObject);
     procedure btnStartClick(Sender: TObject);
     procedure btnStopClick(Sender: TObject);
     procedure InHttpDataProvider1Get(Sender: TObject; Request: THttpRequest;
-      Respone: THttpRespone);
+      Response: THttpResponse);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure InHttpDataProvider1Accept(Sender: TObject; Request: THttpRequest;
       var Accept: Boolean);
@@ -217,7 +218,7 @@ begin
 end;
 
 procedure TFormInIOCPWebQueryScores.InHttpDataProvider1Get(Sender: TObject;
-  Request: THttpRequest; Respone: THttpRespone);
+  Request: THttpRequest; Response: THttpResponse);
 var
   i: Integer;
   ExamNo: TExamNumber;
@@ -228,36 +229,40 @@ begin
   begin
     // 查询成绩
     ExamNo := Request.Params.AsString['exam_no'];
+    Memo1.Lines.Add('准考证号=' + ExamNo);
+    
     if (Length(ExamNo) > 0) then
       for i := 0 to High(FScores) do
       begin
         Scores := @FScores[i];
-        if (Scores^.ExamNo = ExamNo) then // 找到记录
+        if (Scores^.ExamNo = ExamNo) then  // 找到记录
         begin
-          Respone.SetContent(Scores^.Scores);  // 发送 JSON 成绩
+          Response.SetContent(Scores^.Scores);  // 发送 JSON 成绩
           Exit;
         end;
       end;
     // 考生不存在！
-    Respone.SetContent('NOT_EXISTS');
+    Response.SetContent('NOT_EXISTS');
   end else
   if (Request.URI = '/return') then
   begin
     // 重定位
-    Respone.Redirect('/');
+    Response.Redirect('/');
   end else
   if (Request.URI = '/query.htm') then
   begin
     // 返回查询页
-    Respone.TransmitFile(FWebSitePath + 'query.htm');
+    Response.TransmitFile(FWebSitePath + 'query.htm');
   end else
   if (Request.URI = '/favicon.ico') then
   begin
-    Respone.StatusCode := 204;  // 没有东西
+    Response.StatusCode := 204;  // 没有东西
   end else
   begin
     // 返回首页
-    Respone.TransmitFile(FWebSitePath + 'index.htm');
+    Memo1.Lines.Add('传入参数，x=' + Request.Params.AsString['x']);
+
+    Response.TransmitFile(FWebSitePath + 'index.htm');
   end;
 end;
 

@@ -16,6 +16,12 @@ object FormInIOCPMessageServer: TFormInIOCPMessageServer
   OnCreate = FormCreate
   PixelsPerInch = 120
   TextHeight = 12
+  object Bevel1: TBevel
+    Left = 569
+    Top = 72
+    Width = 307
+    Height = 233
+  end
   object Bevel2: TBevel
     Left = 569
     Top = 318
@@ -30,8 +36,8 @@ object FormInIOCPMessageServer: TFormInIOCPMessageServer
     Caption = #31471#21475#65306
   end
   object Label1: TLabel
-    Left = 591
-    Top = 201
+    Left = 592
+    Top = 171
     Width = 36
     Height = 12
     Caption = #29992#25143#65306
@@ -50,12 +56,6 @@ object FormInIOCPMessageServer: TFormInIOCPMessageServer
     Width = 48
     Height = 12
     Caption = #21457#36865#21040#65306
-  end
-  object Bevel1: TBevel
-    Left = 569
-    Top = 72
-    Width = 307
-    Height = 233
   end
   object Memo1: TMemo
     Left = 8
@@ -105,7 +105,7 @@ object FormInIOCPMessageServer: TFormInIOCPMessageServer
   end
   object btnConnect: TButton
     Left = 591
-    Top = 92
+    Top = 84
     Width = 75
     Height = 25
     Caption = #36830#25509
@@ -113,8 +113,8 @@ object FormInIOCPMessageServer: TFormInIOCPMessageServer
     OnClick = btnConnectClick
   end
   object btnDisconnect: TButton
-    Left = 591
-    Top = 125
+    Left = 680
+    Top = 84
     Width = 75
     Height = 25
     Caption = #26029#24320
@@ -167,8 +167,8 @@ object FormInIOCPMessageServer: TFormInIOCPMessageServer
     OnClick = btnLogoutClick
   end
   object EditUserName: TEdit
-    Left = 591
-    Top = 203
+    Left = 592
+    Top = 189
     Width = 75
     Height = 20
     ImeName = #35895#27468#25340#38899#36755#20837#27861' 2'
@@ -237,6 +237,17 @@ object FormInIOCPMessageServer: TFormInIOCPMessageServer
     Caption = #33258#23450#20041
     TabOrder = 16
     OnClick = Button1Click
+  end
+  object LabeledEdit1: TLabeledEdit
+    Left = 592
+    Top = 144
+    Width = 74
+    Height = 20
+    EditLabel.Width = 36
+    EditLabel.Height = 12
+    EditLabel.Caption = #20998#32452#65306
+    ImeName = #35895#27468#25340#38899#36755#20837#27861' 2'
+    TabOrder = 17
   end
   object InIOCPServer1: TInIOCPServer
     IOCPManagers.ClientManager = InClientManager1

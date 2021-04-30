@@ -3,12 +3,13 @@
 interface
 
 uses
-  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, DateUtils,
-  Forms, iocp_zlib, Dialogs, StdCtrls, SyncObjs, ExtCtrls, iocp_base, iocp_log,
-  iocp_server, iocp_msgPacks, iocp_sockets, iocp_objPools, IniFiles, iocp_md5,
-  iocp_clients, iocp_managers, fmIOCPSvrInfo, Grids, iocp_sqlMgr,
-  DBGrids, ComCtrls, DB, DBClient, Provider, http_base, http_objects,
-  iocp_wsClients;
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls,
+  DateUtils, Forms, DBGrids, ComCtrls, DB, DBClient, Provider, Dialogs,
+  StdCtrls, SyncObjs, ExtCtrls, IniFiles, Grids,
+  fmIOCPSvrInfo, iocp_zlib,  iocp_base, iocp_log,
+  iocp_server, iocp_msgPacks, iocp_sockets, iocp_objPools, iocp_md5,
+  iocp_clients, iocp_managers, iocp_sqlMgr, http_base,
+  http_objects, iocp_wsClients, iocp_clientBase;
 
 type
   TFormTestIOCPServer = class(TForm)
@@ -94,6 +95,7 @@ type
     btnWSListFiles: TButton;
     InDBSQLClient1: TInDBSQLClient;
     ClientDataSet1: TClientDataSet;
+    Button2: TButton;
     procedure btnStartClick(Sender: TObject);
     procedure btnStopClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -182,15 +184,13 @@ type
     procedure InCertifyClient1Certify(Sender: TObject; Action: TActionType;
       ActResult: Boolean);
     procedure InHttpDataProvider1Get(Sender: TObject; Request: THttpRequest;
-      Respone: THttpRespone);
+      Response: THttpResponse);
     procedure InHttpDataProvider1Post(Sender: TObject;
-      Request: THttpRequest; Respone: THttpRespone);
+      Request: THttpRequest; Response: THttpResponse);
     procedure InFileManager1AfterUpload(Sender: TObject;
                  Params: TReceiveParams; Document: TIOCPDocument);
     procedure InFileManager1AfterDownload(Sender: TObject;
                  Params: TReceiveParams; Document: TIOCPDocument);
-    procedure InHttpDataProvider1InvalidSession(Sender: TObject;
-      Request: THttpRequest; Respone: THttpRespone);
     procedure InIOCPServer1DataSend(Sender: TBaseSocket; Size: Cardinal);
     procedure InHttpDataProvider1Accept(Sender: TObject; Request: THttpRequest;
       var Accept: Boolean);
@@ -235,11 +235,14 @@ type
     procedure InWSConnection1ReturnResult(Sender: TObject; Result: TJSONResult);
     procedure btnWSListFilesClick(Sender: TObject);
     procedure InWSConnection1AfterConnect(Sender: TObject);
-    procedure InIOCPServer1Connect(Sender: TObject; Socket: TBaseSocket);
     procedure InIOCPServer1Disconnect(Sender: TObject; Socket: TBaseSocket);
     procedure InMessageManager1ListFiles(Sender: TObject;
       Params: TReceiveParams; Result: TReturnResult);
     procedure InIOCPServer1DataReceive(Sender: TBaseSocket; Size: Cardinal);
+    procedure InDBQueryClient1AfterLoadData(DataSet: TClientDataSet;
+      const TableName: string);
+    procedure InIOCPServer1Connect(Sender: TObject; Socket: TBaseSocket);
+    procedure Button2Click(Sender: TObject);
   private
     { Private declarations }
     FAppDir: String;
@@ -292,8 +295,6 @@ begin
   // 开启日志
 
   iocp_log.TLogThread.InitLog(FAppDir + 'log');
-
-  iocp_utils.IniDateTimeFormat;   // 设置时间格式
 
   if edtHost.Text <> '' then
     InIOCPServer1.ServerAddr := edtHost.Text;
@@ -451,6 +452,24 @@ begin
 
   Msg.Post(atCustomAction);
 
+end;
+
+procedure TFormTestIOCPServer.Button2Click(Sender: TObject);
+var
+  Msg: TCustomPack;
+  S: AnsiString;
+begin
+  Msg := TCustomPack.Create;
+  Msg.AsString['xxxx'] := 'aaaa';
+  Msg.AsString['xxxx'] := 'aaaabbbbb';
+  Msg.AsVariant['xxxx'] := 1111;
+  Msg.AsVariant['xxxx'] := 'aaaabbbbbsssfsfsssss';
+
+  S := 'adslfsfsfsfafsfsdfadslfsfsfsfafsfsdfadslfsfsfsfafsfsdfadslfsfsfsfafs';
+  Msg.AsVariant['vv'] := BufferToVariant(PAnsiChar(S), Length(S));
+  Msg.AsVariant['vv'] := BufferToVariant(PAnsiChar(S), Length(S));
+    
+  Msg.Free;
 end;
 
 procedure TFormTestIOCPServer.btnWSConnectClick(Sender: TObject);
@@ -637,7 +656,7 @@ procedure TFormTestIOCPServer.InCertifyClient1ListClients(Sender: TObject;
 begin
   // ++
   AddMessage(mmoClient, IntToStr(No) + '/' + IntToStr(Count) + ', ' +
-             Client^.Name + '  ->  ' + IntToStr(Cardinal(Client^.Socket)) + ', ' +
+             Client^.Group + ':' + Client^.Name + '  ->  ' + IntToStr(Cardinal(Client^.Socket)) + ', ' +
              Client^.PeerIPPort + ', ' + DateTimeToStr(Client^.LoginTime) + ', ' +
              DateTimeToStr(Client^.LogoutTime));
 end;
@@ -1028,6 +1047,13 @@ begin
   end;
 end;
 
+procedure TFormTestIOCPServer.InDBQueryClient1AfterLoadData(
+  DataSet: TClientDataSet; const TableName: string);
+begin
+  // 数据已经装载到 DataSet，数据集合对应的表名称为 TableName
+  // 此事件在 OnReturnResult 之前执行
+end;
+
 procedure TFormTestIOCPServer.InDBQueryClient1ReturnResult(Sender: TObject;
   Result: TResultParams);
 begin
@@ -1306,7 +1332,7 @@ begin
 end;
 
 procedure TFormTestIOCPServer.InHttpDataProvider1Get(Sender: TObject;
-  Request: THttpRequest; Respone: THttpRespone);
+  Request: THttpRequest; Response: THttpResponse);
 var
   Source, Target: String;
   Stream: TStream;
@@ -1345,55 +1371,53 @@ begin
   if Respone.StatusCode <> 304 then // // 304 Not Modified，文件没修改过
     Respone.AddHeader(rshContentType, 'text/html; charset=gb2312');
 
-  Exit;  // ==================     }
+  Exit;
+}
 
   if (Request.URI = '/hello') then
-    Respone.SetContent('hello world')
+    Response.SetContent('hello world')
   else
-{  if (Request.URI = '/') then
-    Respone.TransmitFile('web_site\html\index.htm')
-  else       }
 
   if Pos('/downloads', Request.URI) > 0 then
   begin
     FileName := FAppDir + Request.URI;
     if Request.URI = '/web_site/downloads/中文-A09.txt' then
-      Respone.TransmitFile(FileName)          // IE浏览器自动显示
+      Response.TransmitFile(FileName)          // IE浏览器自动显示
     else
     if Request.URI = '/web_site/downloads/中文-A10.txt' then
-      Respone.TransmitFile(FileName, False)   // 让浏览器不自动显示
+      Response.TransmitFile(FileName, False)   // 让浏览器不自动显示
     else
     if Request.URI = '/web_site/downloads/httptest.exe' then
-      Respone.TransmitFile(FileName)
+      Response.TransmitFile(FileName)
     else
     if Request.URI = '/web_site/downloads/InIOCP技术要点.doc' then
     begin
    //   Respone.TransmitFile(FileName);
       Stream := TIOCPDocument.Create(AdjustFileName(FileName));
-      Respone.SendStream(Stream);         // 发送文件流（自动释放）
+      Response.SendStream(Stream);         // 发送文件流（自动释放）
     end else
     if Request.URI = '/web_site/downloads/InIOCP技术要点2.doc' then
     begin
       FileName := FAppDir + '/web_site/downloads/InIOCP技术要点.doc';
       Stream := TIOCPDocument.Create(AdjustFileName(FileName));
-      Respone.SendStream(Stream, True);   // 压缩文件流（自动释放）
+      Response.SendStream(Stream, True);   // 压缩文件流（自动释放）
     end else
     if Request.URI = '/web_site/downloads/jdk-8u77-windows-i586.exe' then
     begin
       // 测试大文件下载
       if FileExists('F:\Backup\jdk-8u77-windows-i586.exe') then
-        Respone.TransmitFile('F:\Backup\jdk-8u77-windows-i586.exe')
+        Response.TransmitFile('F:\Backup\jdk-8u77-windows-i586.exe')
       else
-        Respone.TransmitFile('web_site\downloads\jdk-8u77-windows-i586.exe');
+        Response.TransmitFile('web_site\downloads\jdk-8u77-windows-i586.exe');
     end else
     if Request.URI = '/web_site/downloads/test.jpg' then
     begin
-      Respone.TransmitFile('web_site\downloads\test.jpg');
+      Response.TransmitFile('web_site\downloads\test.jpg');
     end else    
     begin           // 测试 chunk，分块发送
       Stream := TIOCPDocument.Create(AdjustFileName(FileName));
       try
-        Respone.SendChunk(Stream);  // 立刻发送，不释放（改进，内部自动发送结束标志）
+        Response.SendChunk(Stream);  // 立刻发送，不释放（改进，内部自动发送结束标志）
       finally
         Stream.Free;
       end;
@@ -1401,28 +1425,11 @@ begin
 
   end else
 
-  // 2. ajax 动态页面
+  // 2. ajax 动态页面，参考网页文件 login.htm、ajax.htm
   if Pos('/ajax', Request.URI) > 0 then
   begin
-    if Request.URI = '/ajax/login' then  // 登录
-      Respone.TransmitFile('web_site\ajax\login.htm')
-    else
-    if Request.URI = '/ajax/ajax_text.txt' then
-    begin
-      // AJAX 请求文本，IE 可能乱码，chrome 正常
-      if Respone.HasSession then
-        Respone.TransmitFile('web_site\ajax\ajax_text.txt')
-      else  //  用转义符，返回 INVALID_SESSION，客户端作相应检查
-        Respone.SetContent(HTTP_INVALID_SESSION);
-    end else
-    if Request.URI = '/ajax/server_time.pas' then
-    begin
-      // AJAX 取服务器时间
-      if Respone.HasSession then
-        Respone.SetContent('<p>服务器时间：' + GetHttpGMTDateTime + '</p>')
-      else  // 用转义符，返回 INVALID_SESSION，客户端作相应检查
-        Respone.SetContent(HTTP_INVALID_SESSION);
-    end else
+
+    // 放在前面，不检查 Session，方便 ab.exe 大并发测试 
     if Request.URI = '/ajax/query_xzqh.pas' then
     begin
       // AJAX 查询数据表，方法：
@@ -1430,24 +1437,40 @@ begin
       // 2. 指定数模：TBusiWorker(Sender).DataModules[1].HttpExecQuery(Request, Respone)
 
       // 测试大并发查询数据库
-      //   使用工具 httpTest.exe，URL 用：
-      //   /ajax/query_xzqh.pas?code=110112&SQL=Select_tbl_xzqh2
+      //   使用工具 ab.exe，URL 用：
+      //   /ajax/query_xzqh.pas?SQL=Select_tbl_xzqh2
       //   使用 Select_tbl_xzqh2 对应的 SQL 命令查询数据
-      TBusiWorker(Sender).DataModule.HttpExecQuery(Request, Respone);
+      TBusiWorker(Sender).DataModule.HttpExecQuery(Request, Response);
 
-{      if Respone.HasSession then
-        TBusiWorker(Sender).DataModules[1].HttpExecQuery(Request, Respone)
+      // 有多个数模时，使用 DataModules[x]
+{     if Response.HasSession then
+        TBusiWorker(Sender).DataModules[1].HttpExecQuery(Request, Response)
       else
-        Respone.SetContent(HTTP_INVALID_SESSION); }
-
+        Response.SetContent(HTTP_INVALID_SESSION); }
     end else
-    if Request.URI = '/ajax/quit' then     // 退出登录
+
+    if (Request.URI = '/ajax/login') then  // 登录
+      Response.TransmitFile('web_site\ajax\login.htm')
+    else
+
+    // 退出登录 或 Session 无效
+    if (Request.URI = '/ajax/quit') or not Response.HasSession then
     begin
-      // 删除 Sessions，安全退出
-      //   参考页面 ajax.htm 的函数 function getExit()，用 GET 方法，状态码 = 200
-      if Respone.HasSession then
-        Respone.InvalidSession;
-    end;
+      // 客户端的 ajax 代码内部不能监测重定位 302
+      // 调整：InvalidSession 改为 RemoveSession，不直接发送 HTTP_INVALID_SESSION      
+      Response.RemoveSession;  // 删除、返回无效的 Cookie, 安全退出
+      Response.SetContent(HTTP_INVALID_SESSION);  // 客户端重定位到登录页面
+    end else
+
+    if Request.URI = '/ajax/ajax_text.txt' then
+      // AJAX 请求文本，IE 可能乱码，chrome 正常
+      Response.TransmitFile('web_site\ajax\ajax_text.txt')
+    else
+
+    if Request.URI = '/ajax/server_time.pas' then
+      // AJAX 取服务器时间
+      Response.SetContent('<p>服务器时间：' + GetHttpGMTDateTime + '</p>');
+
   end else
   begin
 
@@ -1455,33 +1478,19 @@ begin
     // 三种类型的表单，POST 的参数编码不同，解码不同
 
     if (Request.URI = '/') then
-      Respone.TransmitFile('web_site\html\index.htm')
+      Response.TransmitFile('web_site\html\index.htm')
     else
     if (Request.URI = '/favicon.ico') then
-      Respone.StatusCode := 204   // 没有东西
+      Response.StatusCode := 204   // 没有东西
     else  // 页面增加后缀名 .htm
-      Respone.TransmitFile('web_site\html\' + Request.URI);
+      Response.TransmitFile('web_site\html\' + Request.URI);
 
   end;
 
 end;
 
-procedure TFormTestIOCPServer.InHttpDataProvider1InvalidSession(Sender: TObject;
-  Request: THttpRequest; Respone: THttpRespone);
-begin
-  // 请求带 Session，但 Session 无效时调用此事件
-  if Pos('/ajax', Request.URI) = 1 then
-    if (Request.URI = '/ajax/login') then
-      Respone.TransmitFile('web_site\ajax\login.htm')
-    else
-      // 浏览器 ajax 中无法响应 302 状态，不能用 Redirect
-      //   用转义符，返回 INVALID_SESSION，客户端作相应检查，
-      //   也可以使用其他方法，如 JSON 数据
-      Respone.SetContent(HTTP_INVALID_SESSION);
-end;
-
 procedure TFormTestIOCPServer.InHttpDataProvider1Post(Sender: TObject;
-  Request: THttpRequest; Respone: THttpRespone);
+  Request: THttpRequest; Response: THttpResponse);
 begin
   // Post：已经接收完毕，调用此事件
   //   此时：Request.Complete = True
@@ -1498,10 +1507,10 @@ begin
     if (Request.Params.AsString['user_name'] <> '') and
       (Request.Params.AsString['user_password'] <> '') then   // 登录成功
     begin
-      Respone.CreateSession;  // 生成 Session！
-      Respone.TransmitFile('web_site\ajax\ajax.htm');
+      Response.CreateSession;  // 生成 Session！
+      Response.TransmitFile('web_site\ajax\ajax.htm');
     end else
-      Respone.Redirect('/ajax/login');  // 重定位到登录页面
+      Response.Redirect('/ajax/login');  // 重定位到登录页面
   end else
   begin
     with mmoServer.Lines do
@@ -1512,8 +1521,8 @@ begin
       Add('    onefile=' + Request.Params.AsString['onefile']);
       Add('  morefiles=' + Request.Params.AsString['morefiles']);
     end;
-    Respone.SetContent('<html><body>InIOCP HTTP 服务！<br>提交成功！<br>');
-    Respone.AddContent('<a href="' + Request.URI + '">返回</a><br></body></html>');
+    Response.SetContent('<html><body>InIOCP HTTP 服务！<br>提交成功！<br>');
+    Response.AddContent('<a href="' + Request.URI + '">返回</a><br></body></html>');
   end;
 end;
 
@@ -1599,7 +1608,7 @@ procedure TFormTestIOCPServer.InMessageClient1MsgReceive(Sender: TObject;
 begin
   // 收到其他客户端的消息
   AddMessage(mmoClient, 'USER_A 收到客户消息：' +
-             Msg.Msg + ', 来自:' + IntToStr(Msg.Owner));
+             Msg.Msg + ', 来自:' + IntToStr(LongWord(Msg.Owner)));
 end;
 
 procedure TFormTestIOCPServer.InMessageClient1ReturnResult(Sender: TObject;
@@ -1728,7 +1737,7 @@ begin
   //  3. mtAttachment: 用 InIOCP-JSON 封装的附件流。
 
   // MsgType 为 mtDefault 时的 Socket 相关属性：
-  // 1、         Data：本次收到的数据内容首位置
+  // 1、       InData：本次收到的数据内容首位置（不是Data，以前版本有误）
   // 2、FrameRecvSize：本次收到的内容长度
   // 3、    FrameSize：当前帧的内容总长度
   // 4、      MsgSize：当前消息累计收到的内容长度（可能含多帧数据）
@@ -1801,7 +1810,7 @@ begin
 
     mtAttachment: begin
       // 2. InIOCP 扩展的 附件流 数据（此时 Socket.Complete = True）
-      //    如果 Socket.JSON.Attachment 未空，照样会执行到此
+      //    如果 Socket.JSON.Attachment 为空，照样会执行到此
 
       // 系统会自动关闭附件流 Socket.JSON.Attachment
       mmoServer.Lines.Add('附件接收完毕（系统会自动关闭附件流）。');
@@ -1827,11 +1836,11 @@ begin
 
       // 3. 标准的 WebSocket 数据（如浏览器发送来的，Socket.Complete 未必为 True）
       
-      if Socket.Complete then // 消息接收完毕
+      if Socket.Completed then // 消息接收完毕
       begin
         // 双字节的 UTF8To 系列函数的传入参数以 AnsiString 为主
         // 定义 S 为 AnsiString 更方便操作
-        SetString(S, Socket.Data, Socket.FrameRecvSize); // 把消息转为 String
+        SetString(S, Socket.InData, Socket.FrameRecvSize); // 把消息转为 String
 
         Socket.UserName := System.Utf8ToAnsi(S); // XE10 还可以用 UTF8ToString(S)
         mmoServer.Lines.Add(Socket.UserName);
@@ -2289,12 +2298,20 @@ begin
     Params.AsDateTime['datetime'] := Now;
     Params.AsString['中文变量'] := '中文文本。。。。。。';
 
+    // 测试
+    Params.AsVariant['VVVV'] := 'aaa中文';
+    Params.AsVariant['VVVV'] := 1235;
+    Params.AsVariant['VVVV'] := '中文文本。。。。。。';
+    Params.AsVariant['VVVV'] := NULL;
+
+    mmoServer.Lines.Add(Params.AsVariant['vvvv']);
+
     // 把小文件当作变量/参数/字段发送
     Params.AsStream['strm'] := TFileStream.Create('测试2.txt', fmShareDenyWrite);
 //    Params.AsDocument['doc'] := '测试3.txt';
 
     // 把文件当作附件发送
-    Params.LoadFromFile('autoClick.7z');
+    Params.LoadFromFile('测试2.7z');
 
     Params.CheckType := ctMD5; // ctMurmurHash;
     Params.ZipLevel := zcDefault; // 压缩率

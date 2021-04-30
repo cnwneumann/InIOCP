@@ -110,6 +110,7 @@ object FormInIOCPWsDBClient: TFormInIOCPWsDBClient
     ServerPort = 80
     AfterConnect = InWSConnection1AfterConnect
     AfterDisconnect = InWSConnection1AfterConnect
+    URL = '/ws'
     OnReceiveData = InWSConnection1ReceiveData
     OnReceiveMsg = InWSConnection1ReceiveMsg
     OnReturnResult = InWSConnection1ReturnResult

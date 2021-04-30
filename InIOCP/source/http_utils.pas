@@ -19,6 +19,7 @@ function ChangeSlash(const FileName: AnsiString): AnsiString;
 function CreateBoundary: AnsiString;
 function CompareBuffer(Buf: PAnsiChar; const S: AnsiString; IgnoreCase: Boolean = False): Boolean;
 
+function CheckUTFEncode(const Text: AnsiString; var Count: Integer): Boolean;
 function DecodeHexText(const Text: AnsiString): AnsiString;
 function ExtractFieldInf(var Buf: PAnsiChar; Len: Integer; var FieldValue: AnsiString): TFormElementType;
 
@@ -36,8 +37,7 @@ function FindInBuffer2(Buf: PAnsiChar; Len: Integer; const Text: AnsiString): Bo
 function SearchInBuffer(var Buf: PAnsiChar; Len: Integer; const Text: AnsiString): Boolean;
 function SearchInBuffer2(var Buf: PAnsiChar; Len: Integer; const Text: AnsiString): Boolean;
 
-function URLDecode(const URL: AnsiString): AnsiString;
-function URLEncode(const URL: AnsiString): AnsiString;
+function InURLEncode(const URL: AnsiString): AnsiString;
 
 implementation
 
@@ -132,37 +132,80 @@ begin
     end;
 end;
 
-function _DecodeHexChar(var Buf: PAnsiChar): AnsiChar; {$IFDEF USE_INLINE} inline; {$ENDIF}
+function CheckUTFEncode(const Text: AnsiString; var Count: Integer): Boolean;
 var
-  Value: SmallInt;
+  Byt: Byte;
+  pB, pE: PAnsiChar;
 begin
-  // 解码十六进制字符（前一字符应该为 %）
-  // %D2%BB%B8%F6%CE%C4%B1%BE%A1%A3
-  Inc(Buf);
-  if (Ord(Buf^) >= 97) then          // 小写 A..Z = 97..
-    Buf^ := AnsiChar(Ord(Buf^) - 32);
+  // 判断是否含有 UTF-8 编码：代码来自网络，有优化，
+  //                          遍历，要全部符合 UTF-8 编码规律
+  // 2字节：110xxxxx 10xxxxxx
+  // 3字节：1110xxxx 10xxxxxx 10xxxxxx
 
-  if (Buf^ in ['0'..'9']) then       // Asc(0) = 48
-    Value := (Ord(Buf^) - 48) shl 4
-  else
-    Value := (Ord(Buf^) - 55) shl 4; // Asc(A) = 65, 对应 10
+  Count := 0;  // 字符总数
+  Result := True;
 
-  Inc(Buf);
-  if (Buf^ in ['0'..'9']) then
-    Inc(Value, Ord(Buf^) - 48)
-  else
-    Inc(Value, Ord(Buf^) - 55);
+  pB := PAnsiChar(Text);
+  pE := pB + Length(Text);
 
-  Result := AnsiChar(Value);
+  while Result and (pB < pE) do
+  begin
+    Byt := Byte(pB^);
+    if (Byt < $80) then  // 值小于0x80=128的为ASCII字符
+    begin
+      Inc(pB);
+      Inc(Count);
+    end else
+    if (Byt < $E0) then  // 此范围内为2字节UTF-8字符
+    begin
+      Result := Result and (pB < pE) and (Byte((pB + 1)^) and $C0 = $80);
+      Inc(pB, 2);
+      Inc(Count, 2);
+    end else
+    if (Byt < $F0) then  // 此范围内为3字节UTF-8字符
+    begin
+      Result := Result and (pB < pE - 1) and (Byte((pB + 1)^) and $C0 = $80) and
+                           (Byte((pB + 2)^) and $C0 = $80);
+      Inc(pB, 3);
+      Inc(Count, 2);
+    end else  // 其他情况为无效的UTF-8字符
+    begin
+      Result := False;
+      Exit;
+    end;
+  end;
 end;
 
 function DecodeHexText(const Text: AnsiString): AnsiString;
+  function _DecodeChar(var Buf: PAnsiChar): AnsiChar; {$IFDEF USE_INLINE} inline; {$ENDIF}
+  var
+    Value: SmallInt;
+  begin
+    // 解码十六进制字符（前一字符应该为 %）
+    // %D2%BB%B8%F6%CE%C4%B1%BE%A1%A3
+    Inc(Buf);
+    if (Ord(Buf^) >= 97) then          // 小写 A..Z = 97..
+      Buf^ := AnsiChar(Ord(Buf^) - 32);
+
+    if (Buf^ in ['0'..'9']) then       // Asc(0) = 48
+      Value := (Ord(Buf^) - 48) shl 4
+    else
+      Value := (Ord(Buf^) - 55) shl 4; // Asc(A) = 65, 对应 10
+
+    Inc(Buf);
+    if (Buf^ in ['0'..'9']) then
+      Inc(Value, Ord(Buf^) - 48)
+    else
+      Inc(Value, Ord(Buf^) - 55);
+
+    Result := AnsiChar(Value);
+  end;
 var
   p, p2: PAnsiChar;
 begin
-  // 解码十六进制字符串
-
+  // 解码十六进制字符串，格式：
   // %D2%BB%B8%F6%CE%C4%B1%BE%A1%A3++a
+  // 结果是 UTF 时要继续 UTF8Decode()
 
   SetLength(Result, Length(Text));
 
@@ -174,7 +217,10 @@ begin
     begin
       case p^ of
         #37:  // 百分号 MODULUS %
-          p2^ := _DecodeHexChar(p);
+          if ((p + 1)^ in ['0'..'9', 'a'..'f', 'A'..'F']) then
+            p2^ := _DecodeChar(p)
+          else
+            p2^ := p^;
         #43:  // 加号 +
           p2^ := #32;
         else  // 其他
@@ -551,44 +597,7 @@ begin
 
 end;
 
-function URLDecode(const URL: AnsiString): AnsiString;
-var
-  p, p2: PAnsiChar;
-begin
-  // 解码 Hex 类型的 URL
-  //   中文 -> UTF8 -> Hex
-  // %E4%B8%AD%E5%9B%BDa%E4%B8%AD%E5%9B%BD.txt
-
-  SetLength(Result, Length(URL));
-
-  p := PAnsiChar(URL);
-  p2 := PAnsiChar(Result);
-
-  try
-    while (p^ <> #0) do
-    begin
-      case p^ of
-        #37:   // 百分号 MODULUS %
-          p2^ := _DecodeHexChar(p);
-        #43:  // 加号 +
-          p2^ := #32;
-        else  // 其他
-          p2^ := p^;
-      end;
-      Inc(p);
-      Inc(p2);
-    end;
-
-    SetLength(Result, p2 - PAnsiChar(Result));
-
-    Result := System.Utf8ToAnsi(Result);
-  except
-    Result := URL;
-  end;
-
-end;
-
-function URLEncode(const URL: AnsiString): AnsiString;
+function InURLEncode(const URL: AnsiString): AnsiString;
 var
   S: AnsiString;
   p, p2: PAnsiChar;

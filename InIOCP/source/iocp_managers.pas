@@ -55,14 +55,16 @@ type
     property OnAttachBegin: TAttachmentEvent read FOnAttachBegin write FOnAttachBegin;
     property OnAttachFinish: TAttachmentEvent read FOnAttachFinish write FOnAttachFinish;
   public
-    procedure AddToBackground(Socket: TBaseSocket);
+    procedure AddToBackground(Socket: TBaseSocket);  // 后台执行
+    procedure Wakeup(Socket: TBaseSocket);  // 后台执行完毕后，唤醒客户端
   public
     property GlobalLock: TThreadLock read GetGlobalLock;
   end;
 
   // ================== 流服务管理 类 ======================
 
-  TDataInEvent = procedure(Socket: TStreamSocket; const Data: PAnsiChar; Size: Cardinal) of object;
+  TDataInEvent   = procedure(Socket: TStreamSocket; const Data: PAnsiChar; Size: Cardinal; var Completed: Boolean) of object;
+  TCopyDataEvent = procedure(Socket: TStreamSocket; const ABuffers: PAnsiChar) of object;
 
   TInStreamManager = class(TBaseManager)
   private
@@ -76,6 +78,7 @@ type
     procedure Execute(Socket: TIOCPSocket); override;
   public
     function Logined(const AClientId: String): Boolean;
+    function GetClientData(const AClientId: String; ABuffers: PAnsiChar; AEvent: TCopyDataEvent): Boolean;
     procedure Broadcast(AOwner: TStreamSocket; const AText: string = '');
     procedure SendTo(AOwner: TStreamSocket; const AToClient: string; const AText: string = '');
   published
@@ -107,7 +110,7 @@ type
     destructor Destroy; override;
   public
     procedure Clear;
-    procedure Add(IOCPSocket: TIOCPSocket; ClientRole: TClientRole);
+    procedure Add(IOCPSocket: TIOCPSocket; ClientRole: TClientRole = crClient);
     procedure Disconnect(const UserName: String);
     procedure GetClientState(const UserName: String; Result: TReturnResult);
     procedure RemoveClient(const UserName: string);
@@ -135,8 +138,8 @@ type
     FOnReceive: TRequestEvent;   // 收到消息
     procedure InterCopyPush(ASource, ATarget: TIOCPSocket; AResult: TReturnResult;
                             AToSockets: TInList = nil; CastType: TBroadcastType = btUnknown);
-    procedure InterPushMsg(ASource, ATarget: TIOCPSocket;
-                           AToSockets: TInList = nil; CastType: TBroadcastType = btUnknown);
+    procedure InterPushMsg(ASource, ATarget: TIOCPSocket; AToSockets: TInList = nil;
+                           CastType: TBroadcastType = btUnknown);
     procedure InterPushResultMsg(Socket: TIOCPSocket; Result: TReturnResult;
                                  UserNameList: AnsiString);
     procedure InterSavePushMsg(AOwner: TIOCPSocket; PushMsg: TInList; UserNameList: AnsiString);
@@ -268,7 +271,6 @@ type
     procedure SetCustomManager(const Value: TInCustomManager);
   protected
     procedure Execute(Socket: TIOCPSocket); override;
-  public
     procedure Notification(AComponent: TComponent; Operation: TOperation); override;
   published
     property CustomManager: TInCustomManager read FCustomManager write SetCustomManager;
@@ -284,19 +286,18 @@ type
   private
     FJSONLength: Integer;           // JSON 长度
     FUserName: string;              // 要查找的人
-    FOnBackground: TWebSocketEvent; // 后台执行事件（覆盖）
     FOnReceive: TWebSocketEvent;    // 接收事件
     FOnUpgrade: TOnUpgradeEvent;    // 升级为 WebSocket 事件
     procedure CallbackMethod(ObjType: TObjectType; var FromObject: Pointer;
                              const Data: TObject; var CancelScan: Boolean);
     procedure InterPushMsg(Source, Target: TWebSocket); overload;
     procedure InterPushMsg(Socket: TWebSocket; OpCode: TWSOpCode;
-                           const Text: AnsiString = ''); overload;
+                           const Text: AnsiString = ''; const Group: AnsiString = ''); overload;
   protected
     procedure Execute(Socket: TIOCPSocket); override;
   public
     procedure Broadcast(Socket: TWebSocket); overload;
-    procedure Broadcast(const Text: string; OpCode: TWSOpCode = ocText); overload;
+    procedure Broadcast(const Group, Text: string; OpCode: TWSOpCode = ocText); overload;
 
     procedure Delete(Admin: TWebSocket; const ToUser: String);
     procedure GetUserList(Socket: TWebSocket);
@@ -307,7 +308,6 @@ type
     function Logined(const UserName: String; var Socket: TWebSocket): Boolean; overload;
     function Logined(const UserName: String): Boolean; overload;
   published
-    property OnBackground: TWebSocketEvent read FOnBackground write FOnBackground;  // 覆盖
     property OnReceive: TWebSocketEvent read FOnReceive write FOnReceive;
     property OnUpgrade: TOnUpgradeEvent read FOnUpgrade write FOnUpgrade;
   end;
@@ -322,9 +322,8 @@ type
     procedure SetWebSocketManager(const Value: TInWebSocketManager);
   protected
     procedure Execute(Socket: THttpSocket);
-    procedure UpdateServer;    
-  public
     procedure Notification(AComponent: TComponent; Operation: TOperation); override;
+    procedure UpdateServer;
   published
     property RootDirectory: String read FRootDirectory write FRootDirectory;
     property WebSocketManager: TInWebSocketManager read FWebSocketManager write SetWebSocketManager;
@@ -392,7 +391,8 @@ type
 
     FOnAccept: TAcceptBroker;       // 判断是否接受连接
     FOnBind: TBindIPEvent;          // 绑定服务器
-
+    FOnBeforeForwardData: TForwardDataEvent;  // 转发前事件
+    
     function GetReverseMode: Boolean;
     procedure PostConnectionsEx;
     procedure PostConnections;
@@ -422,6 +422,7 @@ type
   published
     property OnAccept: TAcceptBroker read FOnAccept write FOnAccept;
     property OnBind: TBindIPEvent read FOnBind write FOnBind;
+    property OnBeforeForwardData: TForwardDataEvent read FOnBeforeForwardData write FOnBeforeForwardData;
   end;
 
   // ================== 业务模块调用者 ======================
@@ -456,14 +457,15 @@ type
 implementation
 
 uses
-  iocp_Varis, iocp_server, iocp_threads,
-  iocp_senders, iocp_WsJSON, iocp_wsExt;
+  iocp_Varis, iocp_server, iocp_threads, iocp_WsJSON, iocp_wsExt;
 
 type
 
+  TIOCPServerRef    = class(TInIOCPServer);
   TBaseSocketRef    = class(TBaseSocket);
   TReceiveParamsRef = class(TReceiveParams);
   TReturnResultRef  = class(TReturnResult);
+  TIOCPSocketRef    = class(TIOCPSocket);
   TSocketBrokerRef  = class(TSocketBroker);
   TWebSocketRef     = class(TWebSocket);
   
@@ -508,14 +510,18 @@ end;
 { TBaseManager }
 
 procedure TBaseManager.AddToBackground(Socket: TBaseSocket);
+var
+ NewSocket: TBaseSocketRef;
 begin
   // 将任务改为后台执行（从新加入业务线程）
-{  if (TBaseSocketRef(Socket).Background = False) and (
+  if (Socket.Background = False) and (
      (Socket.ClassType = TIOCPSocket) or (Socket.ClassType = TWebSocket)) then
   begin
-    TBaseSocketRef(Socket).FBackground := True;  // 设为在后台执行
-    TInIOCPServer(FServer).BusiWorkMgr.AddWork(Socket);
-  end; }
+    NewSocket := Socket.ObjPool.Pop^.Data;
+    NewSocket.IniSocket(FServer, 0);  // 实际上套接字 FSocket 无用
+    NewSocket.CopyResources(Socket);
+    TInIOCPServer(FServer).BusiWorkMgr.AddWork(NewSocket);
+  end;
 end;
 
 function TBaseManager.GetGlobalLock: TThreadLock;
@@ -525,6 +531,25 @@ begin
     Result := TInIOCPServer(FServer).GlobalLock
   else
     Result := Nil;
+end;
+
+procedure TBaseManager.Wakeup(Socket: TBaseSocket);
+begin
+  // 后台执行完毕，唤醒客户端（必须要有 UserName ）
+  if Assigned(Socket) and Socket.Background then
+    try
+      if (Socket is TIOCPSocket) and
+         Assigned(TInIOCPServer(FServer).MessageManager) then
+        TInIOCPServer(FServer).MessageManager.InterPushResultMsg(
+                               TIOCPSocket(TBaseSocketRef(Socket).FLinkSocket),
+                               TIOCPSocket(Socket).Result, Socket.PeerIP) // PeerIP 转义为用户名称
+      else
+      if (Socket is TWebSocket) then
+        TInIOCPServer(FServer).HttpDataProvider.WebSocketManager.SendTo(
+                               TWebSocket(Socket), Socket.PeerIP); // PeerIP 转义为用户名称
+    finally
+      TBaseSocketRef(Socket).InterCloseSocket(Socket);
+    end;
 end;
 
 { TInStreamManager }
@@ -541,7 +566,28 @@ begin
   if Assigned(FOnReceive) then
     FOnReceive(TStreamSocket(Socket),
                Socket.RecvBuf.Data.buf,
-               TStreamSocket(Socket).ByteCount);
+               TBaseSocket(Socket).ByteCount,
+               TBaseSocketRef(Socket).FCompleted);
+end;
+
+function TInStreamManager.GetClientData(const AClientId: String;
+  ABuffers: PAnsiChar; AEvent: TCopyDataEvent): Boolean;
+var
+  Socket: TStreamSocket;
+begin
+  // 查找客户端 AClientId，调用方法 AEvent
+  // 取 Socket.Data（连接时用户定义，不知类型、大小）
+  TInIOCPServer(FServer).IOCPSocketPool.Lock;
+  try
+    Socket := nil;
+    FClientId := AClientId;  // 查找这个客户端
+    TInIOCPServer(FServer).IOCPSocketPool.Scan(Pointer(Socket), CallbackMethod);
+    Result := Assigned(Socket);
+    if Result then
+      AEvent(Socket, ABuffers);  // 调用，保证在加锁状态
+  finally
+    TInIOCPServer(FServer).IOCPSocketPool.UnLock;
+  end;
 end;
 
 procedure TInStreamManager.InterPushText(AOwner, ATarget: TStreamSocket; const AText: AnsiString);
@@ -549,7 +595,7 @@ var
   CastType: TBroadcastType;
   Msg: TPushMessage;
 begin
-  // 给 ATarget/全部客户端 推送文本消息 AText
+  // 给 ATarget/全部客户端 推送文本消息 AText（不分组）
 
   Msg := nil;
   if Assigned(ATarget) then
@@ -632,10 +678,11 @@ begin
   UserName := LowerCase(IOCPSocket.Params.UserName);  // 统一用小写
   Node := FClientList.ValueOf(UserName);
 
-  if (Assigned(Node) = False) then  // 已经存在用户信息
+  if (Assigned(Node) = False) then  // 无用户信息
   begin
     // 分配新的用户信息空间
     Node := New(PEnvironmentVar);
+    Node^.BaseInf.Group := IOCPSocket.Params.UserGroup;  // 分组
     Node^.BaseInf.Name := UserName;
 
     // 工作路径（+用户名+data）
@@ -655,7 +702,7 @@ begin
   Node^.ReuseSession := IOCPSocket.Params.ReuseSessionId;  // 是否重用凭证
 
   // 注册信息到 IOCPSocket
-  IOCPSocket.SetLogState(Node);
+  TIOCPSocketRef(IOCPSocket).SetLogState(Node);
 end;
 
 procedure TInClientManager.GetClientState(const UserName: String; Result: TReturnResult);
@@ -685,13 +732,14 @@ begin
     PClientInfo(Buffer)^ := PEnvironmentVar(Data)^.BaseInf;
     Inc(PAnsiChar(Buffer), CLIENT_DATA_SIZE);  // 位置推进
   end else
-  if (TIOCPSocket(Data).SessionId <= INI_SESSION_ID) then
+  if (TIOCPSocket(Data).SessionId = 0) then
   begin
     with PClientInfo(Buffer)^ do
     begin
       Socket := TServerSocket(Data);
-      Role := crUnknown;
+      Group := 'Unknown';  // 无分组
       Name := 'Unknown';   // 未登录
+      Role := crUnknown;
       PeerIPPort := TIOCPSocket(Data).PeerIPPort;
     end;
     Inc(PAnsiChar(Buffer), CLIENT_DATA_SIZE);  // 位置推进
@@ -741,7 +789,7 @@ begin
         atUserLogout: begin   // 登出
             if Assigned(FOnLogout) then
               FOnLogout(Socket.Worker, Socket.Params, Socket.Result);
-            Socket.SetLogState(Nil); // 内部登出
+            TIOCPSocketRef(Socket).SetLogState(Nil); // 内部登出
           end;
 
         atUserRegister:       // 注册用户
@@ -974,6 +1022,8 @@ begin
   begin
     Msg := TPushMessage.Create(ASource.ObjPool, ASource.BufferPool, CastType);
     Msg.IngoreSocket := ASource;  // 忽略自己（注解后自己也能收到）
+    if (ASource.Background = False) then
+      Msg.Group := ASource.UserGroup;  // 分组
   end else
   begin
     Msg := TPushMessage.Create(ASource.ObjPool, ASource.BufferPool, btUnknown);
@@ -1020,6 +1070,8 @@ begin
   begin
     Msg := TPushMessage.Create(ASource.RecvBuf, CastType);
     Msg.IngoreSocket := ASource;  // 忽略自己（注解后自己也能收到）
+    if (ASource.Background = False) then
+      Msg.Group := ASource.UserGroup;  // 分组
   end else
   begin
     Msg := TPushMessage.Create(ASource.RecvBuf, btUnknown);
@@ -1529,13 +1581,6 @@ begin
   // 数据库操作与数模关系密切，不进入界面性业务模块，减少复杂性。
   // 调用前已经设置用当前数据连接，见：TBusiWorker.Execute
 
-  if Socket.Background then  // 后台执行
-  begin
-    TBaseSocketRef(Socket).FBackground := False;
-    Self.Execute(Socket);
-    Exit;
-  end;
-
   case Socket.Action of
     atAfterSend: begin   // 发送附件完毕
       Socket.Result.Clear;
@@ -1777,11 +1822,12 @@ begin
   InterPushMsg(Socket, nil);
 end;
 
-procedure TInWebSocketManager.Broadcast(const Text: string; OpCode: TWSOpCode);
+procedure TInWebSocketManager.Broadcast(const Group, Text: string; OpCode: TWSOpCode);
 begin
   // 广播消息 Text，不能太长
   //   OpCode = ocClose 时，全部客户端关闭
-  InterPushMsg(nil, OpCode, System.AnsiToUtf8(Text));
+  if (OpCode in [ocText, ocClose, ocPong]) then
+    InterPushMsg(nil, OpCode, System.AnsiToUtf8(Text), Group);
 end;
 
 procedure TInWebSocketManager.CallbackMethod(ObjType: TObjectType;
@@ -1868,6 +1914,7 @@ end;
 procedure TInWebSocketManager.InterPushMsg(Source, Target: TWebSocket);
 var
   Msg: TPushMessage;
+  Stream: TMemoryStream;
 begin
   // 发收到的消息发给 Target 或广播
   //   提交到推送线程，不知道何时发出、是否成功。
@@ -1878,58 +1925,75 @@ begin
     Exit;
   end;
 
-  if (Source.Complete = False) or (Source.MsgSize > IO_BUFFER_SIZE - 50) then
+  if (Source.Completed = False) or
+     (Source.MsgSize > IO_BUFFER_SIZE - 50) or
+     (Source.JSON.Size > IO_BUFFER_SIZE - 50) or
+     (Source.Result.Size > IO_BUFFER_SIZE - 50) then
   begin
     Source.SendData('消息未完整接收或太长, 放弃.');
     Exit;
   end;
 
-  // 清除掩码、宿主
-  TWebSocketRef(Source).ClearOwnerMark;
-
-  if Assigned(Target) then  // 发给 Target
+  if Source.Background then
   begin
-    Msg := TPushMessage.Create(Source.RecvBuf, btUnknown);
+    Msg := TPushMessage.Create(Source.ObjPool, Source.BufferPool, btUnknown);
     Msg.Add(Target);  // 加入 Target
-  end else  
-  begin  // 广播
-    Msg := TPushMessage.Create(Source.RecvBuf, btAllClient);
-    Msg.IngoreSocket := Source;
+
+    Stream := TMemoryStream.Create;
+    try
+      Source.Result.SaveToStream(Stream, True);
+      Msg.WriteWebSocketMsg(ocText, Stream.Memory, Stream.Size);
+    finally
+      Stream.Free;
+    end;
+  end else
+  begin
+    // 清除掩码、宿主
+    TWebSocketRef(Source).ClearOwnerMark;
+    if Assigned(Target) then  // 发给 Target
+    begin
+      Msg := TPushMessage.Create(Source.RecvBuf, btUnknown);
+      Msg.Add(Target);  // 加入 Target
+    end else
+    begin  // 广播
+      Msg := TPushMessage.Create(Source.RecvBuf, btAllClient);
+      Msg.IngoreSocket := Source;
+      Msg.Group := Source.UserGroup;  // 分组
+    end;
   end;
 
-  // 加入推送线程（必须发送一个消息给客户端）
+  // 加入推送线程
   if TInIOCPServer(FServer).PushManager.AddWork(Msg) then
-    TWebSocketRef(Source).InternalPing  // Ping 客户端（延时，必须）
+    TWebSocketRef(Source).InternalPong  // Pong 客户端（延时，必须）
   else
     Source.SendData('系统繁忙, 放弃.'); // 繁忙，放弃，Msg 已被释放
 
 end;
 
-procedure TInWebSocketManager.InterPushMsg(Socket: TWebSocket; OpCode: TWSOpCode; const Text: AnsiString);
+procedure TInWebSocketManager.InterPushMsg(Socket: TWebSocket; OpCode: TWSOpCode;
+  const Text, Group: AnsiString);
 var
-  Data: PWsaBuf;
   Msg: TPushMessage;
 begin
   // 给 Socket/全部客户端 推送文本消息 Text
   if (Length(Text) <= IO_BUFFER_SIZE - 70) then
   begin
     if Assigned(Socket) then // 给 Socket，ioPush，长度未知 0
-      Msg := TPushMessage.Create(Socket, ioPush, 0)
-    else begin  // 广播
+    begin
+      Msg := TPushMessage.Create(Socket, ioPush, 0);
+      Msg.IngoreSocket := Socket;  // 忽略自己
+      if (Socket.Background = False) then
+        Msg.Group := Socket.UserGroup;  // 分组
+    end else
+    begin  // 广播
       Msg := TPushMessage.Create(TInIOCPServer(FServer).WebSocketPool,
                                  TInIOCPServer(FServer).IODataPool, btAllClient);
-      Msg.IngoreSocket := Socket;  // 忽略自己
+      Msg.IngoreSocket := nil;
+      Msg.Group := Group;
     end;
 
-    // 构建帧，操作：OpCode，长度：Data^.len
-    Data := @(Msg.PushBuf^.Data);
-    MakeFrameHeader(Data, OpCode, Length(Text));
-
-    if (Length(Text) > 0) then
-    begin
-      System.Move(Text[1], (Data^.buf + Data^.len)^, Length(Text));
-      Inc(Data^.len, Length(Text));
-    end;
+    // 构建帧，操作：OpCode，长度：Length(Text)
+    Msg.WriteWebSocketMsg(OpCode, PAnsiChar(Text), Length(Text));
 
     TInIOCPServer(FServer).PushManager.AddWork(Msg);
   end;
@@ -1982,26 +2046,26 @@ begin
   case Socket.Request.Method of
     hmGet:
       if Assigned(FOnGet) then
-        FOnGet(Socket.Worker, Socket.Request, Socket.Respone);
+        FOnGet(Socket.Worker, Socket.Request, Socket.Response);
     hmPost:  // 上传完毕才调用 Post
-      if Assigned(FOnPost) and Socket.Request.Complete then
-        FOnPost(Socket.Worker, Socket.Request, Socket.Respone);
+      if Assigned(FOnPost) and Socket.Request.Completed then
+        FOnPost(Socket.Worker, Socket.Request, Socket.Response);
     hmConnect:
       { } ;
     hmDelete:
       if Assigned(FOnDelete) then
-        FOnDelete(Socket.Worker, Socket.Request, Socket.Respone);
+        FOnDelete(Socket.Worker, Socket.Request, Socket.Response);
     hmPut:
       if Assigned(FOnPut) then
-        FOnPut(Socket.Worker, Socket.Request, Socket.Respone);
+        FOnPut(Socket.Worker, Socket.Request, Socket.Response);
     hmOptions:
       if Assigned(FOnOptions) then
-        FOnOptions(Socket.Worker, Socket.Request, Socket.Respone);
+        FOnOptions(Socket.Worker, Socket.Request, Socket.Response);
     hmTrace:
       if Assigned(FOnTrace) then
-        FOnTrace(Socket.Worker, Socket.Request, Socket.Respone);
+        FOnTrace(Socket.Worker, Socket.Request, Socket.Response);
     hmHead:  // 设置 Head，稍后发送
-      Socket.Respone.SetHead;
+      Socket.Response.SetHead;
   end;
 end;
 
@@ -2037,6 +2101,8 @@ begin
   begin
     FWebSocketManager.FServer := FServer;
     FOnUpgrade := FWebSocketManager.FOnUpgrade;  // 在父类
+    if (TIOCPServerRef(FServer).FBaseMgr = nil) then // 第一任务管理器
+      TIOCPServerRef(FServer).FBaseMgr := FWebSocketManager;      
   end;
 end;
 

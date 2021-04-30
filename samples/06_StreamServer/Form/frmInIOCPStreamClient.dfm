@@ -15,7 +15,7 @@ object FormInIOCPStreamClient: TFormInIOCPStreamClient
   Scaled = False
   OnCreate = FormCreate
   OnDestroy = FormDestroy
-  PixelsPerInch = 120
+  PixelsPerInch = 96
   TextHeight = 12
   object LabeledEdit1: TLabeledEdit
     Left = 366

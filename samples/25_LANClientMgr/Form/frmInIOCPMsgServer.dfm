@@ -305,8 +305,7 @@ object FormInIOCPMsgServer: TFormInIOCPMsgServer
       #27880#24847#65306#23458#25143#31471#30331#24405#21518#65292#30331#24405#21517' userName '#34987#20445#23384#21040' TIOCPSocket.Evir '#20013#65292
       #21518#32487#28040#24687#21253#30340' userName '#21487#33021#34987#25913#21464#12290#23427#21644#29992#25143#25968#25454#34920#30340' user_name '#19981#21516#65292
       #20351#29992#26102#19981#35201#25630#28151#12290
-      #36825#26159#31034#33539#20195#30721#65292#20197#21518#26410#24517#32487#32493#26356#26032#12290
-      'ZeosDBO: https://sourceforge.net/projects/zeoslib/')
+      #36825#26159#31034#33539#20195#30721#65292#20197#21518#26410#24517#32487#32493#26356#26032#12290)
     TabOrder = 3
   end
   object lbEditIP: TLabeledEdit
@@ -349,7 +348,6 @@ object FormInIOCPMsgServer: TFormInIOCPMsgServer
     IOCPManagers.MessageManager = InMessageManager1
     ServerAddr = '127.0.0.1'
     ServerPort = 80
-    StartParams.TimeOut = 0
     ThreadOptions.BusinessThreadCount = 8
     ThreadOptions.PushThreadCount = 4
     ThreadOptions.WorkThreadCount = 4
@@ -364,6 +362,7 @@ object FormInIOCPMsgServer: TFormInIOCPMsgServer
     AfterUpload = InFileManager1AfterUpload
     BeforeUpload = InFileManager1BeforeUpload
     BeforeDownload = InFileManager1BeforeDownload
+    OnQueryFiles = InFileManager1QueryFiles
     Left = 368
     Top = 88
   end

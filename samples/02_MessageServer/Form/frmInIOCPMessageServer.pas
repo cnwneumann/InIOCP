@@ -41,6 +41,7 @@ type
     InCustomManager1: TInCustomManager;
     InCustomClient1: TInCustomClient;
     Button1: TButton;
+    LabeledEdit1: TLabeledEdit;
     procedure btnStartClick(Sender: TObject);
     procedure btnStopClick(Sender: TObject);
     procedure btnConnectClick(Sender: TObject);
@@ -152,6 +153,7 @@ end;
 
 procedure TFormInIOCPMessageServer.btnLoginClick(Sender: TObject);
 begin
+  InCertifyClient1.Group := LabeledEdit1.Text;
   InCertifyClient1.UserName := EditUserName.Text;
   InCertifyClient1.Password := 'AAABBB';
   InCertifyClient1.Login;
@@ -224,7 +226,6 @@ begin
 
   // 准备工作路径
   FAppDir := ExtractFilePath(Application.ExeName);
-  iocp_utils.IniDateTimeFormat;    // 设置日期时间格式
     
   // 客户端数据存放路径（2.0改名称）
   iocp_Varis.gUserDataPath := FAppDir + 'client_data\';

@@ -14,7 +14,7 @@ object FormInIOCPDBServer: TFormInIOCPDBServer
   Position = poDesktopCenter
   Scaled = False
   OnCreate = FormCreate
-  PixelsPerInch = 120
+  PixelsPerInch = 96
   TextHeight = 17
   object Memo1: TMemo
     Left = 8
@@ -90,6 +90,174 @@ object FormInIOCPDBServer: TFormInIOCPDBServer
     ExplicitLeft = 4
     ExplicitTop = 8
     ExplicitWidth = 547
+    inherited Label3: TLabel
+      Left = 326
+      Width = 68
+      Height = 15
+      ExplicitLeft = 326
+      ExplicitWidth = 68
+      ExplicitHeight = 15
+    end
+    inherited lblWorkCount: TLabel
+      Width = 8
+      Height = 15
+      ExplicitWidth = 8
+      ExplicitHeight = 15
+    end
+    inherited lbl1: TLabel
+      Left = 35
+      Width = 68
+      Height = 15
+      ExplicitLeft = 35
+      ExplicitWidth = 68
+      ExplicitHeight = 15
+    end
+    inherited lbl12: TLabel
+      Left = 326
+      Width = 68
+      Height = 15
+      ExplicitLeft = 326
+      ExplicitWidth = 68
+      ExplicitHeight = 15
+    end
+    inherited lblAcceptExCount: TLabel
+      Left = 16
+      Width = 87
+      Height = 15
+      ExplicitLeft = 16
+      ExplicitWidth = 87
+      ExplicitHeight = 15
+    end
+    inherited lbl14: TLabel
+      Left = 176
+      Width = 68
+      Height = 15
+      ExplicitLeft = 176
+      ExplicitWidth = 68
+      ExplicitHeight = 15
+    end
+    inherited lbl16: TLabel
+      Left = 26
+      Width = 77
+      Height = 15
+      ExplicitLeft = 26
+      ExplicitWidth = 77
+      ExplicitHeight = 15
+    end
+    inherited lblMemeryUsed: TLabel
+      Left = 326
+      Width = 68
+      Height = 15
+      ExplicitLeft = 326
+      ExplicitWidth = 68
+      ExplicitHeight = 15
+    end
+    inherited lbl19: TLabel
+      Left = 35
+      Width = 68
+      Height = 15
+      ExplicitLeft = 35
+      ExplicitWidth = 68
+      ExplicitHeight = 15
+    end
+    inherited lbl3: TLabel
+      Left = 50
+      Width = 53
+      Height = 15
+      ExplicitLeft = 50
+      ExplicitWidth = 53
+      ExplicitHeight = 15
+    end
+    inherited lbl6: TLabel
+      Left = 35
+      Width = 68
+      Height = 15
+      ExplicitLeft = 35
+      ExplicitWidth = 68
+      ExplicitHeight = 15
+    end
+    inherited lblLeftEdge: TLabel
+      Left = 11
+      Width = 92
+      Height = 15
+      ExplicitLeft = 11
+      ExplicitWidth = 92
+      ExplicitHeight = 15
+    end
+    inherited lblAcceptExCnt: TLabel
+      Width = 8
+      Height = 15
+      ExplicitWidth = 8
+      ExplicitHeight = 15
+    end
+    inherited lblDataByteInfo: TLabel
+      Width = 8
+      Height = 15
+      ExplicitWidth = 8
+      ExplicitHeight = 15
+    end
+    inherited lblCheckTime: TLabel
+      Width = 8
+      Height = 15
+      ExplicitWidth = 8
+      ExplicitHeight = 15
+    end
+    inherited lblClientInfo: TLabel
+      Width = 8
+      Height = 15
+      ExplicitWidth = 8
+      ExplicitHeight = 15
+    end
+    inherited lblCliPool: TLabel
+      Left = 50
+      Width = 53
+      Height = 15
+      ExplicitLeft = 50
+      ExplicitWidth = 53
+      ExplicitHeight = 15
+    end
+    inherited lblDBConCount: TLabel
+      Width = 8
+      Height = 15
+      ExplicitWidth = 8
+      ExplicitHeight = 15
+    end
+    inherited lblIODataInfo: TLabel
+      Width = 8
+      Height = 15
+      ExplicitWidth = 8
+      ExplicitHeight = 15
+    end
+    inherited lblMemUsed: TLabel
+      Width = 8
+      Height = 15
+      ExplicitWidth = 8
+      ExplicitHeight = 15
+    end
+    inherited lblDataPackInf: TLabel
+      Width = 8
+      Height = 15
+      ExplicitWidth = 8
+      ExplicitHeight = 15
+    end
+    inherited lblStartTime: TLabel
+      Width = 8
+      Height = 15
+      ExplicitWidth = 8
+      ExplicitHeight = 15
+    end
+    inherited lblThreadInfo: TLabel
+      Width = 8
+      Height = 15
+      ExplicitWidth = 8
+      ExplicitHeight = 15
+    end
+    inherited lblWorkTimeLength: TLabel
+      Width = 8
+      Height = 15
+      ExplicitWidth = 8
+      ExplicitHeight = 15
+    end
   end
   object InIOCPServer1: TInIOCPServer
     IOCPManagers.ClientManager = InClientManager1

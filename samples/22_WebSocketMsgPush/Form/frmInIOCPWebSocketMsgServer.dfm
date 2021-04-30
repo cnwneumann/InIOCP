@@ -14,7 +14,7 @@ object FormInIOCPWsJSONMsgServer: TFormInIOCPWsJSONMsgServer
   Position = poDesktopCenter
   Scaled = False
   OnCreate = FormCreate
-  PixelsPerInch = 96
+  PixelsPerInch = 120
   TextHeight = 15
   object Button1: TButton
     Left = 600

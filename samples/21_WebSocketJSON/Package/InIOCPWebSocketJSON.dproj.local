@@ -2,17 +2,17 @@
 <BorlandProject>
 	<Transactions>
     <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Form\frmInIOCPHttpServer.pas=</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Form\frmInIOCPWebSocketChar.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Package\Unit1.dfm</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Package\InIOCPWebSocketChar.bdsproj=D:\Administrator\Documents\RAD Studio\Projects\Project1.bdsproj</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\12_WebSocketJSON\Form\frmInIOCPWebSocketJSON.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\12_WebSocketJSON\Form\frmInIOCPWebSocketChat.pas</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\12_WebSocketJSON\Package\InIOCPWebSocketJSON.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\12_WebSocketJSON\Package\InIOCPWebSocketChat.bdsproj</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Form\frmInIOCPWebSocketChar.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Package\Unit1.pas</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.bdsproj,D:\Administrator\Documents\RAD Studio\Projects\Project1.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Package\InIOCPWebSocketChar.bdsproj</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Package\InIOCPWebSocketChar.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Package\InIOCPWebSocketChat.bdsproj</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\12_WebSocketJSON\Form\frmInIOCPWebSocketChat.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\12_WebSocketJSON\Form\frmInIOCPWebSocketJSON.dfm</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Form\frmInIOCPWebSocketChar.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Form\frmInIOCPWebSocketChat.pas</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Form\frmInIOCPWebSocketChar.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Form\frmInIOCPWebSocketChat.dfm</Transaction>
     <Transaction>1899-12-30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\21_WebSocketJSON\Module\dm_iniocp_test.dfm=</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Package\InIOCPWebSocketChat.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Package\InIOCPWebSocketChar.bdsproj</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Form\frmInIOCPWebSocketChat.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Form\frmInIOCPWebSocketChar.pas</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Form\frmInIOCPWebSocketChat.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Form\frmInIOCPWebSocketChar.dfm</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\12_WebSocketJSON\Form\frmInIOCPWebSocketJSON.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\12_WebSocketJSON\Form\frmInIOCPWebSocketChat.dfm</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Package\Unit1.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Form\frmInIOCPWebSocketChar.pas</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\12_WebSocketJSON\Package\InIOCPWebSocketChat.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\12_WebSocketJSON\Package\InIOCPWebSocketJSON.bdsproj</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Package\Unit1.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Form\frmInIOCPWebSocketChar.dfm</Transaction>
     <Transaction>1899-12-30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\14_WebSocketChat\Form\frmInIOCPHttpServer.dfm=</Transaction>
     <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\21_WebSocketJSON\Module\dm_iniocp_test.pas=</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\12_WebSocketJSON\Form\frmInIOCPWebSocketChat.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\12_WebSocketJSON\Form\frmInIOCPWebSocketJSON.pas</Transaction>
   </Transactions>
 </BorlandProject>

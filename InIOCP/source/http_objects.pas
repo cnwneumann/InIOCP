@@ -22,24 +22,18 @@ type
 
   // Set-Cookie: InIOCP_SID=Value
 
-  THttpSession = class(Tobject)
+  THttpSession = class(TObject)
   private
-    FName: AnsiString;       // 名称
-    FValue: AnsiString;      // 值
     FExpires: Int64;         // 生成 UTC 时间（读取速度快）
     FTimeOut: Integer;       // 超时时间（秒）
     FCount: Integer;         // 累计请求次数
-    function CheckAttack: Boolean;
+  public
+    function CheckAttack(const SessionId: AnsiString): Boolean;
     function CreateSessionId: AnsiString;
-    function ValidSession: Boolean;
+    function ValidateSession: Boolean;
     procedure UpdateExpires;
   public
-    constructor Create(const AName: AnsiString; const AValue: AnsiString = '');
-    class function Extract(const Info: AnsiString; var Name, Value: AnsiString): Boolean;
-  public
-    property Name: AnsiString read FName;   // 只读
-    property Value: AnsiString read FValue; // 只读
-    property TimeOut: Integer read FTimeOut;
+    class function Extract(const SetCookie: AnsiString; var SessionId: AnsiString): Boolean;
   end;
 
   // ================ Http Session 管理 类 ================
@@ -59,12 +53,12 @@ type
 
   THttpBase         = class;         // 基类
   THttpRequest      = class;         // 请求
-  THttpRespone      = class;         // 响应
+  THttpResponse     = class;         // 响应
 
   TOnAcceptEvent    = procedure(Sender: TObject; Request: THttpRequest;
                                 var Accept: Boolean) of object;
   TOnInvalidSession = procedure(Sender: TObject; Request: THttpRequest;
-                                Respone: THttpRespone) of object;
+                                Response: THttpResponse) of object;
   TOnReceiveFile    = procedure(Sender: TObject; Request: THttpRequest;
                                 const FileName: String; Data: PAnsiChar;
                                 DataLength: Integer; State: THttpPostState) of object;
@@ -72,7 +66,7 @@ type
   // 请求事件（Sender 是 Worker）
   THttpRequestEvent = procedure(Sender: TObject;
                                 Request: THttpRequest;
-                                Respone: THttpRespone) of object;
+                                Response: THttpResponse) of object;
 
   // 升级为 WebSocket 的事件
   TOnUpgradeEvent = procedure(Sender: TObject; const Origin: String;
@@ -85,8 +79,7 @@ type
     FKeepAlive: Boolean;                  // 保存连接
     FPeerIPList: TPreventAttack;          // 客户端 IP 列表
     FPreventAttack: Boolean;              // IP列表（防攻击）
-    function CheckSessionState(Request: THttpRequest; Respone: THttpRespone;
-                               const PeerInfo: AnsiString): Boolean;
+    procedure CheckSessionState(Request: THttpRequest; Response: THttpResponse);
     procedure SetMaxContentLength(const Value: Integer);
     procedure SetPreventAttack(const Value: Boolean);
   protected
@@ -94,7 +87,6 @@ type
     FOnAccept: TOnAcceptEvent;            // 是否接受请求
     FOnDelete: THttpRequestEvent;         // 请求：Delete
     FOnGet: THttpRequestEvent;            // 请求：Get
-    FOnInvalidSession: TOnInvalidSession; // Session 无效事件
     FOnPost: THttpRequestEvent;           // 请求：Post
     FOnPut: THttpRequestEvent;            // 请求：Put
     FOnOptions: THttpRequestEvent;        // 请求：Options
@@ -115,7 +107,6 @@ type
     property OnAccept: TOnAcceptEvent read FOnAccept write FOnAccept;
     property OnDelete: THttpRequestEvent read FOnDelete write FOnDelete;
     property OnGet: THttpRequestEvent read FOnGet write FOnGet;
-    property OnInvalidSession: TOnInvalidSession read FOnInvalidSession write FOnInvalidSession;
     property OnPost: THttpRequestEvent read FOnPost write FOnPost;
     property OnPut: THttpRequestEvent read FOnPut write FOnPut;
     property OnOptions: THttpRequestEvent read FOnOptions write FOnOptions;
@@ -142,7 +133,7 @@ type
     function GetBoundary: AnsiString;
     function GetContentLength: Integer;
     function GetContentType: THttpContentType;
-    function GetEncodeType: THttpEncodeType;
+    function GetUTF8Encode: Boolean;
     function GetKeepAlive: Boolean;
     function GetMultiPart: Boolean;
     function GetRange: AnsiString;
@@ -155,9 +146,9 @@ type
     property Boundary: AnsiString read GetBoundary;    // Content-Type: multipart/form-data; Boundary=
     property ContentLength: Integer read GetContentLength; // Content-Length 的值
     property ContentType: THttpContentType read GetContentType; // Content-Type 的值
-    property EncodeType: THttpEncodeType read GetEncodeType;  // UTF-8...
+    property UTF8Encode: Boolean read GetUTF8Encode;  // UTF-8...
     property IfMath: AnsiString read GetIfMath;  // if-math...
-    property LastModified: AnsiString read GetLastModified;  // Last-Modified  
+    property LastModified: AnsiString read GetLastModified;  // Last-Modified
     property KeepAlive: Boolean read GetKeepAlive;  // Keep-Alive...
     property MultiPart: Boolean read GetMultiPart; // Content-Type：multipart/form-data
     property Range: AnsiString read GetRange; // range
@@ -169,7 +160,7 @@ type
   private
     FDataProvider: THttpDataProvider;  // HTTP 支持
     FOwner: TObject;             // THttpSocket 对象
-    FContentSize: Integer;       // 实体长度
+    FContentSize: Int64;         // 实体长度
     FFileName: AnsiString;       // 收到、发送到的文件名
     FKeepAlive: Boolean;         // 保持连接
     FSessionId: AnsiString;      // 对话期 ID
@@ -212,18 +203,20 @@ type
     FUpgradeState: Integer;      // 升级为 WebSocket 的状态
     FVersion: AnsiString;        // 版本 http/1.1
 
-    function GetComplete: Boolean; {$IFDEF USE_INLINE} inline; {$ENDIF}
+    function GetCompleted: Boolean; {$IFDEF USE_INLINE} inline; {$ENDIF}
     function GetHeaderIndex(const Header: AnsiString): TRequestHeaderType; {$IFDEF USE_INLINE} inline; {$ENDIF}
     function GetHeaders(Index: TRequestHeaderType): AnsiString;
 
     procedure ExtractElements(Data: PAnsiChar; Len: Integer; RecvFileEvent: TOnReceiveFile);
     procedure ExtractHeaders(Data: PAnsiChar; DataLength: Integer);
     procedure ExtractMethod(var Data: PAnsiChar);
-    procedure ExtractParams(Data: PAnsiChar; Len: Integer);
+    procedure ExtractParams(Data: PAnsiChar; Len: Integer; Decode: Boolean);
+
+    procedure InitializeInStream;
     procedure URLDecodeRequestURI;
     procedure WriteHeader(Index: TRequestHeaderType; const Content: AnsiString);
   protected
-    procedure Decode(Sender: TBaseTaskSender; Respone: THttpRespone; Data: PPerIOData);
+    procedure Decode(Sender: TBaseTaskSender; Response: THttpResponse; Data: PPerIOData);
   public
     constructor Create(ADataProvider: THttpDataProvider; AOwner: TObject);
     destructor Destroy; override;
@@ -231,8 +224,8 @@ type
   public
     property Accepted: Boolean read FAccepted;
     property Attacked: Boolean read FAttacked;
-    property Complete: Boolean read GetComplete;
-    property Entity: TInMemStream read FStream;
+    property Completed: Boolean read GetCompleted;
+    property Entity: TInMemStream read FStream;  // 实体内容
     property Headers[Index: TRequestHeaderType]: AnsiString read GetHeaders;
     property Method: THttpMethod read FMethod;
     property Params: THttpFormParams read FParams;
@@ -246,22 +239,22 @@ type
   // 为加快速度，响应报头的内存直接引用发送器的 TPerIOData.Data，
   // 用 Add 方法加入报头，用 Append 方法加入小页面的实体（总长 <= IO_BUFFER_SIZE）
 
-  THeaderArray = array[TResponeHeaderType] of Boolean;
+  THeaderArray = array[TResponseHeaderType] of Boolean;
 
-  THttpResponeHeaders = class(TObject)
+  THttpResponseHeaders = class(TObject)
   private
     FHeaders: THeaderArray;     // 已加入的报头
     FData: PWsaBuf;             // 引用发送器缓存
     FBuffer: PAnsiChar;         // 发送缓存当前位置
     FOwner: TServerTaskSender;  // 数据发送器
-    function GetSize: Integer;
+    function GetSize: Integer; {$IFDEF USE_INLINE} inline; {$ENDIF}
     procedure InterAdd(const Content: AnsiString; SetCRLF: Boolean = True);
     procedure SetOwner(const Value: TServerTaskSender);
   public
     procedure Clear;
 
-    procedure Add(Code: TResponeHeaderType; const Content: AnsiString = '');
-    procedure Append(Content: AnsiString; SetCRLF: Boolean = True); overload;
+    procedure Add(Code: TResponseHeaderType; const Content: AnsiString = '');
+    procedure Append(const Content: AnsiString; SetCRLF: Boolean = True); overload;
     procedure Append(var AHandle: THandle; ASize: Cardinal); overload;
     procedure Append(var AStream: TStream; ASize: Cardinal); overload;
     procedure Append(AList: TInStringList; ASize: Cardinal); overload;
@@ -277,10 +270,10 @@ type
 
   // ================ Http 响应 ================
 
-  THttpRespone = class(THttpBase)
+  THttpResponse = class(THttpBase)
   private
     FRequest: THttpRequest;    // 引用请求
-    FHeaders: THttpResponeHeaders; // 服务器状态、报头
+    FHeaders: THttpResponseHeaders; // 服务器状态、报头
     FContent: TInStringList;   // 列表式实体内容
 
     FHandle: THandle;          // 要发送的文件
@@ -311,13 +304,13 @@ type
     // 清空资源
     procedure Clear; override;
 
-    // Session：新建、设为失效
+    // Session：新建、删除
     procedure CreateSession;
-    procedure InvalidSession;
+    procedure RemoveSession;
 
     // 设置状态、报头
     procedure SetStatus(Code: Integer);
-    procedure AddHeader(Code: TResponeHeaderType; const Content: AnsiString = '');
+    procedure AddHeader(Code: TResponseHeaderType; const Content: AnsiString = '');
 
     // 设置实体
     procedure SetContent(const Content: AnsiString);
@@ -332,7 +325,7 @@ type
 
     // 发送 JSON
     procedure SendJSON(DataSet: TDataSet; CharSet: THttpCharSet = hcsDefault); overload;
-    procedure SendJSON(JSON: AnsiString); overload;
+    procedure SendJSON(const JSON: AnsiString); overload;
 
     // 设置 Head 信息
     procedure SetHead;
@@ -355,7 +348,7 @@ type
 
 { THttpSession }
 
-function THttpSession.CheckAttack: Boolean;
+function THttpSession.CheckAttack(const SessionId: AnsiString): Boolean;
 var
   TickCount: Int64;
 begin
@@ -369,27 +362,13 @@ begin
     if Result then                // 是攻击
     begin
       FExpires := TickCount + 900000;  // 900 秒
-//      {$IFDEF DEBUG_MODE}
-      iocp_log.WriteLog('THttpSession.CheckAttack->拒绝服务，攻击对话期：' + FValue);
-//      {$ENDIF}
+      {$IFDEF DEBUG_MODE}
+      iocp_log.WriteLog('THttpSession.CheckAttack->拒绝服务，攻击对话期：' + SessionId);
+      {$ENDIF}
     end else
       FExpires := TickCount;
     Inc(FCount);
   end;
-end;
-
-constructor THttpSession.Create(const AName, AValue: AnsiString);
-begin
-  inherited Create;
-  // FName 以后不能改，尽量用唯一的值
-  // FValue = CreateSessionId，以后不能改
-  FName := UpperCase(AName);
-  if (AValue = '') then
-    FValue := CreateSessionId
-  else
-    FValue := AValue;
-  FExpires := GetUTCTickCount;  // 当前时间
-  FTimeOut := 300;              // 300 秒超时
 end;
 
 function THttpSession.CreateSessionId: AnsiString;
@@ -401,28 +380,29 @@ var
   i: Integer;
 begin
   Randomize;
-  Result := Copy(BASE_CHARS, 1, HTTP_SESSION_ID_LEN);  // 32 字节
-  for i := 1 to HTTP_SESSION_ID_LEN do                 // 总长 32
+
+  Result := Copy(BASE_CHARS, 1, 32);  // 32 字节
+  for i := 1 to 32 do  // 总长 32
     Result[i] := BASE_CHARS[Random(62) + 1];           // 1 <= Random < 62
+
+  FExpires := GetUTCTickCount;  // 当前时间
+  FTimeOut := 300;  // 300 秒超时
 end;
 
-class function THttpSession.Extract(const Info: AnsiString; var Name, Value: AnsiString): Boolean;
+class function THttpSession.Extract(const SetCookie: AnsiString; var SessionId: AnsiString): Boolean;
 var
   pa, p2: PAnsiChar;
 begin
-  // 提取 Session 的名称、值
-  pa := PAnsiChar(Info);
+  // 提取 SetCookie 的 SessionId
+  pa := PAnsiChar(SetCookie);
   p2 := pa;
-  if SearchInBuffer(p2, Length(Info), HTTP_SESSION_ID) then
+  if SearchInBuffer(p2, Length(SetCookie), HTTP_SESSION_ID) then
   begin
-    Inc(p2);
-    Name := HTTP_SESSION_ID;
-    Value := Copy(Info, Integer(p2 - pa) + 1, HTTP_SESSION_ID_LEN);
-    Result := Pos(HTTP_INVALID_SESSION, Value) = 0;
+    SessionId := Copy(SetCookie, Integer(p2 - pa) + 2, 32);  // 32 字节
+    Result := (SessionId <> '');
   end else
   begin
-    Name := '';
-    Value := '';
+    SessionId := '';
     Result := False;
   end;
 end;
@@ -433,7 +413,7 @@ begin
   FExpires := GetUTCTickCount;  // 当前时间
 end;
 
-function THttpSession.ValidSession: Boolean;
+function THttpSession.ValidateSession: Boolean;
 begin
   // 检查是否有效
   Result := (GetUTCTickCount - FExpires) <= FTimeOut * 1000;
@@ -447,7 +427,7 @@ var
 begin
   // 回调：检查 Session 是否有效
   Session := THttpSession(Data);
-  if (Session.ValidSession = False) then
+  if (Session.ValidateSession = False) then
     try
       Session.Free;
     finally
@@ -459,16 +439,17 @@ procedure THttpSessionManager.DecRef(const SessionId: AnsiString);
 var
   Session: THttpSession;
 begin
-  // 减少 IP 引用
-  if (SessionId = '') or (SessionId = HTTP_INVALID_SESSION) then
-    Exit;
-  Lock;
-  try
-    Session := ValueOf2(SessionId);
-    if Assigned(Session) and (Session.FCount > 0) then
-      Dec(Session.FCount);
-  finally
-    UnLock;
+  // 减少 SessionId 引用
+  if (SessionId <> '') and (SessionId <> HTTP_INVALID_SESSION) then
+  begin
+    Lock;
+    try
+      Session := ValueOf2(SessionId);
+      if Assigned(Session) and (Session.FCount > 0) then
+        Dec(Session.FCount);
+    finally
+      UnLock;
+    end;
   end;
 end;
 
@@ -480,7 +461,7 @@ begin
   Lock;
   try
     Session := ValueOf2(SessionId);
-    Result := Assigned(Session) and Session.CheckAttack;
+    Result := Assigned(Session) and Session.CheckAttack(SessionId);
   finally
     UnLock;
   end;
@@ -510,45 +491,31 @@ end;
 
 { THttpDataProvider }
 
-function THttpDataProvider.CheckSessionState(Request: THttpRequest;
-                           Respone: THttpRespone; const PeerInfo: AnsiString): Boolean;
+procedure THttpDataProvider.CheckSessionState(Request: THttpRequest; Response: THttpResponse);
 var
-  State: Integer;
   Session: THttpSession;
+  Item: PPHashItem;
 begin
   // 检查客户端 Session 在服务端的状态
   //  从 FSessionMgr 中查找客户端 SessionId 对应的 THttpSession
-
-  Session := FSessionMgr.ValueOf(Request.FSessionId);
-  if Assigned(Session) = False then  // 不存在
-    State := 1
-  else
-  if (Session.ValidSession = False) then // 超时, 删除
-  begin
-    State := 2;
-    FSessionMgr.Remove(Request.FSessionId);
-  end else
-  begin
-    State := 0;
-    Session.UpdateExpires;  // 生命期延后
-    Respone.FSessionId := Request.FSessionId;  // 方便操作界面判断
-  end;
-
-  if (State = 0) then
-    Result := True
-  else
-    try
-//      {$IFDEF DEBUG_MODE}
-      iocp_log.WriteLog(PeerInfo + '->对话期无效, ' + HTTP_SESSION_ID  + '=' + Request.FSessionId);
-//      {$ENDIF}
-      if Assigned(FOnInvalidSession) then  // 调用事件 FOnInvalidSession
-        FOnInvalidSession(THttpSocket(Request.FOwner).Worker, Request, Respone);
-    finally
+  FSessionMgr.Lock;
+  try
+    Session := FSessionMgr.ValueOf3(Request.FSessionId, Item);
+    if (Assigned(Session) = False) then  // 没有
+      Request.FSessionId := ''
+    else
+    if Session.ValidateSession then  // 有效
+    begin
+      Response.FSessionId := Request.FSessionId;  // 方便操作界面判断
+      Session.UpdateExpires;  // 生命期延后
+    end else
+    begin
       Request.FSessionId := '';
-      Respone.InvalidSession;   // 返回一个无效的 Session 给客户端
-      Result := False; 
+      FSessionMgr.Remove2(Item);
     end;
-
+  finally
+    FSessionMgr.UnLock;
+  end;
 end;
 
 procedure THttpDataProvider.ClearIPList;
@@ -617,9 +584,9 @@ begin
   Result := THttpContentType(inherited AsInteger['CONTENT-TYPE']);
 end;
 
-function THttpHeaderParams.GetEncodeType: THttpEncodeType;
+function THttpHeaderParams.GetUTF8Encode: Boolean;
 begin
-  Result := THttpEncodeType(inherited AsInteger['ENCODE-TYPE']);
+  Result := inherited AsBoolean['UTF8-ENCODE'];
 end;
 
 function THttpHeaderParams.GetIfMath: AnsiString;
@@ -672,7 +639,7 @@ end;
 
 function THttpBase.GetHasSession: Boolean;
 begin
-  Result := (FSessionId <> '');
+  Result := (FSessionId <> '');  // 合法时才不为空
 end;
 
 { THttpRequest }
@@ -704,7 +671,7 @@ begin
   FStream := TInMemStream.Create;
 end;
 
-procedure THttpRequest.Decode(Sender: TBaseTaskSender; Respone: THttpRespone; Data: PPerIOData);
+procedure THttpRequest.Decode(Sender: TBaseTaskSender; Response: THttpResponse; Data: PPerIOData);
 var
   Buf: PAnsiChar;
 begin
@@ -712,69 +679,74 @@ begin
   //  1. 任务完成 -> 开始新任务
   //  2. 任务未接收完成，继续接收     
 
-  Respone.FRequest := Self;     // 引用
-  Respone.FExtParams := FExtParams; // 引用参数表
-  Respone.FSender := Sender;    // 引用数据发送器
+  Response.FRequest := Self;     // 引用
+  Response.FExtParams := FExtParams; // 引用参数表
+  Response.FSender := Sender;    // 引用数据发送器
 
   // 设置报头缓存，把报头对象和发送器关联起来
-  Respone.FHeaders.Owner := TServerTaskSender(Sender);
+  Response.FHeaders.Owner := TServerTaskSender(Sender);
 
   Buf := Data^.Data.buf;  // 开始地址
   FByteCount := Data^.Overlapped.InternalHigh;  // 数据包长度
 
-  if Complete then   // 新的请求
+  if Completed then   // 新的请求
   begin
     // 提取命令行信息（可能带参数）
     ExtractMethod(Buf);
 
     if (FMethod > hmUnknown) and (FRequestURI <> '') and (FStatusCode = 200) then
     begin
-      // 继续分析报头 Headers（ Buf 已移到第 2 行的首位置）
+      // 分析报头 Headers（ Buf 已移到第 2 行的首位置）
       ExtractHeaders(Buf, Integer(Data^.Overlapped.InternalHigh) -
                           Integer(Buf - Data^.Data.buf));
 
-      // 复制 FKeepAlive（暂不用长连接）
-      Respone.FKeepAlive := FKeepAlive;
+      // 复制 FKeepAlive
+      Response.FKeepAlive := FKeepAlive;
 
-      // URI 解码, 分离 GET 参数表
+      // URI 解码, 提取 GET 请求的参数表
       if (FMethod = hmGet) then
         URLDecodeRequestURI;
 
-      // 调用是否允许事件
+      if (FSessionId <> '') then   // 检查 FSessionId 是否有效
+        FDataProvider.CheckSessionState(Self, Response);
+
+      // 调用事件：是否允许请求
       if Assigned(FDataProvider.FOnAccept) then
-      begin
-        FDataProvider.FOnAccept(THttpSocket(FOwner).Worker, Self, FAccepted);
-        if (FAccepted = False) then
-          FStatusCode := 403  // 403: Forbidden
-        else
-        if (FSessionId <> '') then // 检查 FSessionId 是否有效
-          FAccepted := FDataProvider.CheckSessionState(Self, Respone,
-                                     THttpSocket(FOwner).PeerIPPort);
-      end;
+        FDataProvider.FOnAccept(THttpSocket(FOwner).Worker,
+                                Self, FAccepted);
 
-      // 检查是否要升级为 WebSocket, 15=8+4+2+1
-      if FAccepted and (FUpgradeState = 15) and
-         Assigned(FDataProvider.FOnUpgrade) then
+      if (FAccepted = False) then  // 禁止请求
       begin
-        FDataProvider.FOnUpgrade(Self, FHeadersAry[rqhOrigin], FAccepted);
+        FStatusCode := 403;        // 403: Forbidden
         {$IFDEF DEBUG_MODE}
-        if (FAccepted = False) then  // 升级为 WebSocket
-          iocp_log.WriteLog(THttpSocket(FOwner).PeerIPPort + '->拒绝请求升级为 WebSocket.');
-        {$ENDIF}
-        Exit;
-      end;
-
-      // 清除
-      FUpgradeState := 0;
-
-      {$IFDEF DEBUG_MODE}
-      if (FAccepted = False) then
         iocp_log.WriteLog(THttpSocket(FOwner).PeerIPPort +
                           '->拒绝请求 ' + METHOD_LIST[FMethod] + ' ' +
                           FRequestURI + ', 状态=' + IntToStr(FStatusCode));
-      {$ENDIF}
+        {$ENDIF}
+      end else
+      if (FUpgradeState = 15) then  // 检查是否要升级为 WebSocket, 15=8+4+2+1
+      begin
+        if Assigned(FDataProvider.FOnUpgrade) then  // 是否允许升级
+          FDataProvider.FOnUpgrade(Self, FHeadersAry[rqhOrigin], FAccepted);
+        if (FAccepted = False) then
+        begin
+          FStatusCode := 406;      // 406 Not Acceptable
+          {$IFDEF DEBUG_MODE}
+          iocp_log.WriteLog(THttpSocket(FOwner).PeerIPPort + '->拒绝请求升级为 WebSocket.');
+          {$ENDIF}
+        end;
+        Exit;
+      end;
+
     end else
+    begin
       FAccepted := False;
+      {$IFDEF DEBUG_MODE}
+      iocp_log.WriteLog(THttpSocket(FOwner).PeerIPPort +
+                        '->错误的请求 ' + METHOD_LIST[FMethod] + ' ' +
+                        FRequestURI + ', 状态=' + IntToStr(FStatusCode));
+      {$ENDIF}
+    end;
       
   end else
   if FAccepted then    // 上传数据包，接收
@@ -788,13 +760,13 @@ begin
     FExtParams.Clear;  
     FStream.Clear;
   end else             // 接收数据完毕
-  if FAccepted and Complete and (FStream.Size > 0) then
+  if FAccepted and Completed and (FStream.Size > 0) then
     if (FMethod = hmPost) and (FContentType <> hctUnknown) then
       try
         if FExtParams.MultiPart then  // 提取表单字段
           ExtractElements(FStream.Memory, FStream.Size, FDataProvider.FOnReceiveFile)
         else  // 提取普通变量/参数
-          ExtractParams(FStream.Memory, FStream.Size);
+          ExtractParams(FStream.Memory, FStream.Size, True);
       finally
         FStream.Clear;
       end;
@@ -949,7 +921,9 @@ begin
     on E: Exception do
     begin
       FStatusCode := 500;
+      {$IFDEF DEBUG_MODE}
       iocp_log.WriteLog('THttpBase.ExtractElements->' + E.Message);
+      {$ENDIF}
     end;
   end;
 
@@ -991,7 +965,7 @@ begin
   FContentLength := 0;  // 实体长度
   FContentType := hctUnknown;  // 实体类型
   FKeepAlive := False;  // 默认不保持连接
-  FUpgradeState := 0;   // 不升级为 WebSocket
+  FUpgradeState := 0;   // 清0, 不升级为 WebSocket
 
   i := 0;       // 开始位置
   k := 0;       // 行首位置
@@ -1033,12 +1007,14 @@ begin
               Dec(DataLength, i + 3);    // 减 3
               if (DataLength > 0) then   // 有实体内容
               begin
-                if (FContentLength > 0) then  // hctUnknown 时末尾不加 &
-                  FStream.Initialize(FContentLength, FContentType <> hctUnknown);
+                if (FContentLength > 0) then
+                  InitializeInStream;
+
                 if (DataLength <= FContentLength) then
                   FContentSize := DataLength
                 else
                   FContentSize := FContentLength;
+
                 FStream.Write((p + 3)^, FContentSize);
               end;
               Break;
@@ -1052,7 +1028,7 @@ begin
 
   // 未收到实体内容，预设空间
   if (FContentLength > 0) and (FStream.Size = 0) then  // 预设空间
-    FStream.Initialize(FContentLength, FContentType <> hctUnknown);
+    InitializeInStream;
 
 end;
 
@@ -1127,7 +1103,7 @@ begin
 
 end;
 
-procedure THttpRequest.ExtractParams(Data: PAnsiChar; Len: Integer);
+procedure THttpRequest.ExtractParams(Data: PAnsiChar; Len: Integer; Decode: Boolean);
 var
   i: Integer;
   Buf: PAnsiChar;
@@ -1154,13 +1130,17 @@ begin
           else begin
             // 非空值（hctMultiPart 类型时不在此处理）
             SetString(Value, Buf, Data - Buf);
-            if (FContentType <> hctTextPlain) then
-            begin
-              Value := DecodeHexText(Value);
-              if (FExtParams.EncodeType = etUTF8) then
-                Value := Trim(System.UTF8Decode(Value));
-            end;
-            FParams.SetAsString(Param, Value); 
+
+            // 字符集转换
+            if Decode then
+              if FExtParams.UTF8Encode then  // TNetHttpClient：UTF-8 编码
+                Value := System.UTF8Decode(Value)
+              else 
+              if (FContentType = hctUrlEncoded) then  // hctUrlEncoded 表单不是 UTF-8 编码
+                Value := DecodeHexText(Value);
+
+            // 加入参数
+            FParams.SetAsString(Param, Value);
           end;
 
           // 推进
@@ -1184,7 +1164,7 @@ begin
   end;
 end;
 
-function THttpRequest.GetComplete: Boolean;
+function THttpRequest.GetCompleted: Boolean;
 begin
   // 判断是否接收完毕
   Result := (FContentLength = 0) or (FContentSize >= FContentLength);
@@ -1209,33 +1189,54 @@ begin
   Result := FHeadersAry[Index];
 end;
 
+procedure THttpRequest.InitializeInStream;
+begin
+  // 初始化 FStream 空间
+  if (FContentType = hctUnknown) then  // hctUnknown 时末尾不加 &
+    FStream.Initialize(FContentLength)
+  else begin  // 末尾 + &
+    FStream.Initialize(FContentLength + 1);
+    PAnsiChar(PAnsiChar(FStream.Memory) + FContentLength)^ := AnsiChar('&');
+  end;
+end;
+
 procedure THttpRequest.URLDecodeRequestURI;
 var
-  i: Integer;
+  i, k: Integer;
   ParamList: AnsiString;
 begin
-  // URI 解码，提取参数
+  // URL 解码，提取参数
   // 分离出 GET 请求的参数表：/aaa/ddd.jsp?code=111&name=WWW
-  for i := 1 to Length(FRequestURI) do
-    if (FRequestURI[i] = AnsiChar('?')) then
+  // 可能为 UFT-8,UFT-16
+  if (Pos(AnsiChar('%'), FRequestURI) > 0) then
+  begin
+    ParamList := DecodeHexText(FRequestURI);
+    if CheckUTFEncode(ParamList, k) then  // ParamList 可能是 UTF，中文“一”特殊，歧义？
     begin
-      SetLength(ParamList, Length(FRequestURI) - i + 1); // 多一个字节
-      ParamList[Length(ParamList)] := AnsiChar('&'); // 末尾设为 &
+      FRequestURI := System.UTF8Decode(ParamList);
+      if (Length(FRequestURI) <> k) then  // 有特殊字符
+        FRequestURI := ParamList;
+    end else
+      FRequestURI := ParamList;
+  end;  
+  i := Pos(AnsiChar('?'), FRequestURI);
+  if (i > 0) then
+  begin
+    k := Length(FRequestURI) - i + 1;
+    SetLength(ParamList, k); // 多一个字节
+    System.Move(FRequestURI[i + 1], ParamList[1], k - 1);
 
-      System.Move(FRequestURI[i + 1], ParamList[1], Length(ParamList) - 1);
-      ExtractParams(@ParamList[1], Length(ParamList)); // 提取参数表
+    ParamList[k] := AnsiChar('&'); // 末尾设为 &
+    ExtractParams(PAnsiChar(ParamList), k, False); // 提取参数表
 
-      Delete(FRequestURI, i, Length(FRequestURI));
-      Exit;
-    end;
-  if (Pos('%', FRequestURI) > 0) then  // 可能为双字节文件
-    FRequestURI := http_utils.URLDecode(FRequestURI);
+    Delete(FRequestURI, i, Length(FRequestURI));
+  end;
 end;
 
 procedure THttpRequest.WriteHeader(Index: TRequestHeaderType; const Content: AnsiString);
 var
   i: Int64;
-  StrName, StrValue: AnsiString;
+  ItemValue: AnsiString;
 begin
   // 保存 Content 到报头数组
 
@@ -1244,12 +1245,8 @@ begin
   // 根据情况增加额外的变量/参数
   
   case Index of
-    rqhAcceptCharset: begin  // TNetHttpClient
-      if (Pos('UTF-8', UpperCase(Content)) > 0) then
-        FExtParams.SetAsInteger('ENCODE-TYPE', Integer(etUTF8))
-      else
-        FExtParams.SetAsInteger('ENCODE-TYPE', Integer(etNone));
-    end;
+    rqhAcceptCharset:   // TNetHttpClient
+      FExtParams.SetAsBoolean('UTF8-ENCODE', Pos('UTF-8', UpperCase(Content)) > 0);
 
     rqhContentLength:
       // Content-Length: 增设长度变量, 文件太大时，IE < 0, Chrome 正常
@@ -1272,7 +1269,7 @@ begin
             FStatusCode := 403    // 403 Forbidden
           else begin
             FContentLength := i;   // 返回长度 i
-            FExtParams.SetAsInteger('CONTENT-LENGTH', i);
+            FExtParams.SetAsInt64('CONTENT-LENGTH', i);
           end;
         end;
 
@@ -1294,7 +1291,7 @@ begin
       //               application/x-www-form-urlencoded
       //               multipart/form-data; boundary=...
       // 增设三个变量：CONTENT-TYPE、MULTIPART、BOUNDARY
-      StrValue := LowerCase(Content);
+      ItemValue := LowerCase(Content);
       if (FMethod = hmGet) then
       begin
         if (Pos('%', FRequestURI) > 0) then
@@ -1302,34 +1299,34 @@ begin
           FContentType := hctUrlEncoded;
           FExtParams.SetAsInteger('CONTENT-TYPE', Integer(hctUrlEncoded));
         end;
-        if (Pos('utf-8', StrValue) > 1) then
-          FExtParams.SetAsInteger('ENCODE-TYPE', Integer(etUTF8));
+        if (Pos('utf-8', ItemValue) > 1) then
+          FExtParams.SetAsBoolean('UTF8-ENCODE', True);
       end else
-        if (StrValue = 'text/plain') then
+        if (ItemValue = 'text/plain') then
         begin
           FContentType := hctTextPlain;
           FExtParams.SetAsString('BOUNDARY', '');
           FExtParams.SetAsInteger('CONTENT-TYPE', Integer(hctTextPlain));
           FExtParams.SetAsBoolean('MULTIPART', False);
         end else
-        if (Pos('application/x-www-form-urlencoded', StrValue) = 1) then
+        if (Pos('application/x-www-form-urlencoded', ItemValue) = 1) then
         begin
           FContentType := hctUrlEncoded;
           FExtParams.SetAsString('BOUNDARY', '');
           FExtParams.SetAsInteger('CONTENT-TYPE', Integer(hctUrlEncoded));
           FExtParams.SetAsBoolean('MULTIPART', False);
         end else
-        if (Pos('multipart/form-data', StrValue) = 1) then
+        if (Pos('multipart/form-data', ItemValue) = 1) then
         begin
           FStatusCode := 417; // 不符预期
           i := PosEx('=', Content, 28);
           if (i >= 29) then   // multipart/form-data; boundary=...
           begin
-            StrValue := Copy(Content, i + 1, 999);
-            if (StrValue <> '') then
+            ItemValue := Copy(Content, i + 1, 999);
+            if (ItemValue <> '') then
             begin
               FContentType := hctMultiPart;
-              FExtParams.SetAsString('BOUNDARY', StrValue);
+              FExtParams.SetAsString('BOUNDARY', ItemValue);
               FExtParams.SetAsInteger('CONTENT-TYPE', Integer(hctMultiPart));
               FExtParams.SetAsBoolean('MULTIPART', True);
               FStatusCode := 200;
@@ -1343,15 +1340,15 @@ begin
         end;
     end;
 
-    rqhCookie:  // 新建一个 Session，不用加入 Hash 表
-      if THttpSession.Extract(Content, StrName, StrValue) then
+    rqhCookie:  // 提取 Cookie 信息
+      if THttpSession.Extract(Content, ItemValue) then
       begin
-        FAttacked := FDataProvider.FSessionMgr.CheckAttack(StrValue);
+        FAttacked := FDataProvider.FSessionMgr.CheckAttack(ItemValue);
         if FAttacked then  // 被用 SessionId 攻击
           FAccepted := False
-        else               // 不是无效 SessionId
-        if (StrValue <> HTTP_INVALID_SESSION) then
-          FSessionId := StrValue;
+        else    // SessionId 有效
+        if (ItemValue <> HTTP_INVALID_SESSION) then
+          FSessionId := ItemValue;
       end;
 
     rqhIfMatch,
@@ -1359,9 +1356,9 @@ begin
       FExtParams.SetAsString('IF_MATCH', Copy(Content, 2, Length(Content) - 2));
 
     rqhIfRange: begin  // 断点下载
-      StrValue := Copy(Content, 2, Length(Content) - 2);
-      FExtParams.SetAsString('IF_MATCH', StrValue);
-      FExtParams.SetAsString('IF_RANGE', StrValue);
+      ItemValue := Copy(Content, 2, Length(Content) - 2);
+      FExtParams.SetAsString('IF_MATCH', ItemValue);
+      FExtParams.SetAsString('IF_RANGE', ItemValue);
     end;
 
     rqhRange:  // 断点下载
@@ -1399,9 +1396,9 @@ begin
 
 end;
 
-{ THttpResponeHeaders }
+{ THttpResponseHeaders }
 
-procedure THttpResponeHeaders.Add(Code: TResponeHeaderType; const Content: AnsiString);
+procedure THttpResponseHeaders.Add(Code: TResponseHeaderType; const Content: AnsiString);
 begin
   // 增加报头信息
   if (Code = rshUnknown) then  // 自定义
@@ -1414,16 +1411,16 @@ begin
     FHeaders[Code] := True;
     case Code of
       rshDate:
-        InterAdd(RESPONE_HEADERS[Code] + CHAR_SC2 + GetHttpGMTDateTime);
+        InterAdd(RESPONSE_HEADERS[Code] + CHAR_SC2 + GetHttpGMTDateTime);
       rshServer:
-        InterAdd(RESPONE_HEADERS[Code] + CHAR_SC2 + HTTP_SERVER_NAME);
+        InterAdd(RESPONSE_HEADERS[Code] + CHAR_SC2 + HTTP_SERVER_NAME);
       else
-        InterAdd(RESPONE_HEADERS[Code] + CHAR_SC2 + Content);
+        InterAdd(RESPONSE_HEADERS[Code] + CHAR_SC2 + Content);
     end;
   end;
 end;
 
-procedure THttpResponeHeaders.AddCRLF;
+procedure THttpResponseHeaders.AddCRLF;
 begin
   // 加回车换行
   PStrCRLF(FBuffer)^ := STR_CRLF;
@@ -1431,7 +1428,7 @@ begin
   Inc(FData^.len, 2);
 end;
 
-procedure THttpResponeHeaders.Append(var AHandle: THandle; ASize: Cardinal);
+procedure THttpResponseHeaders.Append(var AHandle: THandle; ASize: Cardinal);
 begin
   // 追加文件内容（实体）
   try
@@ -1440,11 +1437,11 @@ begin
     Inc(FData^.len, ASize);
   finally
     CloseHandle(AHandle);
-    AHandle := 0;  // 必须，否则清资源时异常 
+    AHandle := 0;  // 必须，否则清资源时异常
   end;
 end;
 
-procedure THttpResponeHeaders.Append(var AStream: TStream; ASize: Cardinal);
+procedure THttpResponseHeaders.Append(var AStream: TStream; ASize: Cardinal);
 begin
   // 追加数据流（实体）
   try
@@ -1457,7 +1454,7 @@ begin
   end;
 end;
 
-procedure THttpResponeHeaders.Append(AList: TInStringList; ASize: Cardinal);
+procedure THttpResponseHeaders.Append(AList: TInStringList; ASize: Cardinal);
 var
   i: Integer;
   S: AnsiString;
@@ -1476,20 +1473,20 @@ begin
   end;
 end;
 
-procedure THttpResponeHeaders.Append(Content: AnsiString; SetCRLF: Boolean);
+procedure THttpResponseHeaders.Append(const Content: AnsiString; SetCRLF: Boolean);
 begin
   // 加入字符串（一行内容）
   InterAdd(Content, SetCRLF);
 end;
 
-procedure THttpResponeHeaders.ChunkDone;
+procedure THttpResponseHeaders.ChunkDone;
 begin
   PAnsiChar(FData^.buf)^ := AnsiChar('0');  // 0
   PStrCRLF2(FData^.buf + 1)^ := STR_CRLF2;  // 回车换行, 两个
   FData^.len := 5;
 end;
 
-procedure THttpResponeHeaders.ChunkSize(ASize: Cardinal);
+procedure THttpResponseHeaders.ChunkSize(ASize: Cardinal);
 begin
   if (ASize > 0) then
   begin
@@ -1505,7 +1502,7 @@ begin
   end;
 end;
 
-procedure THttpResponeHeaders.Clear;
+procedure THttpResponseHeaders.Clear;
 begin
   // 写入地址恢复到开始位置
   FillChar(FHeaders, SizeOf(THeaderArray), 0);
@@ -1516,13 +1513,13 @@ begin
   end;
 end;
 
-function THttpResponeHeaders.GetSize: Integer;
+function THttpResponseHeaders.GetSize: Integer;
 begin
   // 取发送内容长度
   Result := FData^.len;
 end;
 
-procedure THttpResponeHeaders.InterAdd(const Content: AnsiString; SetCRLF: Boolean);
+procedure THttpResponseHeaders.InterAdd(const Content: AnsiString; SetCRLF: Boolean);
 begin
   // 增加报头项目
   // 如：Server: InIOCP/2.0
@@ -1541,7 +1538,7 @@ begin
   end;
 end;
 
-procedure THttpResponeHeaders.SetOwner(const Value: TServerTaskSender);
+procedure THttpResponseHeaders.SetOwner(const Value: TServerTaskSender);
 begin
   // 初始化
   FOwner := Value;
@@ -1550,7 +1547,7 @@ begin
   FBuffer := FData^.buf;
 end;
 
-procedure THttpResponeHeaders.SetStatus(Code: Integer);
+procedure THttpResponseHeaders.SetStatus(Code: Integer);
 begin
   // 设置响应状态
   Clear;
@@ -1568,16 +1565,16 @@ begin
   end;
 end;
 
-{ THttpRespone }
+{ THttpResponse }
 
-procedure THttpRespone.AddContent(const Content: AnsiString);
+procedure THttpResponse.AddContent(const Content: AnsiString);
 begin
   // 增加实体内容
   FContent.Add(Content);
   FContentSize := FContent.Size;  // 调
 end;
 
-procedure THttpRespone.AddDataPackets;
+procedure THttpResponse.AddDataPackets;
 var
   ETag, LastModified: AnsiString;
 
@@ -1624,7 +1621,7 @@ var
       FHeaders.Add(rshAcceptRanges, 'bytes');
       FHeaders.Add(rshContentType, FContentType);
 
-      if (FSessionId <> '') then
+      if (FSessionId <> '') then  // 加入 Cookie
         FHeaders.Add(rshSetCookie, HTTP_SESSION_ID + '=' + FSessionId);
 
       // 数据块长度
@@ -1680,7 +1677,7 @@ begin
 
 end;
 
-procedure THttpRespone.AddHeader(Code: TResponeHeaderType; const Content: AnsiString);
+procedure THttpResponse.AddHeader(Code: TResponseHeaderType; const Content: AnsiString);
 begin
   // 增加报头信息
   if (FStatusCode = 0) then
@@ -1694,7 +1691,7 @@ begin
   FHeaders.Add(Code, Content);
 end;
 
-procedure THttpRespone.AddHeaderList(SendNow: Boolean);
+procedure THttpResponse.AddHeaderList(SendNow: Boolean);
 begin
   // 准备状态、报头
   if (FStatusCode = 0) then
@@ -1760,8 +1757,7 @@ begin
     end;
   end;
 
-  // 加入 SessionId
-  if (FSessionId <> '') then
+  if (FSessionId <> '') then  // 加入 Cookie
     FHeaders.Add(rshSetCookie, HTTP_SESSION_ID + '=' + FSessionId);
 
   // 报头结束，发送
@@ -1771,7 +1767,7 @@ begin
   
 end;
 
-procedure THttpRespone.Clear;
+procedure THttpResponse.Clear;
 begin
   inherited;
   FreeResources;
@@ -1781,24 +1777,24 @@ begin
   FWorkDone := False;
 end;
 
-constructor THttpRespone.Create(ADataProvider: THttpDataProvider; AOwner: TObject);
+constructor THttpResponse.Create(ADataProvider: THttpDataProvider; AOwner: TObject);
 begin
   inherited;
   FContent := TInStringList.Create;   // 消息内容
-  FHeaders := THttpResponeHeaders.Create; // 服务器状态、报头
+  FHeaders := THttpResponseHeaders.Create; // 服务器状态、报头
 end;
 
-procedure THttpRespone.CreateSession;
+procedure THttpResponse.CreateSession;
 var
   Session: THttpSession;
 begin
   // 新建 SessionId
-  Session := THttpSession.Create(HTTP_SESSION_ID);
-  FSessionId := Session.FValue;
-  FDataProvider.FSessionMgr.Add(Session.FValue, Session);  // 加入 Hash 表
+  Session := THttpSession.Create;
+  FSessionId := Session.CreateSessionId;
+  FDataProvider.FSessionMgr.Add(FSessionId, Session);  // 加入 Hash 表的值
 end;
 
-destructor THttpRespone.Destroy;
+destructor THttpResponse.Destroy;
 begin
   FreeResources;
   FHeaders.Free;
@@ -1806,7 +1802,7 @@ begin
   inherited;
 end;
 
-procedure THttpRespone.FreeResources;
+procedure THttpResponse.FreeResources;
 begin
   if Assigned(FStream) then
   begin
@@ -1822,13 +1818,13 @@ begin
     FContent.Clear;
 end;
 
-function THttpRespone.GetFileETag: AnsiString;
+function THttpResponse.GetFileETag: AnsiString;
 begin
   // 取文件标识（原理上是唯一的）
   Result := IntToHex(FLastWriteTime, 2) + '-' + IntToHex(FContentSize, 4);
 end;
 
-function THttpRespone.GZipCompress(Stream: TStream): TStream;
+function THttpResponse.GZipCompress(Stream: TStream): TStream;
 begin
   // GZip 压缩流、返回文件流
   Result := TFileStream.Create(iocp_varis.gTempPath + '_' +
@@ -1841,16 +1837,7 @@ begin
   end;
 end;
 
-procedure THttpRespone.InvalidSession;
-begin
-  // 设置无效的 SessionId，反馈给客户端
-  if (FSessionId <> '') then
-    FDataProvider.FSessionMgr.Remove(FSessionId);
-  FSessionId := HTTP_INVALID_SESSION;
-  SetContent(HTTP_INVALID_SESSION);
-end;
-
-procedure THttpRespone.Redirect(const URL: AnsiString);
+procedure THttpResponse.Redirect(const URL: AnsiString);
 begin
   // 定位到指定的 URL
   SetStatus(302);  // 302 Found, 303 See Other
@@ -1859,7 +1846,15 @@ begin
   FHeaders.AddCRLF;       
 end;
 
-procedure THttpRespone.SendWork;
+procedure THttpResponse.RemoveSession;
+begin
+  // 设置无效的 SessionId，反馈给客户端
+  if (FSessionId <> '') and (FSessionId <> HTTP_INVALID_SESSION) then
+    FDataProvider.FSessionMgr.Remove(FSessionId);
+  FSessionId := HTTP_INVALID_SESSION;  // 无效的
+end;
+
+procedure THttpResponse.SendWork;
   procedure AppendEntityData;
   begin
     // 把小实体内容加入到 FHeaders 之后
@@ -1953,7 +1948,7 @@ begin
 
 end;
 
-procedure THttpRespone.SendChunk(Stream: TStream);
+procedure THttpResponse.SendChunk(Stream: TStream);
 begin
   // 立即分块发送（在外部释放 Stream）
   //   HTTP 协议不能对单块进行压缩（整体传输时可以）
@@ -1981,7 +1976,7 @@ begin
     end;
 end;
 
-procedure THttpRespone.SendChunkHeaders(const ACharSet: AnsiString);
+procedure THttpResponse.SendChunkHeaders(const ACharSet: AnsiString);
 begin
   // 发送分块描述
   SetStatus(200);
@@ -1990,7 +1985,7 @@ begin
   FHeaders.Add(rshDate);
   FHeaders.Add(rshContentType, CONTENT_TYPES[0].ContentType + ACharSet);
 
-  if (FSessionId <> '') then
+  if (FSessionId <> '') then // 加入 Cookie: InIOCP_SID=...
     FHeaders.Add(rshSetCookie, HTTP_SESSION_ID + '=' + FSessionId);
 
   FHeaders.Add(rshTransferEncoding, 'chunked');
@@ -2004,7 +1999,7 @@ begin
 
 end;
 
-procedure THttpRespone.SendJSON(DataSet: TDataSet; CharSet: THttpCharSet);
+procedure THttpResponse.SendJSON(DataSet: TDataSet; CharSet: THttpCharSet);
 begin
   // 把大数据集转为 JSON 分块发送（立即发送）
   // CharSet：把记录转换为相应的字符集
@@ -2016,13 +2011,13 @@ begin
   end;
 end;
 
-procedure THttpRespone.SendJSON(JSON: AnsiString);
+procedure THttpResponse.SendJSON(const JSON: AnsiString);
 begin
   // 设置要发送的 JSON（不立即发送）
   SetContent(JSON);
 end;
 
-procedure THttpRespone.SendStream(Stream: TStream; Compress: Boolean);
+procedure THttpResponse.SendStream(Stream: TStream; Compress: Boolean);
 begin
   // 准备要发送的数据流
 
@@ -2030,7 +2025,7 @@ begin
   if Assigned(Stream) then
   begin
     FContentSize := Stream.Size;
-    if (FContentSize > MAX_TRANSMIT_LENGTH) then  // 太大
+    if (FContentSize > MAX_TRANSMIT_LENGTH div 200) then  // 太大
     begin
       FContentSize := 0;
       FStatusCode := 413;
@@ -2050,7 +2045,7 @@ begin
     
 end;
 
-procedure THttpRespone.SetContent(const Content: AnsiString);
+procedure THttpResponse.SetContent(const Content: AnsiString);
 begin
   // 第一次加入实体内容
   if (FContent.Count > 0) then
@@ -2059,7 +2054,7 @@ begin
   FContentSize := FContent.Size;  // 调
 end;
 
-procedure THttpRespone.SetHead;
+procedure THttpResponse.SetHead;
 begin
   // 返回 Head 请求的信息
   SetStatus(200);
@@ -2084,14 +2079,14 @@ begin
   
 end;
 
-procedure THttpRespone.SetStatus(Code: Integer);
+procedure THttpResponse.SetStatus(Code: Integer);
 begin
   // 设置响应状态
   FStatusCode := Code;
   FHeaders.SetStatus(Code);
 end;
 
-procedure THttpRespone.TransmitFile(const FileName: String; AutoView: Boolean);
+procedure THttpResponse.TransmitFile(const FileName: String; AutoView: Boolean);
 var
   ETag: AnsiString;
   TempFileName: String;
@@ -2108,7 +2103,7 @@ begin
     FStatusCode := 404;
     SetContent('<html><body>InIOCP/2.0: 页面不存在！</body></html>');
     {$IFDEF DEBUG_MODE}
-    iocp_log.WriteLog('THttpRespone.TransmitFile->文件不存在：' + FileName);
+    iocp_log.WriteLog('THttpResponse.TransmitFile->文件不存在：' + FileName);
     {$ENDIF}
     Exit;
   end;
@@ -2120,15 +2115,6 @@ begin
   begin
     // 用 文件大小 + 修改时间 计算 ETag
     FContentSize := GetFileSize64(FHandle);
-
-    if (FContentSize > MAX_TRANSMIT_LENGTH) then     // 文件太大
-    begin
-      FContentSize := 0;
-      FStatusCode := 413;
-      CloseHandle(FHandle);
-      FHandle := 0;
-      Exit;
-    end;
 
     // 返回 FFileName，chrome 浏览器以后断点下载
     if not AutoView or (FContentSize > 4096000) then
@@ -2165,13 +2151,13 @@ begin
   begin
     FStatusCode := 500;
     {$IFDEF DEBUG_MODE}
-    iocp_log.WriteLog('THttpRespone.TransmitFile->打开文件异常：' + FileName);
+    iocp_log.WriteLog('THttpResponse.TransmitFile->打开文件异常：' + FileName);
     {$ENDIF}
   end;
 
 end;
 
-procedure THttpRespone.Upgrade;
+procedure THttpResponse.Upgrade;
 begin
   // 升级为 WebSocket，反馈
   FHeaders.SetStatus(101);

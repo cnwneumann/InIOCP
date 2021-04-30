@@ -25,7 +25,7 @@ type
     FSockets: TInList;    // 可以删首节点的列表
   protected
     procedure AfterWork; override;
-    procedure DoMethod; override;
+    procedure DoThreadMethod; override;
   public
     constructor Create;
     procedure AddSocket(const Socket: TBaseSocket);
@@ -44,7 +44,7 @@ type
     FWorker: TBusiWorker;       // 任务执行者（引用）
   protected
     procedure AfterWork; override;
-    procedure DoMethod; override;
+    procedure DoThreadMethod; override;
   public
     constructor Create(AManager: TBusiWorkManager);
   end;
@@ -99,6 +99,7 @@ type
     FBufPool: TIODataPool;      // 内存池
     FPushBuf: PPerIOData;       // 待推送消息
     FCastType: TBroadcastType;  // 广播目的类型
+    FGroup: String;             // 客户端分组
     FIngoreSocket: TObject;     // 忽略广播的 TIOCPSocketPool
     FClientCount: Integer;      // 估计广播目的数
     FTickCount: Cardinal;       // 加入时间毫秒
@@ -110,8 +111,11 @@ type
     destructor Destroy; override;
   public
     procedure UpdateMsgId;
+    procedure WriteWebSocketMsg(OpCode: TWSOpCode; Buffer: PAnsiChar; Size: Integer);
+  public    
     property IngoreSocket: TObject read FIngoreSocket write FIngoreSocket;
     property PushBuf: PPerIOData read FPushBuf;
+    property Group: String read FGroup write FGroup;
   end;
 
   // ===================== 消息推送线程 =====================
@@ -127,7 +131,7 @@ type
     procedure PushMesssage;
   protected
     procedure AfterWork; override;
-    procedure DoMethod; override;
+    procedure DoThreadMethod; override;
   public
     constructor Create(APushManager: TPushMsgManager; ABusiManager: TBusiWorkManager);
   end;
@@ -226,7 +230,7 @@ begin
   FSockets := TInList.Create;
 end;
 
-procedure TCloseSocketThread.DoMethod;
+procedure TCloseSocketThread.DoThreadMethod;
 var
   Socket: TBaseSocket;
 begin
@@ -241,9 +245,9 @@ begin
       FLock.Release;
     end;
     try
-      Socket.Close;
+      Socket.Close;  // 释放资源
     finally
-      Socket.ObjPool.Push(Socket.LinkNode);
+      Socket.ObjPool.Push(Socket.LinkNode);  // 压入池，下次不用新建
     end;
   end;
 end;
@@ -267,13 +271,13 @@ end;
 
 constructor TBusiThread.Create(AManager: TBusiWorkManager);
 begin
-  inherited Create(False);
+  inherited Create(False);  // 引用信号灯
   FManager := AManager;
   FSemaphore := FManager.FSemaphore;  // 引用
   FSender := TServerTaskSender.Create(TInIOCPServer(FManager.FServer).IODataPool);
 end;
 
-procedure TBusiThread.DoMethod;
+procedure TBusiThread.DoThreadMethod;
 begin
   // 取列表第一个 Socket，执行
   while (Terminated = False) and
@@ -564,6 +568,17 @@ begin
   MsgHead^.MsgId := TSystemGlobalLock.GetMsgId;
 end;
 
+procedure TPushMessage.WriteWebSocketMsg(OpCode: TWSOpCode; Buffer: PAnsiChar; Size: Integer);
+var
+  Data: PWsaBuf;
+begin
+  // 写 WebSocket 协议消息
+  Data := @(FPushBuf^.Data);
+  MakeFrameHeader(Data, OpCode, Size);  // 构建帧，操作：OpCode，长度：Size
+  System.Move(Buffer^, (Data^.buf + Data^.len)^, Size);  // 加入 Buffer
+  Inc(Data^.len, Size);
+end;
+
 { TPushThread }
 
 procedure TPushThread.AfterWork;
@@ -574,13 +589,13 @@ end;
 
 constructor TPushThread.Create(APushManager: TPushMsgManager; ABusiManager: TBusiWorkManager);
 begin
-  inherited Create(False);
+  inherited Create(False);  // 引用信号灯
   FBusiManager := ABusiManager;
   FPushManager := APushManager;
   FSemaphore := APushManager.FSemaphore;  // 引用
 end;
 
-procedure TPushThread.DoMethod;
+procedure TPushThread.DoThreadMethod;
 var
   i: Integer;
   Trigger: Boolean;
@@ -594,7 +609,8 @@ begin
     // 1. 广播，建在线客户端列表
     if (FMsg.FCastType > btUnknown) then
     begin
-      FMsg.FObjPool.GetSockets(FMsg, FMsg.FIngoreSocket, FMsg.FCastType = btAdminOnly);
+      FMsg.FObjPool.GetSockets(FMsg, FMsg.FIngoreSocket,
+                               FMsg.FCastType = btAdminOnly, FMsg.Group);
       FMsg.FCastType := btUnknown;  // 只取在此时间点的客户端
     end;
 

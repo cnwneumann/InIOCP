@@ -2,8 +2,8 @@ object FormInIOCPWebQueryScores: TFormInIOCPWebQueryScores
   Left = 339
   Top = 271
   Caption = 'InIOCP HTTP '#26381#21153' -- '#25104#32489#26597#35810
-  ClientHeight = 343
-  ClientWidth = 724
+  ClientHeight = 410
+  ClientWidth = 694
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -18,7 +18,7 @@ object FormInIOCPWebQueryScores: TFormInIOCPWebQueryScores
   PixelsPerInch = 120
   TextHeight = 15
   object btnStart: TButton
-    Left = 413
+    Left = 505
     Top = 283
     Width = 93
     Height = 31
@@ -31,8 +31,8 @@ object FormInIOCPWebQueryScores: TFormInIOCPWebQueryScores
     OnClick = btnStartClick
   end
   object btnStop: TButton
-    Left = 541
-    Top = 284
+    Left = 505
+    Top = 332
     Width = 93
     Height = 30
     Margins.Left = 2
@@ -45,8 +45,8 @@ object FormInIOCPWebQueryScores: TFormInIOCPWebQueryScores
     OnClick = btnStopClick
   end
   inline FrameIOCPSvrInfo1: TFrameIOCPSvrInfo
-    Left = 21
-    Top = 10
+    Left = 7
+    Top = 7
     Width = 684
     Height = 251
     Margins.Left = 2
@@ -60,8 +60,8 @@ object FormInIOCPWebQueryScores: TFormInIOCPWebQueryScores
     Font.Style = []
     ParentFont = False
     TabOrder = 2
-    ExplicitLeft = 21
-    ExplicitTop = 10
+    ExplicitLeft = 7
+    ExplicitTop = 7
     ExplicitWidth = 684
     ExplicitHeight = 251
     inherited Label3: TLabel
@@ -411,11 +411,18 @@ object FormInIOCPWebQueryScores: TFormInIOCPWebQueryScores
       ExplicitHeight = 18
     end
   end
+  object Memo1: TMemo
+    Left = 8
+    Top = 266
+    Width = 449
+    Height = 135
+    ScrollBars = ssVertical
+    TabOrder = 3
+  end
   object InIOCPServer1: TInIOCPServer
     HttpDataProvider = InHttpDataProvider1
     ServerAddr = '127.0.0.1'
     ServerPort = 80
-    StartParams.TimeOut = 0
     ThreadOptions.BusinessThreadCount = 8
     ThreadOptions.PushThreadCount = 4
     ThreadOptions.WorkThreadCount = 4

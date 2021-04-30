@@ -3,34 +3,34 @@ object FormInIOCPClient: TFormInIOCPClient
   Top = 0
   BorderStyle = bsSingle
   Caption = 'InIOCP-'#26222#36890#23458#25143#31471
-  ClientHeight = 228
-  ClientWidth = 525
+  ClientHeight = 298
+  ClientWidth = 687
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
-  Font.Height = -11
+  Font.Height = -14
   Font.Name = 'Tahoma'
   Font.Style = []
   OldCreateOrder = False
   Position = poDesktopCenter
   OnClose = FormClose
   OnCreate = FormCreate
-  PixelsPerInch = 96
-  TextHeight = 13
+  PixelsPerInch = 120
+  TextHeight = 17
   object btnInOut: TButton
-    Left = 394
-    Top = 128
-    Width = 75
-    Height = 25
+    Left = 515
+    Top = 167
+    Width = 98
+    Height = 33
     Caption = #30331#24405
     TabOrder = 0
     OnClick = btnInOutClick
   end
   object Memo1: TMemo
-    Left = 8
-    Top = 8
-    Width = 361
-    Height = 207
+    Left = 10
+    Top = 10
+    Width = 473
+    Height = 271
     ImeName = #35895#27468#25340#38899#36755#20837#27861' 2'
     Lines.Strings = (
       #27880#24847#65306#28040#24687#21253#39044#35774#30340#23646#24615' userName '#26159#30331#24405#32773#21517#31216#65292#30331#24405#21518
@@ -40,33 +40,33 @@ object FormInIOCPClient: TFormInIOCPClient
     TabOrder = 1
   end
   object btnLogin2: TButton
-    Left = 394
-    Top = 171
-    Width = 75
-    Height = 25
+    Left = 515
+    Top = 224
+    Width = 98
+    Height = 32
     Caption = #30331#24405'2'
     TabOrder = 2
     OnClick = btnLogin2Click
   end
   object lbEditIP: TLabeledEdit
-    Left = 394
-    Top = 29
-    Width = 98
+    Left = 515
+    Top = 38
+    Width = 128
     Height = 21
-    EditLabel.Width = 14
-    EditLabel.Height = 13
+    EditLabel.Width = 17
+    EditLabel.Height = 17
     EditLabel.Caption = 'IP:'
     ImeName = #35895#27468#25340#38899#36755#20837#27861' 2'
     TabOrder = 3
     Text = '127.0.0.1'
   end
   object lbEditPort: TLabeledEdit
-    Left = 394
-    Top = 69
-    Width = 49
+    Left = 515
+    Top = 90
+    Width = 64
     Height = 21
-    EditLabel.Width = 24
-    EditLabel.Height = 13
+    EditLabel.Width = 31
+    EditLabel.Height = 17
     EditLabel.Caption = 'Port:'
     ImeName = #35895#27468#25340#38899#36755#20837#27861' 2'
     TabOrder = 4

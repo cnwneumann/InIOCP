@@ -4,11 +4,11 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls, fmIOCPSvrInfo, iocp_managers, iocp_base,
+  Dialogs, StdCtrls, fmIOCPSvrInfo, iocp_managers, iocp_base, 
   http_objects, iocp_server, iocp_sockets, iocp_wsClients;
 
 type
-  TFormInIOCPWsJSON = class(TForm)
+  TFormInIOCPWsJSON = class(TForm)             
     Button1: TButton;
     Button2: TButton;
     Memo1: TMemo;
@@ -19,6 +19,7 @@ type
     Button3: TButton;
     InDatabaseManager1: TInDatabaseManager;
     InFileManager1: TInFileManager;
+    Button4: TButton;
     procedure FormCreate(Sender: TObject);
     procedure Button1Click(Sender: TObject);
     procedure Button2Click(Sender: TObject);
@@ -32,6 +33,7 @@ type
     procedure InWSConnection1ReceiveMsg(Sender: TObject; Msg: TJSONResult);
     procedure InWSConnection1ReturnResult(Sender: TObject; Result: TJSONResult);
     procedure Button3Click(Sender: TObject);
+    procedure Button4Click(Sender: TObject);
   private
     { Private declarations }
   public
@@ -74,6 +76,20 @@ begin
   InIOCPServer1AfterOpen(nil);
 end;
 
+procedure TFormInIOCPWsJSON.Button4Click(Sender: TObject);
+var
+  S, S2: AnsiString;
+begin
+  S := 'WebSocket 数据库查询.';
+  S2 := System.UTF8Encode(S);
+
+  memo1.Lines.Add('S2=' + IntToStr(Length(S2)));
+
+  S := System.UTF8Decode(S2);
+
+  memo1.Lines.Add(S);
+end;
+
 procedure TFormInIOCPWsJSON.FormCreate(Sender: TObject);
 begin
   iocp_varis.gAppPath := ExtractFilePath(Application.ExeName);  // 程序路径
@@ -88,7 +104,7 @@ end;
 
 procedure TFormInIOCPWsJSON.InIOCPServer1AfterOpen(Sender: TObject);
 begin
-  Memo1.Lines.Clear;
+//  Memo1.Lines.Clear;
   Memo1.Lines.Add('IP:' + InIOCPServer1.ServerAddr);
   Memo1.Lines.Add('Port:' + IntToStr(InIOCPServer1.ServerPort));
 end;
@@ -106,7 +122,7 @@ begin
   //  3. mtAttachment: 用 InIOCP-JSON 封装的附件流。
 
   // MsgType 为 mtDefault 时的 Socket 相关属性：
-  // 1、         Data：本次收到的数据内容首位置
+  // 1、       InData：本次收到的数据内容首位置（不是Data，以前版本有误）
   // 2、FrameRecvSize：本次收到的内容长度
   // 3、    FrameSize：当前帧的内容总长度
   // 4、      MsgSize：当前消息累计收到的内容长度（可能含多帧数据）
@@ -168,7 +184,7 @@ begin
           if Socket.JSON.HasAttachment then // 带附件 -> 建文件流接收附件，不建时忽略
             Socket.JSON.Attachment := TFileStream.Create('temp\服务端收到' + Socket.JSON.S['attach'], fmCreate);
 
-          Socket.UserName := 'JSON';
+          Socket.UserName := 'JSON';  // 新版支持分组 Socket.UserGroup！
     //     InWebSocketManager1.SendTo(Socket, 'ToUser');
 
     //      Socket.Result.S['return'] := 'test 返回消息';
@@ -179,7 +195,7 @@ begin
 
     mtAttachment: begin
       // 2. InIOCP 扩展的 附件流 数据（此时 Socket.Complete = True）
-      //    如果 Socket.JSON.Attachment 未空，照样会执行到此
+      //    如果 Socket.JSON.Attachment 为空，照样会执行到此
 
       // 系统会自动关闭附件流 Socket.JSON.Attachment
       Memo1.Lines.Add('附件接收完毕（系统会自动关闭附件流）。');
@@ -205,11 +221,11 @@ begin
 
       // 3. 标准的 WebSocket 数据（如浏览器发送来的，Socket.Complete 未必为 True）
       
-      if Socket.Complete then // 消息接收完毕
+      if Socket.Completed then // 消息接收完毕
       begin
         // 双字节的 UTF8To 系列函数的传入参数以 AnsiString 为主
         // 定义 S 为 AnsiString 更方便操作
-        SetString(S, Socket.Data, Socket.FrameRecvSize); // 把消息转为 String
+        SetString(S, Socket.InData, Socket.FrameRecvSize); // 把消息转为 String
 
         Socket.UserName := System.Utf8ToAnsi(S); // XE10 还可以用 UTF8ToString(S)
         Memo1.Lines.Add(Socket.UserName);

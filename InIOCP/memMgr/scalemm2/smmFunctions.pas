@@ -11,6 +11,7 @@ type
   DWORD  = LongWord;
   BOOL   = LongBool;
   ULONG_PTR = NativeUInt;
+  DWORD_PTR  = ULONG_PTR;
   {$if CompilerVersion >= 23}  //Delphi XE2
   UINT_PTR  = System.UIntPtr;
   {$else}
@@ -34,6 +35,26 @@ type
 
   PSecurityAttributes = Pointer;
 
+  PSystemInfo = ^TSystemInfo;
+  _SYSTEM_INFO = record
+    case Integer of
+      0: (
+        dwOemId: DWORD);
+      1: (
+        wProcessorArchitecture: Word;
+        wReserved: Word;
+        dwPageSize: DWORD;
+        lpMinimumApplicationAddress: Pointer;
+        lpMaximumApplicationAddress: Pointer;
+        dwActiveProcessorMask: DWORD_PTR;
+        dwNumberOfProcessors: DWORD;
+        dwProcessorType: DWORD;
+        dwAllocationGranularity: DWORD;
+        wProcessorLevel: Word;
+        wProcessorRevision: Word);
+  end;
+  TSystemInfo = _SYSTEM_INFO;
+
 const
   kernel32  = 'kernel32.dll';
   user32    = 'user32.dll';
@@ -51,6 +72,10 @@ const
   FILE_MAP_WRITE = 2;
   FILE_MAP_READ  = 4;
   INVALID_HANDLE_VALUE = THandle(-1);
+  DUPLICATE_SAME_ACCESS = $00000002;
+  STATUS_WAIT_0 = $00000000;
+  WAIT_FAILED   = DWORD($FFFFFFFF);
+  WAIT_OBJECT_0 = ((STATUS_WAIT_0 ) + 0 );
 
   {$IFnDEF PURE_PASCAL}
   function  TlsAlloc: DWORD; stdcall; external kernel32 name 'TlsAlloc';
@@ -68,14 +93,21 @@ const
   function  GetCurrentProcess: THandle; stdcall; external kernel32 name 'GetCurrentProcess';
   function  GetCurrentProcessId: DWORD; stdcall; external kernel32 name 'GetCurrentProcessId';
   function  GetCurrentThreadId: DWORD; stdcall; external kernel32 name 'GetCurrentThreadId';
-//  function  GetCurrentThread: THandle; stdcall; external kernel32 name 'GetCurrentThread';
+  function  GetCurrentThread: THandle; stdcall; external kernel32 name 'GetCurrentThread';
   procedure ExitThread(dwExitCode: DWORD); stdcall; external kernel32 name 'ExitThread';
+  function  SuspendThread(hThread: THandle): DWORD; stdcall; external kernel32 name 'SuspendThread';
+  function  ResumeThread(hThread: THandle): DWORD; stdcall; external kernel32 name 'ResumeThread';
 
   function  OpenFileMappingA(dwDesiredAccess: DWORD; bInheritHandle: BOOL; lpName: PAnsiChar): THandle; stdcall; external kernel32 name 'OpenFileMappingA';
   function  CreateFileMappingA(hFile: THandle; lpFileMappingAttributes: PSecurityAttributes; flProtect, dwMaximumSizeHigh, dwMaximumSizeLow: DWORD; lpName: PAnsiChar): THandle; stdcall; external kernel32 name 'CreateFileMappingA';
   function  MapViewOfFile(hFileMappingObject: THandle; dwDesiredAccess: DWORD; dwFileOffsetHigh, dwFileOffsetLow, dwNumberOfBytesToMap: SIZE_T): Pointer; stdcall; external kernel32 name 'MapViewOfFile';
   function  UnmapViewOfFile(lpBaseAddress: Pointer): BOOL; stdcall; external kernel32 name 'UnmapViewOfFile';
   function  CloseHandle(hObject: THandle): BOOL; stdcall; external kernel32 name 'CloseHandle';
+  function  DuplicateHandle(hSourceProcessHandle, hSourceHandle, hTargetProcessHandle: THandle;
+              lpTargetHandle: Pointer; dwDesiredAccess: DWORD;
+              bInheritHandle: BOOL; dwOptions: DWORD): BOOL; stdcall; external kernel32 name 'DuplicateHandle';
+
+  function WaitForSingleObject(hHandle: THandle; dwMilliseconds: DWORD): DWORD; stdcall; external kernel32 name 'WaitForSingleObject';
 
   function  VirtualAlloc(lpvAddress: Pointer; dwSize: SIZE_T; flAllocationType, flProtect: DWORD): Pointer; stdcall; external kernel32 name 'VirtualAlloc';
   function  VirtualFree(lpAddress: Pointer; dwSize: SIZE_T; dwFreeType: DWORD): BOOL; stdcall; external kernel32 name 'VirtualFree';
@@ -110,6 +142,19 @@ const
   procedure Move(const Source; var Dest; Count: Integer);
   {$ifend}
   {$endif PURE_PASCAL}
+
+  procedure GetSystemInfo(var lpSystemInfo: TSystemInfo); stdcall; external kernel32 name 'GetSystemInfo';
+
+  function  WriteFile(hFile: THandle; const Buffer; nNumberOfBytesToWrite: DWORD;
+                      var lpNumberOfBytesWritten: DWORD; lpOverlapped: pointer): BOOL; stdcall; external kernel32 name 'WriteFile';
+  procedure WriteToFile(hFile: THandle; const aString: AnsiString);
+
+  //from FastMM4.pas
+  procedure WriteNativeUIntToStrBuf(hFile: THandle; ANum: NativeUInt);
+  procedure WriteNativeUIntToHexBuf(hFile: THandle; ANum: NativeUInt; aDigits: Integer = 8);
+
+  function QueryPerformanceCounter(var lpPerformanceCount: Int64): BOOL; stdcall; external kernel32 name 'QueryPerformanceCounter';
+  function QueryPerformanceFrequency(var lpFrequency: Int64): BOOL; stdcall; external kernel32 name 'QueryPerformanceFrequency';
 
 
 implementation
@@ -457,5 +502,80 @@ asm // eax=source edx=dest ecx=count
 end;
 {$ifend}
 {$endif PURE_PASCAL}
+
+procedure WriteToFile(hFile: THandle; const aString: AnsiString);
+var icount: DWORD;
+begin
+  icount := Length(aString);
+  WriteFile(hFile, aString[1], icount, icount, nil);
+end;
+
+{Converts an unsigned integer to string at the buffer location, returning the
+ new buffer position. Note: The 32-bit asm version only supports numbers up to
+ 2^31 - 1.}
+procedure WriteNativeUIntToStrBuf(hFile: THandle; ANum: NativeUInt);
+const
+  MaxDigits = 20 + (20 div 3);
+var
+  LDigitBuffer: array[0..MaxDigits - 1] of AnsiChar;
+  LCount: Cardinal;
+  LDigit: NativeUInt;
+begin
+  {Generate the digits in the local buffer}
+  LCount := 0;
+  repeat
+    if (LCount = 3) or (LCount = 7) or (LCount = 11)  then
+    begin
+      Inc(LCount);
+      LDigitBuffer[MaxDigits - LCount] := '.';
+    end;
+    LDigit := ANum;
+    ANum   := ANum div 10;
+    LDigit := LDigit - ANum * 10;
+    Inc(LCount);
+    LDigitBuffer[MaxDigits - LCount] := AnsiChar(Ord('0') + LDigit);
+  until ANum = 0;
+
+  WriteFile(hFile, LDigitBuffer[MaxDigits - LCount], LCount, LCount, nil);
+  //{Copy the digits to the output buffer and advance it}
+  //System.Move(LDigitBuffer[MaxDigits - LCount], APBuffer^, LCount);
+  //Result := APBuffer + LCount;
+end;
+
+{Converts an unsigned integer to a hexadecimal string at the buffer location,
+ returning the new buffer position.}
+procedure WriteNativeUIntToHexBuf(hFile: THandle; ANum: NativeUInt; aDigits: Integer = 8);
+const
+  MaxDigits = 16;
+  {Hexadecimal characters}
+  HexTable: array[0..15] of AnsiChar = ('0', '1', '2', '3', '4', '5', '6', '7',
+    '8', '9', 'A', 'B', 'C', 'D', 'E', 'F');
+var
+  LDigitBuffer: array[0..MaxDigits - 1] of AnsiChar;
+  LCount: Integer;
+  LWritten: Cardinal;
+  LDigit: NativeUInt;
+begin
+  {Generate the digits in the local buffer}
+  LCount := 0;
+  repeat
+    LDigit := ANum;
+    ANum := ANum div 16;
+    LDigit := LDigit - ANum * 16;
+    Inc(LCount);
+    LDigitBuffer[MaxDigits - LCount] := HexTable[LDigit];
+  until ANum = 0;
+
+  while LCount < aDigits do
+  begin
+    Inc(LCount);
+    LDigitBuffer[MaxDigits - LCount] := ' ';
+  end;
+
+  WriteFile(hFile, LDigitBuffer[MaxDigits - LCount], LCount, LWritten, nil);
+//  {Copy the digits to the output buffer and advance it}
+//  System.Move(LDigitBuffer[MaxDigits - LCount], APBuffer^, LCount);
+//  Result := APBuffer + LCount;
+end;
 
 end.

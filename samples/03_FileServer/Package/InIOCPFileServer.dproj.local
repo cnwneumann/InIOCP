@@ -1,23 +1,23 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <BorlandProject>
 	<Transactions>
-    <Transaction>1899-12-30 00:00:00.000.dfm,D:\My Documents\RAD Studio\Projects\Unit6.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\Echo\Form\frmInIOCPEcho.dfm</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Form\frmInIOCPFileMgrSvr.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\MsgMgr\Form\frmInIOCPMsgMgr.pas</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Form\frmInIOCPFileMgrSvr.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Form\frmInIOCPMsgMgr.pas</Transaction>
     <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Form\frmInIOCPFileMgrSvr.pas=</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.bdsproj,D:\My Documents\RAD Studio\Projects\Project1.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\Echo\Package\InIOCPEcho.bdsproj</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\Echo\Form\frmInIOCPEcho.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\MsgMgr\Form\frmInIOCPMsgMgr.pas</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\03_FileServer\Form\frmInIOCPFileMgrSvr.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\03_FileServer\Form\frmInIOCPFileServer.dfm</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Form\frmInIOCPMsgMgr.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Form\frmInIOCPFileMgrSvr.dfm</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\Echo\Form\frmInIOCPEcho.pas=D:\My Documents\RAD Studio\Projects\Unit6.pas</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\03_FileServer\Package\InIOCPFileServer.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\03_FileServer\Package\InIOCPFileMgrServer.bdsproj</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Package\InIOCPFileMgrServer.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\MsgMgr\Package\InIOCPMsgMgr.bdsproj</Transaction>
     <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\samples_group.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\MsgMgr\Package\InIOCPMsgMgr.bdsproj</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.pas,D:\My Documents\RAD Studio\Projects\Unit6.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\Echo\Form\frmInIOCPEcho.pas</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\Echo\Form\frmInIOCPEcho.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\MsgMgr\Form\frmInIOCPMsgMgr.dfm</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\03_FileServer\Package\InIOCPFileMgrServer.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\03_FileServer\Package\InIOCPFileServer.bdsproj</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\Echo\Form\frmInIOCPEcho.dfm=D:\My Documents\RAD Studio\Projects\Unit6.dfm</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\03_FileServer\Form\frmInIOCPFileServer.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\03_FileServer\Form\frmInIOCPFileMgrSvr.pas</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Form\frmInIOCPFileMgrSvr.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\MsgMgr\Form\frmInIOCPMsgMgr.dfm</Transaction>
     <Transaction>1899-12-30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Form\frmInIOCPFileMgrSvr.dfm=</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Form\frmInIOCPMsgMgr.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Form\frmInIOCPFileMgrSvr.pas</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\03_FileServer\Form\frmInIOCPFileMgrSvr.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\03_FileServer\Form\frmInIOCPFileServer.pas</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\MsgMgr\Form\frmInIOCPMsgMgr.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Form\frmInIOCPFileMgrSvr.dfm</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\MsgMgr\Package\InIOCPMsgMgr.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Package\InIOCPFileMgrServer.bdsproj</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Form\frmInIOCPFileMgrSvr.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Form\frmInIOCPMsgMgr.dfm</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\03_FileServer\Form\frmInIOCPFileServer.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\03_FileServer\Form\frmInIOCPFileMgrSvr.dfm</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\MsgMgr\Form\frmInIOCPMsgMgr.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\Echo\Form\frmInIOCPEcho.dfm</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\MsgMgr\Package\InIOCPMsgMgr.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\Echo\Package\InIOCPEcho.bdsproj</Transaction>
     <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\MsgMgr\Package\InIOCPMsgMgr.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\samples_group.bdsproj</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\Echo\Package\InIOCPEcho.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\MsgMgr\Package\InIOCPMsgMgr.bdsproj</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\MsgMgr\Form\frmInIOCPMsgMgr.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\FileMgr\Form\frmInIOCPFileMgrSvr.pas</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\MsgMgr\Form\frmInIOCPMsgMgr.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\Echo\Form\frmInIOCPEcho.pas</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\Echo\Package\InIOCPEcho.bdsproj=D:\My Documents\RAD Studio\Projects\Project1.bdsproj</Transaction>
   </Transactions>
 </BorlandProject>

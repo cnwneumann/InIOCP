@@ -14,7 +14,7 @@ object FormInIOCPStreamServer: TFormInIOCPStreamServer
   Position = poDesktopCenter
   Scaled = False
   OnCreate = FormCreate
-  PixelsPerInch = 120
+  PixelsPerInch = 96
   TextHeight = 12
   object Memo1: TMemo
     Left = 8
@@ -245,7 +245,6 @@ object FormInIOCPStreamServer: TFormInIOCPStreamServer
     IOCPManagers.StreamManager = InStreamManager1
     ServerAddr = '127.0.0.1'
     ServerPort = 800
-    StartParams.TimeOut = 0
     ThreadOptions.BusinessThreadCount = 8
     ThreadOptions.PushThreadCount = 4
     ThreadOptions.WorkThreadCount = 4

@@ -1,19 +1,19 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <BorlandProject>
 	<Transactions>
-    <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\Echo\Form\frmInIOCPEcho.pas=D:\My Documents\RAD Studio\Projects\Unit6.pas</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\MsgMgr\Package\InIOCPMsgMgr.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\Echo\Package\InIOCPEcho.bdsproj</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\MsgMgr\Package\InIOCPMsgMgr.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\samples_group.bdsproj</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\07_ShortConnection\Form\frmInIOCPShortConnection.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\07_ShortConnection\Form\frmInIOCPShortConn.pas</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\ShortConn\Form\frmInIOCPShortConn.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\ShortConn\Form\frmInIOCPMsgMgr.pas</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\samples_group.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\MsgMgr\Package\InIOCPMsgMgr.bdsproj</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\Echo\Form\frmInIOCPEcho.dfm=D:\My Documents\RAD Studio\Projects\Unit6.dfm</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\07_ShortConnection\Package\InIOCPShortConnection.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\07_ShortConnection\Package\InIOCPShortConn.bdsproj</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\07_ShortConnection\Form\frmInIOCPShortConnection.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\07_ShortConnection\Form\frmInIOCPShortConn.dfm</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\ShortConn\Package\InIOCPShortConn.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\ShortConn\Package\InIOCPMsgMgr.bdsproj</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\ShortConn\Form\frmInIOCPShortConn.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\ShortConn\Form\frmInIOCPMsgMgr.dfm</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\MsgMgr\Form\frmInIOCPMsgMgr.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\Echo\Form\frmInIOCPEcho.pas</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\Echo\Package\InIOCPEcho.bdsproj=D:\My Documents\RAD Studio\Projects\Project1.bdsproj</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\MsgMgr\Form\frmInIOCPMsgMgr.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\Echo\Form\frmInIOCPEcho.dfm</Transaction>
+    <Transaction>1899/12/30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\Echo\Form\frmInIOCPEcho.pas=D:\My Documents\RAD Studio\Projects\Unit6.pas</Transaction>
+    <Transaction>1899/12/30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\MsgMgr\Package\InIOCPMsgMgr.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\Echo\Package\InIOCPEcho.bdsproj</Transaction>
+    <Transaction>1899/12/30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\MsgMgr\Package\InIOCPMsgMgr.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\samples_group.bdsproj</Transaction>
+    <Transaction>1899/12/30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\07_ShortConnection\Form\frmInIOCPShortConnection.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\07_ShortConnection\Form\frmInIOCPShortConn.pas</Transaction>
+    <Transaction>1899/12/30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\ShortConn\Form\frmInIOCPShortConn.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\ShortConn\Form\frmInIOCPMsgMgr.pas</Transaction>
+    <Transaction>1899/12/30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\samples_group.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\MsgMgr\Package\InIOCPMsgMgr.bdsproj</Transaction>
+    <Transaction>1899/12/30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\Echo\Form\frmInIOCPEcho.dfm=D:\My Documents\RAD Studio\Projects\Unit6.dfm</Transaction>
+    <Transaction>1899/12/30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\07_ShortConnection\Package\InIOCPShortConnection.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\07_ShortConnection\Package\InIOCPShortConn.bdsproj</Transaction>
+    <Transaction>1899/12/30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\07_ShortConnection\Form\frmInIOCPShortConnection.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\07_ShortConnection\Form\frmInIOCPShortConn.dfm</Transaction>
+    <Transaction>1899/12/30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\ShortConn\Package\InIOCPShortConn.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\ShortConn\Package\InIOCPMsgMgr.bdsproj</Transaction>
+    <Transaction>1899/12/30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\ShortConn\Form\frmInIOCPShortConn.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\ShortConn\Form\frmInIOCPMsgMgr.dfm</Transaction>
+    <Transaction>1899/12/30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\MsgMgr\Form\frmInIOCPMsgMgr.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\Echo\Form\frmInIOCPEcho.pas</Transaction>
+    <Transaction>1899/12/30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\Echo\Package\InIOCPEcho.bdsproj=D:\My Documents\RAD Studio\Projects\Project1.bdsproj</Transaction>
+    <Transaction>1899/12/30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\MsgMgr\Form\frmInIOCPMsgMgr.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\Echo\Form\frmInIOCPEcho.dfm</Transaction>
   </Transactions>
 </BorlandProject>

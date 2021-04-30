@@ -1,9 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <BorlandProject>
-	<Transactions>
-    <Transaction>1899-12-30 00:00:00.000.bdsgroup,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\samples_group.bdsproj=D:\My Documents\RAD Studio\Projects\ProjectGroup2.bdsgroup</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\samples_group_d2007.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\samples_group_d2007.bdsproj</Transaction>
-  </Transactions>
 	<Default.Personality>
 		<Projects ActiveProject="E:\ProgCodes\Delphi\InIOCP\InIOCP\InIOCP\package\dclInIOCP.dproj"/>
 	</Default.Personality>

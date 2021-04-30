@@ -17,7 +17,7 @@ uses
   {$IFDEF DELPHI_XE7UP}
   Winapi.Windows, System.Classes, System.Variants, System.Sysutils, {$ELSE}
   Windows, Classes, Variants, Sysutils, {$ENDIF}
-  iocp_Winsock2, iocp_base, iocp_objPools, iocp_wsExt;
+  iocp_Winsock2, iocp_base, iocp_msgPacks, iocp_objPools, iocp_wsExt;
 
 type
 
@@ -25,17 +25,24 @@ type
   // 服务端、客户端均用 TPerIOData，但客户端用 Send 发送；
   // 发送器不检查待发送数据的有效性！要在调用前检查。
 
+  TSendDataEvent  = procedure(Msg: TBasePackObject; MsgPart: TMessagePart; OutSize: Integer) of object;
+  TSendErrorEvent = procedure(IOType: TIODataType; ErrorCode: Integer) of object;
+
   TBaseTaskObject = class(TObject)
   private
     FOwner: TObject;             // 宿主
+    FSendBuf: PPerIOData;        // 重叠结构
     FSocket: TSocket;            // 客户端对应的套接字
     FTask: TTransmitTask;        // 待发送数据描述
     FErrorCode: Integer;         // 异常代码
-    FOnError: TNotifyEvent;      // 异常事件
+
+    FOnDataSend: TSendDataEvent; // 发出事件
+    FOnError: TSendErrorEvent;   // 异常事件
+
+    function GetData: PWsaBuf;
     function GetIOType: TIODataType;
     procedure SetOwner(const Value: TObject);
   protected
-    FSendBuf: PPerIOData;        // 重叠结构
     procedure InterSetTask(const Data: PAnsiChar; Size: Cardinal; AutoFree: Boolean); overload;
     procedure InterSetTask(const Data: AnsiString; AutoFree: Boolean); overload;
     procedure InterSetTask(Handle: THandle; Size, Offset, OffsetEnd: TFileSize; AutoFree: Boolean); overload;
@@ -43,12 +50,14 @@ type
   public
     procedure FreeResources(FreeRes: Boolean = True); virtual; abstract;
   public
+    property Data: PWsaBuf read GetData;
     property ErrorCode: Integer read FErrorCode;
     property IOType: TIODataType read GetIOType;
     property Owner: TObject read FOwner write SetOwner; // r/w
     property Socket: TSocket read FSocket write FSocket; // r/w
   public
-    property OnError: TNotifyEvent read FOnError write FOnError; // r/w
+    property OnDataSend: TSendDataEvent read FOnDataSend write FOnDataSend;
+    property OnError: TSendErrorEvent read FOnError write FOnError; // r/w
   end;
 
   // ================= 套接字对象数据发送器 类 =================
@@ -61,6 +70,7 @@ type
   private
     FExists: Integer;       // 是否有数据
     function GetExists: Boolean;
+    function GetSendDone: Boolean;
   public
     constructor Create(AOwner: TObject);
     destructor Destroy; override;
@@ -79,6 +89,7 @@ type
     procedure TransmitFile;
   public
     property Exists: Boolean read GetExists;
+    property SendDone: Boolean read GetSendDone;
   end;
 
   {$ENDIF}
@@ -89,14 +100,14 @@ type
   private
     FBufferSize: Cardinal;  // 发送缓存长度
     FChunked: Boolean;      // HTTP 服务端分块发送数据
-
+    FStoped: Boolean;       // 停止发送
+    
     FMasking: Boolean;      // WebSocket 使用掩码
     FOpCode: TWSOpCode;     // WebSocket 操作
     FWebSocket: Boolean;    // WebSocket 类型
     FWSCount: UInt64;       // WebSocket 发出数据计数
     FWSMask: TWSMask;       // WebSocket 掩码
 
-    function GetData: PWsaBuf;
     procedure ChunkDone;
     procedure MakeFrameInf(Payload: UInt64);
     procedure InitHeadTail(DataLength: Cardinal; Fulled: Boolean);
@@ -129,8 +140,8 @@ type
   protected
     property Chunked: Boolean read FChunked write SetChunked;
   public
-    property Data: PWsaBuf read GetData;
     property Masking: Boolean read FMasking write FMasking;
+    property Stoped: Boolean read FStoped write FStoped;
     property OpCode: TWSOpCode read FOpCode write SetOpCode; // r/w
   end;
 
@@ -153,15 +164,9 @@ type
   // ================= 客户端数据发送器 类 =================
   // 用 Send 发送 TPerIOData.Data.Buf
 
-  TAfterSendEvent = procedure(DataType: TMessageDataType; OutSize: Integer) of object;
-
   TClientTaskSender = class(TBaseTaskSender)
   private
-    FAfterSend: TAfterSendEvent;   // 发出事件
-    FDataType: TMessageDataType;   // 数据类型
-    FStoped: Integer;              // 工作状态(0=工作、1=停止)
-    function GetStoped: Boolean;
-    procedure SetStoped(const Value: Boolean);
+    FMsgPart: TMessagePart; // 数据类型
   protected
     procedure DirectSend(OutBuf: PAnsiChar; OutSize, FrameSize: Integer); override;
     procedure ReadSendBuffers(InBuf: PAnsiChar; ReadCount, FrameSize: Integer); override;
@@ -169,10 +174,7 @@ type
     constructor Create;
     destructor Destroy; override;
   public
-    property DataType: TMessageDataType read FDataType write FDataType;
-    property Stoped: Boolean read GetStoped write SetStoped;
-  public
-    property AfterSend: TAfterSendEvent read FAfterSend write FAfterSend;  
+    property MsgPart: TMessagePart read FMsgPart write FMsgPart;
   end;
 
 procedure MakeFrameHeader(const Data: PWsaBuf; OpCode: TWSOpCode; Payload: UInt64 = 0);
@@ -180,7 +182,7 @@ procedure MakeFrameHeader(const Data: PWsaBuf; OpCode: TWSOpCode; Payload: UInt6
 implementation
 
 uses
-  iocp_api, iocp_sockets, http_base;
+  iocp_utils, iocp_api, iocp_sockets, http_base;
 
 procedure MakeFrameHeader(const Data: PWsaBuf; OpCode: TWSOpCode; Payload: UInt64);
 var
@@ -241,6 +243,12 @@ begin
   FTask.Head := Data;
   FTask.HeadLength := Size;
   FTask.AutoFree := AutoFree;
+end;
+
+function TBaseTaskObject.GetData: PWsaBuf;
+begin
+  // 返回发送缓存地址，让外部直接写数据，与 SendBuffers 对应
+  Result := @FSendBuf^.Data;
 end;
 
 function TBaseTaskObject.GetIOType: TIODataType;
@@ -332,7 +340,7 @@ begin
         if (FTask.ObjType = THttpSocket) then
         begin
           // 2. 只有 AnsiString、Handle、Stream 三资源，
-          //    且相互排斥，见：THttpRespone.SendWork;
+          //    且相互排斥，见：THttpResponse.SendWork;
           if Assigned(FTask.Stream) then  // 内存流、文件流
             FTask.Stream.Free
           else
@@ -372,6 +380,12 @@ function TTransmitObject.GetExists: Boolean;
 begin
   // 是否有发送数据
   Result := (iocp_api.InterlockedCompareExchange(FExists, 0, 0) > 0);
+end;
+
+function TTransmitObject.GetSendDone: Boolean;
+begin
+  // 是否发送完毕
+  Result := InterlockedDecrement(FExists) = 1;
 end;
 
 procedure TTransmitObject.SetTask(const Data: AnsiString);
@@ -427,7 +441,7 @@ begin
     end;
   end else
   begin
-    FTask.Stream2 := Stream;  // TBaseSocket 对应 Stream2
+    FTask.Stream2 := Stream;  // C/S 模式，TBaseSocket 对应 Stream2
     if (Stream is TMemoryStream) then
     begin
       // 作为尾
@@ -453,8 +467,45 @@ begin
 end;
 
 procedure TTransmitObject.TransmitFile;
+  function InterTransmit(hHandle: THandle; iSendSize: Cardinal;
+                         LowPart: Cardinal; HighPart: Integer): Boolean;
+  begin
+    // 发送计数
+    Result := True;
+    InterlockedIncrement(FExists);
+
+    // 清重叠结构
+    FillChar(FSendBuf^.Overlapped, SizeOf(TOverlapped), 0);
+
+    if (LowPart > 0) then
+    begin
+      FSendBuf^.Overlapped.Offset := LowPart;      // 设置位移
+      FSendBuf^.Overlapped.OffsetHigh := HighPart; // 位移高位
+    end;
+
+    // 发送数据
+    if (gTransmitFile(FSocket,        // 套接字
+                      hHandle,        // 文件句柄（可能=0）
+                      iSendSize,      // 发送长度（可能=0）
+                      IO_BUFFER_SIZE * 8, // 每次发送长度
+                      @FSendBuf^.Overlapped,     // 重叠结构
+                      PTransmitBuffers(@FTask),  // 头尾数据块
+                      TF_USE_KERNEL_APC   // 用内核线程
+                      ) = False) then
+    begin
+      FErrorCode := WSAGetLastError;
+      if (FErrorCode <> ERROR_IO_PENDING) then  // 异常
+      begin
+        InterlockedDecrement(FExists);
+        FOnError(ioSend, FErrorCode);
+        Result := False;
+      end else
+        FErrorCode := 0;
+    end;
+  end;
 var
-  XOffset: LARGE_INTEGER;
+  LargeInt: LARGE_INTEGER;
+  SendSize: Cardinal;
 begin
   // 用 TransmitFile() 发送 Task 的内容
   // 提交后有三种结果：
@@ -463,42 +514,44 @@ begin
   //    A. 全部发送完毕，被工作线程监测到（只一次），执行 TBaseSocket.FreeTransmitRes 释放资源
   //    B. 发送出现异常，也被工作线程监测到，执行 TBaseSocket.TryClose 尝试关闭
 
-  // 清重叠结构
-  FillChar(FSendBuf^.Overlapped, SizeOf(TOverlapped), 0);
-
   FSendBuf^.Owner := FOwner;  // 宿主
   FSendBuf^.IOType := ioTransmit;  // iocp_server 中判断用
+  FErrorCode := 0;
 
-  // 设置位移（用 LARGE_INTEGER 确定位移）
-  if (FTask.Handle > 0) then
+  if (FTask.Handle = 0) then  // 没有文件，只发送 PTransmitBuffers
   begin
-    XOffset.QuadPart := FTask.Offset;
-    if (FTask.OffsetEnd > 0) then
-    begin
-      FSendBuf^.Overlapped.Offset := XOffset.LowPart;  // 设置位移
-      FSendBuf^.Overlapped.OffsetHigh := XOffset.HighPart; // 位移高位
-      FTask.Size := FTask.OffsetEnd - FTask.Offset + 1; // 发送长度
-    end;
-    SetFilePointer(FTask.Handle, XOffset.LowPart, @XOffset.HighPart, FILE_BEGIN);
+    InterTransmit(0, 0, 0, 0);
+    Exit;
   end;
-  
-  if (iocp_wsExt.gTransmitFile(
-                 FSocket,            // 套接字
-                 FTask.Handle,       // 文件句柄，可为 0
-                 FTask.Size,         // 发送长度，可为 0
-                 IO_BUFFER_SIZE * 8, // 每次发送长度
-                 @FSendBuf^.Overlapped,     // 重叠结构
-                 PTransmitBuffers(@FTask),  // 头尾数据块
-                 TF_USE_KERNEL_APC   // 用内核线程
-                 ) = False) then
+
+  // 发送长度
+  if (FTask.Offset = 0) and (FTask.OffsetEnd = 0) then
+    FTask.Size := GetFileSize64(FTask.Handle)
+  else
+    FTask.Size := FTask.OffsetEnd - FTask.Offset + 1;
+
+  while (FTask.Size > 0) do
   begin
-    FErrorCode := WSAGetLastError;
-    if (FErrorCode <> ERROR_IO_PENDING) then  // 异常
-      FOnError(Self)
+    // 每次最多只能发送 MAX_TRANSMIT_SIZE 字节
+    if (FTask.Size >= MAX_TRANSMIT_SIZE) then
+      SendSize := MAX_TRANSMIT_SIZE
     else
-      FErrorCode := 0;
-  end else
-    FErrorCode := 0;
+      SendSize := FTask.Size;
+
+    // 位移
+    LargeInt.QuadPart := FTask.Offset;
+
+    // 定位
+    SetFilePointer(FTask.Handle, LargeInt.LowPart, @LargeInt.HighPart, FILE_BEGIN);
+
+    // 发送一段内容
+    if InterTransmit(FTask.Handle, SendSize, LargeInt.LowPart, LargeInt.HighPart) then
+    begin
+      Inc(FTask.Offset, SendSize);  // 位移+
+      Dec(FTask.Size, SendSize);    // 剩余-
+    end else
+      Break;
+  end;
 
 end;  
 
@@ -543,12 +596,6 @@ begin
     FillChar(FTask, TASK_SPACE_SIZE, 0);  // 清零
     FTask.ObjType := FOwner.ClassType;    // 会被清
   end;
-end;
-
-function TBaseTaskSender.GetData: PWsaBuf;
-begin
-  // 返回发送缓存地址，让外部直接写数据，与 SendBuffers 对应
-  Result := @FSendBuf^.Data;
 end;
 
 procedure TBaseTaskSender.InitHeadTail(DataLength: Cardinal; Fulled: Boolean);
@@ -601,10 +648,9 @@ begin
     end;
   end;
 
-  if FMasking then  // 客户端的掩码
+  if FMasking then  // 客户端的掩码，4字节
   begin
-    Cardinal(FWsMask) := GetTickCount;
-    FWsMask[3] := FWsMask[1] xor $28;  // = 0 -> 修正
+    Cardinal(FWsMask) := GetTickCount + $10100000;
     PCardinal(p)^ := Cardinal(FWsMask);
     Inc(p, 4);
   end;
@@ -617,6 +663,7 @@ end;
 procedure TBaseTaskSender.InternalSend;
 begin
   // 发送任务 FTask 描述的数据（几种数据不共存）
+  FStoped := False;
   FErrorCode := 0;  // 无异常
   try
     try
@@ -676,7 +723,7 @@ begin
       BufLength := FBufferSize;
     end;
 
-  while (ByteCount > 0) do
+  while (ByteCount > 0) and (FStoped = False) do
   begin
     if (ByteCount >= BufLength) then  // 超长
       BytesToRead := BufLength
@@ -702,7 +749,7 @@ begin
     end;
   end;
 
-  if FChunked then  // 发送分块结束标志
+  if FChunked and (FStoped = False) then  // 发送分块结束标志
     ChunkDone;
 
 end;
@@ -745,7 +792,7 @@ begin
         BufLength := FBufferSize;
       end;
 
-    while (ByteCount > 0) do
+    while (ByteCount > 0) and (FStoped = False) do
     begin
       if (ByteCount >= BufLength) then  // 超长
         BytesToRead := BufLength
@@ -789,7 +836,7 @@ begin
       end;
     end;
 
-    if FChunked then  // 发送分块结束标志
+    if FChunked and (FStoped = False) then  // 发送分块结束标志
       ChunkDone;
 
   except
@@ -919,7 +966,7 @@ begin
   begin
     FErrorCode := WSAGetLastError;
     if (FErrorCode <> ERROR_IO_PENDING) then  // 异常
-      FOnError(Self)  // 执行 TBaseSocket 方法
+      FOnError(ioSend, FErrorCode)  // 执行 TBaseSocket 方法
     else begin
       // 发出时会收到消息，
       // 严格来说要在工作线程处理，那要调整发送器
@@ -1000,7 +1047,7 @@ begin
   if (Stoped = False) then
     FErrorCode := iocp_Winsock2.Send(FSocket, OutBuf^, OutSize, 0)
   else begin
-    if (FDataType <> mdtHead) then  // 发送取消标志
+    if (FMsgPart <> mdtHead) then  // 发送取消标志
       iocp_Winsock2.Send(FSocket, IOCP_SOCKET_CANCEL[1], IOCP_CANCEL_LENGTH, 0);
     FErrorCode := -2;   // 停止，特殊编码
   end;
@@ -1008,19 +1055,13 @@ begin
   if Stoped or (FErrorCode <= 0) then
   begin
     if Assigned(FOnError) then
-      FOnError(FOwner);
+      FOnError(ioSend, 0);
   end else
   begin
     FErrorCode := 0;  // 无异常
-    if Assigned(FAfterSend) then
-      FAfterSend(FDataType, OutSize);
+    if Assigned(FOnDataSend) then
+      FOnDataSend(Nil, FMsgPart, OutSize);
   end;
-end;
-
-function TClientTaskSender.GetStoped: Boolean;
-begin
-  // FState=1，停止了
-  Result := iocp_api.InterlockedCompareExchange(FStoped, 1, 1) = 1;
 end;
 
 procedure TClientTaskSender.ReadSendBuffers(InBuf: PAnsiChar; ReadCount, FrameSize: Integer);
@@ -1034,14 +1075,4 @@ begin
     DirectSend(InBuf, ReadCount, FrameSize);
 end;
 
-procedure TClientTaskSender.SetStoped(const Value: Boolean);
-begin
-  // 设置状态
-  //   工作：Value=False，FStoped=0
-  //   停止：Value=True，FStoped=1
-  InterlockedExchange(FStoped, Ord(Value));
-{  if (Value = False) then  // 不停止
-    FFirst := True;     }
-end;
-  
 end.

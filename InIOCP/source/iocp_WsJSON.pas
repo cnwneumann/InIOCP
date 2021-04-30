@@ -17,24 +17,28 @@ uses
 type
 
   // 说明：这是简单的 JSON 封装，只支持单记录！
-   
+
   TCustomJSON = class(TBasePack)
-  protected
-    FUTF8CharSet: Boolean;     // UTF-8 字符集
   private
+    FText: AnsiString;         // JSON 文本  
     function GetAsRecord(const Index: String): TCustomJSON;
+    function GetJSONText: AnsiString;
     procedure SetAsRecord(const Index: String; const Value: TCustomJSON);
+    procedure SetJSONText(const Value: AnsiString);
+    procedure WriteToBuffers(var JSON: AnsiString; WriteExtra: Boolean);
   protected
-    // 写额外字段
-    procedure WriteExtraFields(var Buffer: PAnsiChar); virtual;
     // 检查名称的合法性
     procedure CheckFieldName(const Value: AnsiString); override;
-    // 检查内容的合法性
-    procedure CheckStringValue(const Value: AnsiString); override;
+    // 刷新 FText
+    procedure InterRefresh; override;  
     // 保存变量表到内存流
-    procedure SaveToMemStream(Stream: TMemoryStream); override;
+    procedure SaveToMemStream(Stream: TMemoryStream; WriteExtra: Boolean); override;
     // 扫描内存块，建变量表
-    procedure ScanBuffers(ABuffer: PAnsiChar; ASize: Cardinal); override;
+    procedure ScanBuffers(ABuffer: PAnsiChar; ASize: Cardinal; ReadExtra: Boolean); override;
+    // 写额外字段
+    procedure WriteSystemInfo(var Buffer: PAnsiChar); virtual;
+  public
+    procedure Clear; override;
   public
     property B[const Name: String]: Boolean read GetAsBoolean write SetAsBoolean;
     property D[const Name: String]: TDateTime read GetAsDateTime write SetAsDateTime;
@@ -44,37 +48,33 @@ type
     property R[const Name: String]: TCustomJSON read GetAsRecord write SetAsRecord;  // 记录
     property S[const Name: String]: String read GetAsString write SetAsString;
     property V[const Name: String]: Variant read GetAsVariant write SetAsVariant;  // 变长
+    property Text: AnsiString read GetJSONText write SetJSONText;  // 改为读写 
   end;
 
   TBaseJSON = class(TCustomJSON)
   protected
-    FOwner: TObject;           // 宿主
     FAttachment: TStream;      // 附件流
-    FMsgId: Int64;             // 消息 Id
+    FMsgId: Int64;             // 消息Id    
   private
     function GetAction: Integer;
     function GetHasAttachment: Boolean;
     procedure SetAction(const Value: Integer);
     procedure SetAttachment(const Value: TStream);
-    procedure SetJSONText(const Value: AnsiString);    
   protected
-    // 写额外字段
-    procedure WriteExtraFields(var Buffer: PAnsiChar); override;
     // 扫描内存块，建变量表
-    procedure ScanBuffers(ABuffer: PAnsiChar; ASize: Cardinal); override;    
+    procedure ScanBuffers(ABuffer: PAnsiChar; ASize: Cardinal; ReadExtra: Boolean); override;
+    // 写额外字段
+    procedure WriteSystemInfo(var Buffer: PAnsiChar); override;
   public
     constructor Create(AOwner: TObject);
     destructor Destroy; override;
-    procedure Close; virtual;    
+    procedure Close; virtual;
   public
     // 预设属性
     property Action: Integer read GetAction write SetAction;
     property Attachment: TStream read FAttachment write SetAttachment;
     property HasAttachment: Boolean read GetHasAttachment;
     property MsgId: Int64 read FMsgId;
-    property Owner: TObject read FOwner;
-    property Text: AnsiString write SetJSONText;  // 只写
-    property UTF8CharSet: Boolean read FUTF8CharSet;
   end;
 
   // 发送用的 JSON 消息
@@ -112,10 +112,10 @@ begin
       raise Exception.Create('变量名称不合法.');
 end;
 
-procedure TCustomJSON.CheckStringValue(const Value: AnsiString);
+procedure TCustomJSON.Clear;
 begin
-  if Pos('",', Value) > 0 then
-    raise Exception.Create('内容不能带保留符号.');
+  inherited;
+  FText := '';    
 end;
 
 function TCustomJSON.GetAsRecord(const Index: String): TCustomJSON;
@@ -135,143 +135,104 @@ begin
     Result := nil;
 end;
 
-procedure TCustomJSON.SaveToMemStream(Stream: TMemoryStream);
-const
-  BOOL_VALUES: array[Boolean] of string = ('False', 'True');
-var
-  i: Integer;
-  S, JSON: AnsiString;
-  p: PAnsiChar;
+function TCustomJSON.GetJSONText: AnsiString;
 begin
-  // 保存消息到 JSON 文本（不支持数组）
-
-  // 1. JSON 长度 = 每字段多几个字符的描述 +
-  //                INIOCP_JSON_HEADER + JSON_CHARSET_UTF8 + MsgOwner
-  SetLength(JSON, Integer(FSize) + FList.Count * 25 + 60);
-  p := PAnsiChar(JSON);
-
-  // 2. 写额外字段
-  WriteExtraFields(p);
-
-  // 3. 加入列表字段
-  for i := 0 to FList.Count - 1 do
-    with Fields[i] do
-      case VarType of
-        etNull:
-          VarToJSON(p, Name, 'Null', True, False, i = FList.Count - 1);
-        etBoolean:
-          VarToJSON(p, Name, BOOL_VALUES[AsBoolean], True, False, i = FList.Count - 1);
-        etCardinal..etInt64:
-          VarToJSON(p, Name, AsString, True, False, i = FList.Count - 1);
-        etDateTime:  // 当作字符串
-          VarToJSON(p, Name, AsString, False, False, i = FList.Count - 1);
-        etString:
-          if FUTF8CharSet then
-            VarToJSON(p, Name, System.AnsiToUtf8(AsString), False, False, i = FList.Count - 1)
-          else
-            VarToJSON(p, Name, AsString, False, False, i = FList.Count - 1);
-        etRecord, etStream: begin  // 其他类型未用
-          // 可能含保留符，加入长度信息，其他解析器可能无法识别
-          // "_Variant":{"Length":1234,"Data":"aaaa... ..."}
-          if (VarType = etRecord) then
-            S := '"' + Name + '":{"Length":' + IntToStr(Size) + ',"Record":'
-          else
-            S := '"' + Name + '":{"Length":' + IntToStr(Size) + ',"Data":"';
-
-          System.Move(S[1], p^, Length(S));
-          Inc(p, Length(S));
-
-          // 直接用流写入，减少复制次数
-          TStream(DataRef).Position := 0;
-          TStream(DataRef).Read(p^, Size);
-          Inc(p, Size);
-
-          if (VarType = etRecord) then
-          begin
-            if (i = FList.Count - 1) then
-              PDblChars(p)^ := AnsiString('}}')
-            else
-              PDblChars(p)^ := AnsiString('},');
-            Inc(p, 2);
-          end else
-          begin
-            if (i = FList.Count - 1) then
-              PThrChars(p)^ := AnsiString('"}}')
-            else
-              PThrChars(p)^ := AnsiString('"},');
-            Inc(p, 3);
-          end;
-        end;
-      end;
-
-  // 4. 删除多余空间
-  Delete(JSON, p - PAnsiChar(JSON) + 1, Length(JSON));
-
-  // 5. 写入流
-  Stream.Write(JSON[1], Length(JSON));
-
+  if (FList.Count = 0) then
+    Result := '[]'
+  else begin
+    if (FText = '') then
+      WriteToBuffers(FText, True);
+    Result := FText;
+  end;
 end;
 
-procedure TCustomJSON.ScanBuffers(ABuffer: PAnsiChar; ASize: Cardinal);
+procedure TCustomJSON.InterRefresh;
+begin
+  // 内容改变，删除 FText
+  if (FText <> '') then
+    FText := '';
+end;
 
-  function ExtractData(var p: PAnsiChar; var StreamType: Boolean): TMemoryStream;
-  var
-    Len: Integer;
-    pa: PAnsiChar;
-    S: AnsiString;
+procedure TCustomJSON.SaveToMemStream(Stream: TMemoryStream; WriteExtra: Boolean);
+var
+  JSON: AnsiString;
+begin
+  // 写入流
+  WriteToBuffers(JSON, WriteExtra);
+  Stream.Write(JSON[1], Length(JSON));
+end;
+
+procedure TCustomJSON.ScanBuffers(ABuffer: PAnsiChar; ASize: Cardinal; ReadExtra: Boolean);
+  procedure ExtractStream(var Stream: TMemoryStream;
+                          var p: PAnsiChar; iLen: Integer);
   begin
-    // 读取 Variant 变量数据，格式：
+    // 提取内容到流
+    // 注：Stream.Position := 0;
+    Stream := TMemoryStream.Create;
+    Stream.Size := iLen;
+    Inc(p, 2);
+    System.Move(p^, Stream.Memory^, iLen);
+    Inc(p, iLen);
+  end;
+  procedure GetFieldData(var p: PAnsiChar; var DataType: TElementType;
+                         var Str: AnsiString; var Stream: TMemoryStream;
+                         var VarValue: Variant);
+  var
+    pa: PAnsiChar;
+    Len: Integer;    
+  begin
+    // 读取带长度描述的字段内容，格式：
     //   {"Length":5,"Data":"abcde"}
     pa := nil;
-    Result := nil;
-
     Len := 0;
-    Inc(p, 8);  // 到 : 前附近
+    Inc(p, 8);  // 到 : 前位置附近
 
     repeat
       case p^ of
         ':':
           if (Len = 0) then  // 长度位置
             pa := p + 1
-          else begin  // 内容位置
-            Result := TMemoryStream.Create;
-            StreamType := CompareBuffer(p - 6, '"Data"');
-            if StreamType then // 是数据流
+          else  // 内容位置
+            if CompareBuffer(p - 9, ',"Stream":"') then  // Stream
             begin
+              DataType := etStream;
+              ExtractStream(Stream, p, Len);
+            end else
+            if CompareBuffer(p - 9, ',"Record":"') then  // JSON 记录
+            begin
+              DataType := etRecord;
+              ExtractStream(Stream, p, Len);
+            end else
+            if CompareBuffer(p - 9, ',"String":"') then  // 字符串
+            begin
+              DataType := etString;
               Inc(p, 2);
-              Result.Size := Len;
-              System.Move(p^, Result.Memory^, Len);
+              SetString(Str, p, Len);
               Inc(p, Len);
             end else
-            begin  // 是 JSON 记录
-              Inc(p);
-              Result.Size := Len;
-              System.Move(p^, Result.Memory^, Len);
-              Inc(p, Len - 1);
+            begin  // ',"Variant":"' -- Variant 类型
+              DataType := etVariant;
+              Inc(p, 2);
+              VarValue := BufferToVariant(p, Len, True);  // 自动解压
+              Inc(p, Len);
             end;
-            // 注：Result.Position := 0;
-          end;
+
         ',': begin  // 取长度
-          SetString(S, pa, p - pa);
-          Len := StrToInt(S);
+          SetString(Str, pa, p - pa);
+          Len := StrToInt(Str);
+          Inc(p, 8);
         end;
       end;
 
       Inc(p);
     until (p^ = '}');
-
   end;
-
   procedure AddJSONField(const AName: String; AValue: AnsiString; StringType: Boolean);
   begin
     // 增加一个变量/字段
-    if StringType then // DateTime 也设为 String
-    begin
-      if FUTF8CharSet then
-        SetAsString(AName, System.UTF8Decode(AValue))
-      else
-        SetAsString(AName, AValue);
-    end else
+    if StringType then // DateTime 用 String 表示
+      SetAsString(AName, AValue)
+    else
     if (AValue = 'True') then
       SetAsBoolean(AName, True)
     else
@@ -287,28 +248,28 @@ procedure TCustomJSON.ScanBuffers(ABuffer: PAnsiChar; ASize: Cardinal);
     if (Length(AValue) < 10) then  // 2147 4836 47
       SetAsInteger(AName, StrToInt(AValue))
     else
+    if (AValue[1] in ['0'..'9', '-', '+']) then
       SetAsInt64(AName, StrToInt64(AValue));
   end;
 
 var
-  Level: Integer;   // 括号层次
-  DblQuo: Boolean;  // 双引号
-  WaitVal: Boolean; // 等待值
+  Level: Integer;          // 括号层次
+  DblQuo: Boolean;         // 双引号
+  WaitVal: Boolean;        // 等待字段值
+
   p, pEnd: PAnsiChar;
   pD, pD2: PAnsiChar;
 
-  FldName: String;
-  FldValue: AnsiString;
-  StreamType: Boolean;  // 是否为数据流
-  Stream: TMemoryStream;
-  JSONRec: TCustomJSON;
+  DataType: TElementType;  // 数据类型
+  FldName: AnsiString;     // 字段名称
+
+  FldValue: AnsiString;    // String 字段值
+  VarValue: Variant;       // Variant 字段值
+  Stream: TMemoryStream;   // Stream 字段值
+  JSONRec: TCustomJSON;    // 记录字段值
 begin
   // 扫描一段内存，分析出 JSON 字段、字段值
   // （全部值转为字符串，不支持数组，否则异常）
-
-  // 先检查字符集：区分大小写
-  p := PAnsiChar(ABuffer + Length(INIOCP_JSON_FLAG));
-  FUTF8CharSet := SearchInBuffer(p, 50, JSON_CHARSET_UTF8);
 
   // 扫描范围
   p := ABuffer;
@@ -338,15 +299,24 @@ begin
           begin
             DblQuo := False;
             WaitVal := False;
-            Stream := ExtractData(p, StreamType);
-            if StreamType then  // 数据流
-              SetAsStream(FldName, Stream)  // 不用 String，否则 CheckStringValue
-            else begin
-              // 记录类型
-              JSONRec := TCustomJSON.Create;
-              JSONRec.Initialize(Stream);
-              SetAsRecord(FldName, JSONRec);
+
+            // 分析内层的内容
+            GetFieldData(p, DataType, FldValue, Stream, VarValue);
+
+            case DataType of
+              etString:
+                SetAsString(FldName, FldValue);
+              etStream:       // 数据流
+                SetAsStream(FldName, Stream);
+              etRecord: begin // 记录类型
+                JSONRec := TCustomJSON.Create;
+                JSONRec.Initialize(Stream);
+                SetAsRecord(FldName, JSONRec);
+              end;
+              etVariant:      // Variant
+                SetAsVariant(FldName, VarValue);
             end;
+
             Dec(Level);  // 回外层
           end;
         end;
@@ -354,12 +324,14 @@ begin
       '"':  // 外层：Level = 1
         if (DblQuo = False) then
           DblQuo := True
-        else begin
+        else
+        if ((p + 1)^ in [':', ',', '}']) then // 引号结束
+        begin
           DblQuo := False;
           pD2 := p;
         end;
 
-      ':':  // 外层,括号："Name":
+      ':':  // 外层,括号："Name":”
         if (DblQuo = False) and (Level = 1) then
         begin
           WaitVal := True;
@@ -369,22 +341,23 @@ begin
           pD2 := nil;
         end;
 
-      ',', '}':  // 值结束：xx,
-        if WaitVal then  // Length(FldName) > 0
-        begin
-          if (pD2 = nil) then  // 前面没有引号
+      ',', '}':  // 值结束：xx,"  xx","  xx},"
+        if (p^ = '}') or (p^ = ',') and ((p + 1)^ = '"') then
+          if (DblQuo = False) and WaitVal then  // Length(FldName) > 0
           begin
-            SetString(FldValue, pD, p - pD);
-            AddJSONField(FldName, Trim(FldValue), False);
-          end else
-          begin
-            SetString(FldValue, pD, pD2 - pD);
-            AddJSONField(FldName, FldValue, True);  // 不要 Trim(FldValue)
+            if (pD2 = nil) then  // 前面没有引号
+            begin
+              SetString(FldValue, pD, p - pD);
+              AddJSONField(FldName, Trim(FldValue), False);
+            end else
+            begin
+              SetString(FldValue, pD, pD2 - pD);
+              AddJSONField(FldName, FldValue, True);  // 不要 Trim(FldValue)
+            end;
+            pD := nil;
+            pD2 := nil;
+            WaitVal := False;
           end;
-          pD := nil;
-          pD2 := nil;
-          WaitVal := False;
-        end;
 
       else
         if (DblQuo or WaitVal) and (pD = nil) then  // 名称、内容开始
@@ -393,10 +366,8 @@ begin
 
     Inc(p);
 
-  until (p >= pEnd);
+  until (p > pEnd);
 
-  FUTF8CharSet := False;  // 已经转换
-  
 end;
 
 procedure TCustomJSON.SetAsRecord(const Index: String; const Value: TCustomJSON);
@@ -407,16 +378,99 @@ begin
   SetField(etRecord, Index, @Variable);
 end;
 
-procedure TCustomJSON.WriteExtraFields(var Buffer: PAnsiChar);
+procedure TCustomJSON.SetJSONText(const Value: AnsiString);
 begin
-  // 加入字符集字段：JSON_CHARSET_UTF8、JSON_CHARSET_DEF
-  Buffer^ := AnsiChar('{');
-  Inc(Buffer);
-  if FUTF8CharSet then
-    PInIOCPJSONField(Buffer)^ := JSON_CHARSET_UTF8
-  else
-    PInIOCPJSONField(Buffer)^ := JSON_CHARSET_DEF;
-  Inc(Buffer, Length(JSON_CHARSET_UTF8) - 1);  // 后面的 " 不要
+  // 用 JSON 文本初始化变量表
+  Clear;
+  if (Value <> '') then
+    ScanBuffers(PAnsiChar(Value), Length(Value), False);
+end;
+
+procedure TCustomJSON.WriteSystemInfo(var Buffer: PAnsiChar);
+begin
+  // Empty
+end;
+
+procedure TCustomJSON.WriteToBuffers(var JSON: AnsiString; WriteExtra: Boolean);
+const
+  BOOL_VALUES: array[Boolean] of AnsiString = ('False', 'True');
+  FIELD_TYPES: array[etString..etVariant] of AnsiString = (
+               ',"String":"', ',"Record":"', ',"Stream":"', ',"Variant":"');
+  function SetFieldNameLength(var Addr: PAnsiChar; AName: AnsiString;
+                              ASize: Integer; AType: TElementType): Integer;
+  var
+    S: AnsiString;
+  begin
+    // 写入字段长度描述
+    // 可能含保留符，加入长度信息，其他解析器可能无法识别
+    // 格式："VarName":{"Length":1234,"String":"???"}
+    S := '"' + AName + '":{"Length":' + IntToStr(ASize) + FIELD_TYPES[AType];
+    Result := Length(S);
+    System.Move(S[1], Addr^, Result);
+    Inc(Addr, Result);
+  end;
+var
+  i: Integer;
+  p: PAnsiChar;
+begin
+  // 保存消息到 JSON 文本（不支持数组）
+
+  // 1. JSON 长度 = 每字段多几个字符的描述 +
+  //                INIOCP_JSON_HEADER + JSON_CHARSET_UTF8 + MsgOwner
+  SetLength(JSON, Integer(FSize) + FList.Count * 25 + 80);
+  p := PAnsiChar(JSON);
+
+  // 2. 写标志性字段
+  WriteSystemInfo(p);
+
+  // 3. 加入列表字段
+  for i := 0 to FList.Count - 1 do
+    with Fields[i] do
+      case VarType of
+        etNull:
+          VarToJSON(p, Name, 'Null', True, False, i = FList.Count - 1);
+        etBoolean:
+          VarToJSON(p, Name, BOOL_VALUES[AsBoolean], True, False, i = FList.Count - 1);
+        etCardinal..etInt64:
+          VarToJSON(p, Name, AsString, True, False, i = FList.Count - 1);
+        etDateTime:  // 当作字符串
+          VarToJSON(p, Name, AsString, False, False, i = FList.Count - 1);
+
+        etString, etRecord,
+        etStream, etVariant: begin  // 其他类型未用
+
+          // 加入字段名称、长度
+          SetFieldNameLength(p, Name, Size, VarType);
+
+          if (Size > 0) then  // 加入内容: "内容"
+            case VarType of
+              etString: begin
+                System.Move(AsString[1], p^, Size);  // 复制内容
+                Inc(p, Size);  // 前移
+              end;
+              etRecord, etStream: begin  // 直接用流写入，减少复制次数
+                TStream(DataRef).Position := 0;
+                TStream(DataRef).Read(p^, Size);
+                Inc(p, Size);  // 前移
+              end;
+              etVariant: begin  // 复制内容
+                System.Move(DataRef^, p^, Size);
+                Inc(p, Size);  // 前移
+              end;
+            end;
+
+          if (i = FList.Count - 1) then
+            PThrChars(p)^ := AnsiString('"}}')
+          else
+            PThrChars(p)^ := AnsiString('"},');
+
+          Inc(p, 3);
+        end;
+      end;
+
+  // 4. 删除多余空间
+  Delete(JSON, p - PAnsiChar(JSON) + 1, Length(JSON));
+
 end;
 
 { TBaseJSON }
@@ -434,7 +488,7 @@ end;
 constructor TBaseJSON.Create(AOwner: TObject);
 begin
   inherited Create;
-  FOwner := AOwner;
+  FOwner := UInt64(AOwner);
   FMsgId := GetUTCTickCount;
 end;
 
@@ -454,10 +508,11 @@ begin
   Result := GetAsBoolean('__has_attach');  // 是否带附件
 end;
 
-procedure TBaseJSON.ScanBuffers(ABuffer: PAnsiChar; ASize: Cardinal);
+procedure TBaseJSON.ScanBuffers(ABuffer: PAnsiChar; ASize: Cardinal; ReadExtra: Boolean);
 begin
   inherited;
-  FOwner := TObject(GetAsInt64('__MSG_OWNER'));  // 消息宿主（大写）
+  // 修改消息宿主（大写）
+  FOwner := GetAsInt64('__MSG_OWNER');  
 end;
 
 procedure TBaseJSON.SetAction(const Value: Integer);
@@ -473,37 +528,15 @@ begin
   SetAsBoolean('__has_attach', Assigned(FAttachment) and (FAttachment.Size > 0));
 end;
 
-procedure TBaseJSON.SetJSONText(const Value: AnsiString);
-begin
-  // 用 JSON 文本初始化变量表
-  if (FList.Count > 0) then
-    Clear;
-  if (Value <> '') then
-    ScanBuffers(PAnsiChar(Value), Length(Value));
-end;
-
-procedure TBaseJSON.WriteExtraFields(var Buffer: PAnsiChar);
+procedure TBaseJSON.WriteSystemInfo(var Buffer: PAnsiChar);
 var
   S: AnsiString;
 begin
-  // 写入附加信息
-  
-  // 1. 加入 InIOCP 标志字段：INIOCP_JSON_HEADER
-  PInIOCPJSONField(Buffer)^ := INIOCP_JSON_FLAG;
-  Inc(Buffer, Length(INIOCP_JSON_FLAG));
-
-  // 2. 加入字符集字段：JSON_CHARSET_UTF8、JSON_CHARSET_DEF
-  if FUTF8CharSet then
-    PInIOCPJSONField(Buffer)^ := JSON_CHARSET_UTF8
-  else
-    PInIOCPJSONField(Buffer)^ := JSON_CHARSET_DEF;
-  Inc(Buffer, Length(JSON_CHARSET_UTF8));
-
-  // 3. 加入宿主（要读取，大写）
-  S := '__MSG_OWNER":' + IntToStr(Int64(FOwner)) + ',';
+  // 写入系统信息字段：InIOCP 标志、宿主（大写）
+  //                   {"_InIOCP_Ver":2.8,"__MSG_OWNER":12345678,
+  S := INIOCP_JSON_FLAG + '"__MSG_OWNER":' + IntToStr(UInt64(FOwner)) + ',';
   System.Move(S[1], Buffer^, Length(S));
   Inc(Buffer, Length(S));
-  
 end;
 
 { TSendJSON }
@@ -545,7 +578,7 @@ begin
         FAttachment.Free   // 直接释放
       else begin
         if (FServerMode = False) then
-          Sleep(5);
+          Sleep(10);
         ASender.OpCode := ocBiary;  // 附件 当作二进制，不能改
         ASender.Send(FAttachment, FFrameSize, True);  // 自动释放
       end;
@@ -556,7 +589,7 @@ begin
     if Assigned(FDataSet) then  // 3.2 数据集
       try
         if (FServerMode = False) then
-          Sleep(5);
+          Sleep(10);
         InterSendDataSet(ASender);
       finally
         FDataSet.Active := False;
@@ -566,19 +599,11 @@ begin
   // 快速投放时，服务端可能几个消息粘连在一起（Win7 64 位容易出现），
   // 致接收异常，面的消息被放弃
   if (FServerMode = False) then
-    Sleep(15);
+    Sleep(10);
 
 end;
 
 procedure TSendJSON.InterSendDataSet(ASender: TBaseTaskSender);
-  function CharSetText(const S: AnsiString): AnsiString; 
-  begin
-    if FUTF8CharSet then  // UTF-8 字符集
-      Result := System.UTF8Encode(S)
-    else
-      Result := S;
-  end;
-
   procedure MarkFrameSize(AData: PWsaBuf; AFrameSize: Integer; ALastFrame: Byte);
   var
     pb: PByte;
@@ -632,11 +657,11 @@ begin
       Field := Dataset.Fields[i];
       if (i = 0) then
       begin
-        Desc := '{"' + CharSetText(LowerCase(Field.FieldName)) + '":"';  // 用小写
+        Desc := '{"' + LowerCase(Field.FieldName) + '":"';  // 用小写
       end else
-        Desc := '","' + CharSetText(LowerCase(Field.FieldName)) + '":"';
+        Desc := '","' + LowerCase(Field.FieldName) + '":"';
       Names[i] := Desc;
-      Inc(n, Length(Desc) + Field.Size);
+      Inc(n, Length(Desc) + Field.Size + 10);
     end;
 
     // 2. 每条记录转为 JSON，缓存满时发送
@@ -660,9 +685,9 @@ begin
       begin
         Field := Dataset.Fields[i];
         if (i = k - 1) then  // [{"Id":"1","Name":"我"},{"Id":"2","Name":"你"}]
-          Desc := Names[i] + CharSetText(Field.Text) + '"}'
+          Desc := Names[i] + Field.Text + '"}'
         else
-          Desc := Names[i] + CharSetText(Field.Text);
+          Desc := Names[i] + Field.Text;
         m := Length(Desc);
         System.Move(Desc[1], p^, m);
         Inc(p, m);

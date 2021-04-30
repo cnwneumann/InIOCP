@@ -38,14 +38,17 @@ type
     otEnvData,                // 客户端工作环境空间
     otTaskInf,                // 发送数据描述信息              
     otIOData,                 // IO 结构数据
-    
-    otSocket,                 // TIOCPSocket 对象
+    // =============================================
+    otIOCPSocket,             // TIOCPSocket 对象
     otHttpSocket,             // THttpSocket 对象
     otStreamSocket,           // TStreamSocket 对象
     otWebSocket,              // TWebSocket 对象（保留）
-    otBroker                  // 代理对象
+    otIOCPBroker              // 代理对象
   );
 
+  // 客户端传输协议
+  TClientComProtocol = TObjectType;
+  
   // 双向链表 结构
   PLinkRec = ^TLinkRec;
   TLinkRec = record
@@ -170,11 +173,11 @@ type
     arErrNoAnswer,            // 无应答
     arErrPush,                // 推送异常
     arErrUser,                // 非法用户
-    arErrWork                // 执行任务异常
+    arErrWork                 // 执行任务异常
   );
 
-  // C/S 消息的数据类型
-  TMessageDataType  = (
+  // C/S 消息部分
+  TMessagePart  = (
     mdtHead,                  // 消息头
     mdtEntity,                // 实体内容
     mdtAttachment             // 附近内容
@@ -214,9 +217,7 @@ type
   
   TFileSize     = Int64;      // 支持大文件
   TIOCPMsgId    = Int64;      // 64 位
-
   TActionTarget = Cardinal;   // 操作目的对象
-  TZipLevel     = TZCompressionLevel;
 
   // 首消息包的协议头
   //   修改时必须同时修改 THeaderPack 的对应字段
@@ -240,6 +241,32 @@ type
     Action: TActionType;       // 操作分类
     ActResult: TActionResult;  // 操作结果
   end;
+
+  // ============= StreamSocket 相关 =============
+
+  // InIOCP 数据流接收状态
+  TIOCPStreamState = (
+    issUnknown,         // 纯数据流（如设备状态）
+    issInitial,         // InIOCP 类型流
+    issBegin,           // InIOCP 流开始接收
+    issSubsequent,      // InIOCP 流后续数据
+    issComplete         // InIOCP 流接收完成
+  );
+
+  // InIOCP 数据流类型
+  TIOCPDataType = (
+    idtBuffer,
+    idtString,
+    idtMemStream,
+    idtFileStream
+  );
+  
+  // InIOCP 流协议，存放：InIOCP_STREAM_SOCKET
+  PStreamProtocol = ^TStreamProtocol;
+  TStreamProtocol = array[0..19] of AnsiChar;
+
+  PIOCPStreamSize = ^TIOCPStreamSize;
+  TIOCPStreamSize = Int64;
 
   // =============== WebSocket 相关 ===============
 
@@ -268,20 +295,22 @@ type
     btAdminOnly     // 只给管理员
   );
 
+  PByteAry = ^TByteAry;
+  TByteAry = array of Byte;
+
   // 掩码
   PWSMask = ^TWSMask;
   TWSMask = array[0..3] of Byte;
 
-  // 长度：WebSocket 帧结构头
+  // WebSocket 帧的结构头
   PWebSocketFrame = ^TWebSocketFrame;
   TWebSocketFrame = array[0..9] of AnsiChar; // 2+8
-
-  PByteAry = ^TByteAry;
-  TByteAry = array of Byte;
 
   // 存放标志字段的空间
   PInIOCPJSONField = ^TInIOCPJSONField;
   TInIOCPJSONField = array[0..18] of AnsiChar;
+
+  // ========================================
 
   // 双字节、三字节类型
   PDblChars = ^TDblChars;
@@ -330,10 +359,12 @@ type
     etInt64,                   // 64 位整数
     // 以下转 JSON 时当字符串
     etDateTime,                // 时间日期 8 字节
+    // 以下为可变长度，顺序不能变
     etBuffer,                  // 内存引用
     etString,                  // 字符串
     etRecord,                  // 记录引用
-    etStream                   // 流引用
+    etStream,                  // 流引用
+    etVariant                  // 变型（用 etString 方式存储）
   );
   
   // 在列表存储时的信息
@@ -370,7 +401,7 @@ type
     HeadLength: DWORD;
     Tail: Pointer;            // 最后发送的数据
     TailLength: DWORD;
-  
+
     // 数据源（释放用）
     Handle: THandle;          // 文件句柄
     RefStr: AnsiString;       // 字符串
@@ -404,11 +435,12 @@ type
   PClientInfo = ^TClientInfo;
   TClientInfo = record
     Socket: TServerSocket;     // TIOCPSocket，兼容 64+32 位系统
-    Role: TClientRole;         // 角色、权限
+    Group: TNameString;        // 分组
     Name: TNameString;         // 名称
     LoginTime: TDateTime;      // 登录时间
     LogoutTime: TDateTime;     // 登出时间
     PeerIPPort: TNameString;   // IP:Port
+    Role: TClientRole;         // 角色、权限
     Tag: TNameString;          // 其他信息
   end;
 
@@ -493,14 +525,12 @@ const
   IO_BUFFER_SIZE_2    = 32768;       // 客户端收发缓存长度 4096 * 8
 
   DEFAULT_SVC_PORT    = 12302;       // 默认端口
-  MAX_CLIENT_COUNT    = 300;         // 预设客户端连接数
-
-  INI_SESSION_ID      = 1;           // 免登录的凭证
+  MAX_CLIENT_COUNT    = 500;         // 预设客户端连接数
   MAX_FILE_VAR_SIZE   = 5120000;     // 文件型变量的最大长度 5M
 
   SESSION_TIMEOUT     = 30;          // 短连接凭证的有效时间，30 分钟
-  TIME_OUT_INTERVAL   = 180000;      // 检查死连接的时间间隔, 180 秒
-  WAIT_MILLISECONDS   = 150000;       // 客户端发出数据后等待反馈的时间
+  OPTIMIZE_INTERVAL   = 30000;       // 优化间隔（30秒）
+  WAIT_MILLISECONDS   = 60000;       // 客户端发出数据后等待反馈的时间
 
   INVALID_FILE_HANDLE = 0;           // 无效的文件句柄（不用 INVALID_HANDLE_VALUE)
 
@@ -511,11 +541,11 @@ const
   MAX_CHECKCODE_SIZE = 52800000;    // 文件大于 52.8M 时，取消校验（大文件非常耗时）！
   OFFLINE_MSG_FLAG   = 2356795438;  // 离线消息文件的开始标志
 
+  MAX_TRANSMIT_SIZE  = 2147483646 - 1024;   // TransmitFile() 最大发送长度
+
   HASH_CODE_SIZE     = SizeOf(TMurmurHash); // Hash 长度
   MSG_HEAD_SIZE      = SizeOf(TMsgHead);    // 信息头长度
-
   POINTER_SIZE       = SizeOf(Pointer);     // 指针长度
-  NEW_TICKCOUNT      = Cardinal(not 0);     // Socket 未接收过数据的状态
 
   STREAM_VAR_SIZE    = SizeOf(TStreamVariable);// 传输流的变量描述长度
   CLIENT_DATA_SIZE   = SizeOf(TClientInfo);    // 客户端信息长度
@@ -533,34 +563,34 @@ const
   FILE_CHUNK_ACTIONS = [atFileDownChunk, atFileUpChunk];
 
   // C/S 模式标志
-  IOCP_SOCKET_FLAG   = AnsiString('IOCP/2.5'#32);
+  IOCP_SOCKET_FLAG   = AnsiString('IOCP/2.8'#32);
   IOCP_SOCKET_FLEN   = Cardinal(Length(IOCP_SOCKET_FLAG));
   IOCP_SOCKET_SIZE   = IOCP_SOCKET_FLEN + MSG_HEAD_SIZE;
 
   // C/S 模式取消任务
-  IOCP_SOCKET_CANCEL = AnsiString('IOCP/2.5 CANCEL');
+  IOCP_SOCKET_CANCEL = AnsiString('IOCP/2.8 CANCEL');
   IOCP_CANCEL_LENGTH = DWORD(Length(IOCP_SOCKET_CANCEL));
 
   // 点对点、广播消息最大长度，HASH_CODE_SIZE * 4 = 2 个 MD5 长度
   BROADCAST_MAX_SIZE = IO_BUFFER_SIZE - IOCP_SOCKET_SIZE - HASH_CODE_SIZE * 4;
+
+  // ============== InIOCP 流协议 ==================
+
+  // 协议标志
+  InIOCP_STREAM_SOCKET = 'InIOCP_STREAM_SOCKET';
 
   // ================ webSocekt ====================
 
   // WebSocekt 的 MAGIC-GUID（不能修改！）
   WSOCKET_MAGIC_GUID = AnsiString('258EAFA5-E914-47DA-95CA-C5AB0DC85B11');
 
-  // webSocekt 的操作代码
-  WEBSOCKET_OPCODES  = [0, 1, 2, 8, 9, 10];
+  // WebSocket 的操作代码集
+  TWSOpCodeSet = [ocContinuation, ocText, ocBiary, ocClose, ocPing, ocPong];
 
   // InIOCP 扩展 WebSocket 的 JSON 首字段，长度=19（不要改）
-  // 见：TBaseJSON.SaveToStream
-  INIOCP_JSON_FLAG     = AnsiString('{"_InIOCP_Ver":2.5,');
+  // 见：TBaseJSON.WriteExtraFields
+  INIOCP_JSON_FLAG     = AnsiString('{"_InIOCP_Ver":2.8,');
   INIOCP_JSON_FLAG_LEN = Length(INIOCP_JSON_FLAG);
-
-  // InIOCP 扩展 WebSocket 的 JSON 次字段，长度=19（不要改）
-  // 见：TBaseJSON.SaveToStream
-  JSON_CHARSET_DEF   = AnsiString('"_UTF8_CHARSET":0,"');  // 默认字符集
-  JSON_CHARSET_UTF8  = AnsiString('"_UTF8_CHARSET":1,"');  // UTF-8
 
   // ================ 代理服务 ====================
 
@@ -568,15 +598,27 @@ const
 
 implementation
 
+uses
+  SysUtils;
+  
 var
   _WSAResult: Integer = 1;
 
-procedure _WSAStartup;
+procedure _InitEnvironment;
 var
   WSAData: TWSAData;
 begin
-  // 初始化 Socket 环境
+  // 初始化 Socket 环境，设置时间日期分隔符
   _WSAResult := iocp_Winsock2.WSAStartup(WINSOCK_VERSION, WSAData);
+  {$IFDEF DELPHI_XE}  // xe 或更高版本
+  FormatSettings.DateSeparator := '-';
+  FormatSettings.TimeSeparator := ':';
+  FormatSettings.ShortDateFormat := 'yyyy-mm-dd';
+  {$ELSE}
+  DateSeparator := '-';
+  TimeSeparator := ':';
+  ShortDateFormat := 'yyyy-mm-dd';
+  {$ENDIF}
 end;
 
 procedure _WSACleanUp;
@@ -587,7 +629,7 @@ begin
 end;
 
 initialization
-  _WSAStartup;
+  _InitEnvironment;
 
 finalization
   _WSACleanUp;

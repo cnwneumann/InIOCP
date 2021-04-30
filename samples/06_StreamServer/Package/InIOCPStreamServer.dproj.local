@@ -1,11 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <BorlandProject>
 	<Transactions>
-    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\StreamServer\Package\InIOCPStrmServer.bdsproj=D:\My Documents\RAD Studio\Projects\Project1.bdsproj</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\StreamServer\Form\frmInIOCPStrmServer.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\StreamServer\Form\frmInIOCPHttpServer.dfm</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\06_StreamServer\Package\InIOCPStreamServer.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\06_StreamServer\Package\InIOCPStrmServer.bdsproj</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\StreamServer\Form\frmInIOCPStrmServer.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\StreamServer\Form\frmInIOCPHttpServer.pas</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\06_StreamServer\Form\frmInIOCPStreamServer.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\06_StreamServer\Form\frmInIOCPStrmServer.dfm</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\06_StreamServer\Form\frmInIOCPStreamServer.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\06_StreamServer\Form\frmInIOCPStrmServer.pas</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.bdsproj,D:\My Documents\RAD Studio\Projects\Project1.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\StreamServer\Package\InIOCPStrmServer.bdsproj</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\StreamServer\Form\frmInIOCPHttpServer.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\StreamServer\Form\frmInIOCPStrmServer.pas</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\06_StreamServer\Package\InIOCPStrmServer.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\06_StreamServer\Package\InIOCPStreamServer.bdsproj</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\06_StreamServer\Form\frmInIOCPStrmServer.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\06_StreamServer\Form\frmInIOCPStreamServer.dfm</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\06_StreamServer\Form\frmInIOCPStrmServer.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\06_StreamServer\Form\frmInIOCPStreamServer.pas</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\StreamServer\Form\frmInIOCPHttpServer.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\StreamServer\Form\frmInIOCPStrmServer.dfm</Transaction>
   </Transactions>
 </BorlandProject>

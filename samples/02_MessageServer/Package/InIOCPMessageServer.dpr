@@ -1,7 +1,8 @@
 program InIOCPMessageServer;
 
 uses
-  ScaleMM2 in '..\..\..\inIocp\memMgr\scalemm2\ScaleMM2.pas',
+  FastMM4 in '..\..\..\inIocp\memMgr\FastMM\FastMM4.pas',
+//  ScaleMM2 in '..\..\..\inIocp\memMgr\scalemm2\ScaleMM2.pas',
   Forms,
   Windows,
   frmInIOCPMessageServer in '..\Form\frmInIOCPMessageServer.pas' {FormInIOCPMessageServer},

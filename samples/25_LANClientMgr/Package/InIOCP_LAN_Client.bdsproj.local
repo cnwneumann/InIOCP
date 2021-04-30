@@ -1,7 +1,2 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<BorlandProject>
-	<Transactions>
-    <Transaction>2019-05-08 08:20:59.691.bdsproj,D:\Administrator\Documents\RAD Studio\Projects\Project1.bdsproj=E:\ProgCodes\Delphi\InIOCP\Pk\InIOCPMsgServer\Package\InIOCPClient.bdsproj</Transaction>
-    <Transaction>2019-05-16 09:52:07.821.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\25_LANClientMgr\Package\InIOCPClient.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\25_LANClientMgr\Package\InIOCP_LAN_Client.bdsproj</Transaction>
-  </Transactions>
-</BorlandProject>
+<BorlandProject/>

@@ -493,7 +493,7 @@ begin
   if (FSize > 0) then
     Result := GetJSONChunk(cpAll)
   else
-    Result := '';
+    Result := '[]';
 end;
 
 function TInStringList.GetJSONChunk(Position: TJSONChunkPosition): AnsiString;
@@ -501,12 +501,6 @@ var
   p: PAnsiChar;
 begin
   // 转换列表到 JSON 分块
-
-  if (FSize = 0) then
-  begin
-    Result := '';
-    Exit;
-  end;
 
   if (Position in [cpMiddle, cpLast]) then
   begin

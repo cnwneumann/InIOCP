@@ -340,8 +340,6 @@ end;
 
 procedure TFormInIOCPNewFeatures.FormCreate(Sender: TObject);
 begin
-  iocp_utils.IniDateTimeFormat;  // 设置日期时间格式     
-
   EditServer.Text := '127.0.0.1'; // GetLocalIp;
   Edit1.Text := 'USER_' + AnsiChar(64 + WinCount);  // 用户名
 

@@ -5,7 +5,7 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, StdCtrls, iocp_clients, ExtCtrls;
-
+                                   
 type
   TForm3 = class(TForm)
     Memo1: TMemo;
@@ -17,6 +17,7 @@ type
     edtAddress: TEdit;
     Button1: TButton;
     Timer1: TTimer;
+    lbEditGroup: TLabeledEdit;
     procedure Button1Click(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
     procedure InConnectionError(Sender: TObject; const Msg: string);
@@ -52,7 +53,7 @@ begin
 
     // 新版改变：
     // 服务端无认证服务管理时，客户端免登录，连接后即可立刻发送请求。
-    
+    InCertifyClient1.Group := lbEditGroup.Text;  // 分组（群）
     InCertifyClient1.UserName := 'USER_A' + IntToStr(GetTickCount);
     InCertifyClient1.Password := 'AAAA';
     InCertifyClient1.Login; 

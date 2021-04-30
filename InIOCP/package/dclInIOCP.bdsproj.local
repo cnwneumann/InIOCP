@@ -1,6 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <BorlandProject>
 	<Transactions>
-    <Transaction>2019-06-15 11:38:09.339.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\InIOCP\package\dclInIOCP.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\InIOCP\package\dclInIOCP.bdsproj</Transaction>
+    <Transaction>2019-10-06 23:40:58.375.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\InIOCP\package\Unit1.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\InIOCP\source\iocp_strmClient.pas</Transaction>
+    <Transaction>2019-10-07 10:23:22.390.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\InIOCP\source\iocp_strmClient.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\InIOCP\source\iocp_baseConnection.pas</Transaction>
+    <Transaction>2019-10-07 10:23:46.593.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\InIOCP\source\iocp_baseConnection.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\InIOCP\source\iocp_baseConn.pas</Transaction>
+    <Transaction>2019-10-16 16:09:57.210.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\InIOCP\package\Unit1.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\InIOCP\source\iocp_stream.pas</Transaction>
+    <Transaction>2019-10-21 10:07:24.606.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\InIOCP\source\iocp_stream.pas=</Transaction>
   </Transactions>
 </BorlandProject>

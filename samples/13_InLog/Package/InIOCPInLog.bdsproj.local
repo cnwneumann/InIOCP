@@ -1,12 +1,2 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<BorlandProject>
-	<Transactions>
-    <Transaction>2018-06-08 17:48:20.397.pas,D:\Administrator\Documents\RAD Studio\Projects\Unit3.pas=E:\ProgCodes\Delphi\InIOCP\v2.0\Form\frmInLog.pas</Transaction>
-    <Transaction>2018-06-08 17:48:20.397.dfm,D:\Administrator\Documents\RAD Studio\Projects\Unit3.dfm=E:\ProgCodes\Delphi\InIOCP\v2.0\Form\frmInLog.dfm</Transaction>
-    <Transaction>2018-06-08 17:48:32.046.bdsproj,D:\Administrator\Documents\RAD Studio\Projects\Project1.bdsproj=E:\ProgCodes\Delphi\InIOCP\v2.0\Package\InLog.bdsproj</Transaction>
-    <Transaction>2018-06-08 17:51:52.889.pas,E:\ProgCodes\Delphi\InIOCP\v2.0\Package\Unit1.pas=E:\ProgCodes\Delphi\InIOCP\v2.0\Unit\in_log.pas</Transaction>
-    <Transaction>2019-04-22 10:57:01.923.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\00_InLog\Package\InLog.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\00_InLog\Package\InIOCPInLog.bdsproj</Transaction>
-    <Transaction>2019-04-22 11:00:25.930.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\00_InLog\Form\frmInLog.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\00_InLog\Form\frmInIOCPInLog.pas</Transaction>
-    <Transaction>2019-04-22 11:00:25.930.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\00_InLog\Form\frmInLog.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\00_InLog\Form\frmInIOCPInLog.dfm</Transaction>
-  </Transactions>
-</BorlandProject>
+<BorlandProject/>

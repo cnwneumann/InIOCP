@@ -1,6 +1,7 @@
 program InIOCPStreamClient;
 
 uses
+  ScaleMM2 in '..\..\..\inIocp\memMgr\scalemm2\ScaleMM2.pas',
   Forms,
   frmInIOCPStreamClient in '..\Form\frmInIOCPStreamClient.pas' {FormInIOCPStreamClient};
 

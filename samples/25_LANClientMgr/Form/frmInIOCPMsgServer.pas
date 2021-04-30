@@ -26,7 +26,7 @@ type
     procedure FormCreate(Sender: TObject);
     procedure InIOCPServer1AfterOpen(Sender: TObject);
     procedure InHttpDataProvider1Get(Sender: TObject; Request: THttpRequest;
-      Respone: THttpRespone);
+      Response: THttpResponse);
     procedure InClientManager1Delete(Sender: TObject; Params: TReceiveParams;
       Result: TReturnResult);
     procedure InClientManager1Login(Sender: TObject; Params: TReceiveParams;
@@ -58,6 +58,8 @@ type
       Params: TReceiveParams; Result: TReturnResult);
     procedure InFileManager1BeforeDownload(Sender: TObject;
       Params: TReceiveParams; Result: TReturnResult);
+    procedure InFileManager1QueryFiles(Sender: TObject; Params: TReceiveParams;
+      Result: TReturnResult);
   private
     { Private declarations }
   public
@@ -109,6 +111,7 @@ begin
   // Sender 是 TBusiWorker，其 DataModule 是启动服务时注册的 TdmInIOCPSQLite3 的实例
   // 删除用户
 
+  Result.UserGroup := Params.UserGroup;
   Result.UserName := Params.UserName;
   if (Params.ToUser <> Params.LogName) then  // LogName 是登录时的名称，Params.LogName = Params.Socket.LogName
   begin
@@ -156,7 +159,9 @@ begin
   if (Result.ActResult = arOK) then  // 用户存在
   begin
     Result.Msg := 'Login OK';
+    Result.UserGroup := Params.UserGroup;
     Result.UserName := Params.UserName;
+    Result.PeerIPPort := Params.Socket.PeerIPPort;
     Result.AsDateTime['action_time'] := Now;
 
     // 登记信息在前：设 Role
@@ -191,6 +196,7 @@ begin
     begin
       // 加入客户端所需的信息
       Result.Msg := 'User Logout.';
+      Result.UserGroup := Params.UserGroup;
       Result.UserName := Params.UserName;
       Result.AsDateTime['action_time'] := Now;
 
@@ -217,6 +223,7 @@ begin
   // 见客户端和文件“数据库操作.SQL"的 [USER_MODIFY]
   TdmInIOCPSQLite3(TBusiWorker(Sender).DataModule).ModifyUser(Params, Result);
 
+  Result.UserGroup := Params.UserGroup;
   Result.UserName := Params.UserName;
   if Result.ActResult = arOK  then
     Result.Msg := '修改用户信息成功: ' + Params.ToUser;
@@ -254,6 +261,7 @@ begin
     // 见客户端和文件“数据库操作.SQL"的 [USER_REGISTER]
     TdmInIOCPSQLite3(TBusiWorker(Sender).DataModule).RegisterUser(Params, Result);
 
+    Result.UserGroup := Params.UserGroup;
     Result.UserName := Params.UserName;
 
     if (Result.ActResult = arOK) then
@@ -322,11 +330,42 @@ begin
     
 end;
 
+procedure TFormInIOCPMsgServer.InFileManager1QueryFiles(Sender: TObject;
+  Params: TReceiveParams; Result: TReturnResult);
+begin
+  // 使用本方法测试后台执行！
+  // 1、默认情况 Params.Socket.Background = False, 后台执行时为 True；
+  // 2、用任一管理器把任务投放到后台执行，如：InFileManager1.AddToBackground()；
+  // 3、后台线程也执行本方法，但 Params.Socket.Background = True，结束时要 Wakeup 客户端；
+  // 4、后台执行时不能直接反馈 Result，只能推送（用任一管理器），Result 不能太大。
+
+  // TWebSocket 同样支持后台执行！
+  // 新版本在 TInIOCPDataModule 中增加两个方法 AddToBackground、Wakeup，
+  // 参考本方法在其子类中用实现后台执行。
+
+  if (Params.Socket.Background = False) then  // 不是后台执行状态
+  begin
+    InFileManager1.AddToBackground(Params.Socket);  // 加入后台执行（不在当前线程执行）
+    Result.Msg := '第一步：投入到后台执行，直接返回。';
+    Result.ActResult := arOK;  // 先返回结果
+  end else
+  begin
+    // 后台执行状态，执行服务端比较耗时的操作... ...
+    // 操作完成后，只能唤醒客户端，不能直接发送返回值
+    Sleep(2000);  // 这里做很多事，很耗时
+    Result.Msg := '第二步：后台执行完毕，推送消息给客户端。';
+    Result.ActResult := arOK;  // 要推送到结果
+    InMessageManager1.Wakeup(Result.Socket);  // 实际是推送 Result 给客户端
+    // Result.Socket 自动被关闭
+  end;
+
+end;
+
 procedure TFormInIOCPMsgServer.InHttpDataProvider1Get(Sender: TObject;
-  Request: THttpRequest; Respone: THttpRespone);
+  Request: THttpRequest; Response: THttpResponse);
 begin
   // HTTP 服务，返回信息：
-  Respone.SetContent('InIOCP HTTP Server v2.5 IS RUNING!');
+  Response.SetContent('InIOCP HTTP Server v2.5 IS RUNING!');
 end;
 
 procedure TFormInIOCPMsgServer.InIOCPServer1AfterOpen(Sender: TObject);
@@ -355,6 +394,7 @@ procedure TFormInIOCPMsgServer.InMessageManager1Broadcast(Sender: TObject;
   Params: TReceiveParams; Result: TReturnResult);
 begin
   // 广播：发送消息给全部客户端，除了自己，有权限
+  Result.UserGroup := Params.UserGroup;
   Result.UserName := Params.UserName;
   Result.Msg := '广播消息，已发出.';
   Result.ActResult := arOK;
@@ -432,6 +472,7 @@ begin
   if (Params.Msg = 'DISCONNECT') then  // 断开指定客户端
   begin
     InClientManager1.Disconnect(Params.ToUser);
+    Result.UserGroup := Params.UserGroup;
     Result.UserName := Params.UserName;
     Result.Msg := '发送断开连接命令.';
     Result.ActResult := arOK;

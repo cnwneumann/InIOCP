@@ -1,11 +1,2 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<BorlandProject>
-	<Transactions>
-    <Transaction>2018-08-12 00:22:05.546.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\24_ReverseProxy\Form\frmOuterProxyServer.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\24_ReverseProxy\Form\frmOuterProxyServer2.pas</Transaction>
-    <Transaction>2018-08-12 00:22:05.546.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\24_ReverseProxy\Form\frmOuterProxyServer.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\24_ReverseProxy\Form\frmOuterProxyServer2.dfm</Transaction>
-    <Transaction>2018-08-12 00:25:20.640.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\24_ReverseProxy\Form\frmOuterProxyServer2.pas=</Transaction>
-    <Transaction>2018-08-12 00:25:20.640.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\24_ReverseProxy\Form\frmOuterProxyServer2.dfm=</Transaction>
-    <Transaction>2018-08-12 00:25:41.984.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\24_ReverseProxy\package\Unit1.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\24_ReverseProxy\Form\frmOuterProxyServer.pas</Transaction>
-    <Transaction>2018-08-12 00:25:41.984.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\24_ReverseProxy\package\Unit1.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\24_ReverseProxy\Form\frmOuterProxyServer.dfm</Transaction>
-  </Transactions>
-</BorlandProject>
+<BorlandProject/>

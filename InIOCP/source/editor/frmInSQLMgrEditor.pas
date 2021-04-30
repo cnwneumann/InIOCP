@@ -3,9 +3,8 @@ unit frmInSQLMgrEditor;
 interface
 
 uses
-  Windows, Messages, SysUtils, Variants, Classes,
-  Graphics, Controls, Forms, Dialogs, ComCtrls, ExtCtrls,
-  StdCtrls, Buttons, ActnList, iocp_sqlMgr;
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, iocp_sqlMgr, ComCtrls, ExtCtrls, StdCtrls, Buttons, ActnList;
 
 type
   TFormInSQLManager = class(TForm)

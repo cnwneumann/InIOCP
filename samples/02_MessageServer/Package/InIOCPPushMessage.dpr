@@ -1,6 +1,7 @@
 program InIOCPPushMessage;
 
 uses
+  FastMM4 in '..\..\..\inIocp\memMgr\FastMM\FastMM4.pas',
   Forms,
   frmInIOCPPushMessage in '..\Form\frmInIOCPPushMessage.pas' {Form3},
   iocp_clients in '..\..\..\InIOCP\source\iocp_clients.pas',

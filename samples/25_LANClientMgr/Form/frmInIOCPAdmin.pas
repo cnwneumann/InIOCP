@@ -10,7 +10,7 @@ type
   TFormInIOCPAdmin = class(TForm)
     InCertifyClient1: TInCertifyClient;
     InConnection1: TInConnection;
-    InMessageClient1: TInMessageClient;
+    InMessageClient1: TInMessageClient;                
     btnLogin: TButton;
     btnBroacast: TButton;
     btnCapScreen: TButton;
@@ -34,6 +34,8 @@ type
     TabSheet1: TTabSheet;
     TabSheet2: TTabSheet;
     Memo1: TMemo;
+    Button1: TButton;
+    actBackground: TAction;
     procedure FormCreate(Sender: TObject);
     procedure InCertifyClient1ReturnResult(Sender: TObject;
       Result: TResultParams);
@@ -53,6 +55,7 @@ type
     procedure InConnection1ReturnResult(Sender: TObject; Result: TResultParams);
     procedure actModifyExecute(Sender: TObject);
     procedure actSendMsgExecute(Sender: TObject);
+    procedure actBackgroundExecute(Sender: TObject);
   private
     { Private declarations }
     function FindClientItem(const ClientName: String): TListItem;
@@ -76,6 +79,17 @@ var
   FormInIOCPLogin: TFormInIOCPLogin = nil;
 
 {$R *.dfm}
+
+procedure TFormInIOCPAdmin.actBackgroundExecute(Sender: TObject);
+begin
+  // 服务端用后台线程执行，完毕后推送消息，客户端下载一个文件（假设是列出文件的结果）
+  // 见：客户端 TFormInIOCPAdmin.InConnection1ReceiveMsg、服务端 InFileManager1QueryFiles
+  with TMessagePack.Create(InConnection1) do
+  begin
+    Msg := '列出文件，假设很耗时。';
+    Post(atFileList);  // 列出文件
+  end;
+end;
 
 procedure TFormInIOCPAdmin.actBroadcastExecute(Sender: TObject);
 begin
@@ -141,6 +155,7 @@ begin
   actModify.Enabled := InConnection1.Logined;
   actSendMsg.Enabled := InConnection1.Logined;
   actDisconnect.Enabled := InConnection1.Logined;
+  actBackground.Enabled := InConnection1.Logined;
   
 end;
 
@@ -234,7 +249,7 @@ begin
   // 客户端登录：加入信息
   Item := lvClientView.Items.Add;
   Item.Caption := IntToStr(Item.Index + 1);
-  Item.SubItems.Add(Msg.UserName);
+  Item.SubItems.Add(Msg.UserGroup + ':' + Msg.UserName);
   Item.SubItems.Add(Msg.PeerIPPort);
   Item.SubItems.Add(IntToStr(Integer(Msg.Role)));
   Item.SubItems.Add(DateTimeToStr(Msg.AsDateTime['action_time']));
@@ -248,7 +263,7 @@ begin
   // 查询客户端：加入信息（见 TClientInfo）
   Item := lvClientView.Items.Add;
   Item.Caption := IntToStr(No);
-  Item.SubItems.Add(Info^.Name);
+  Item.SubItems.Add(Info^.Group + ':' + Info^.Name);
   Item.SubItems.Add(Info^.PeerIPPort);
   Item.SubItems.Add(IntToStr(Integer(Info^.Role)));
   Item.SubItems.Add(DateTimeToStr(Info^.LoginTime));
@@ -279,7 +294,7 @@ end;
 
 procedure TFormInIOCPAdmin.FormCreate(Sender: TObject);
 begin
-  InConnection1.LocalPath := gAppPath + 'data\data_admin';  // 数据目录
+  InConnection1.LocalPath := gAppPath + 'data\data_admin';  // 文件存放路径
   CreateDir(InConnection1.LocalPath);
 end;
 
@@ -298,7 +313,7 @@ begin
   // 列出全部连接过的客户端信息
   if (Client^.LogoutTime = 0) then  // 在线已登录的客户端
   begin
-    Item := FindClientItem(Client^.Name);
+    Item := FindClientItem(Client^.Group + ':' + Client^.Name);
     if Assigned(Item) then  // 更新客户端信息
       Item.Caption := IntToStr(No)
     else  // 加入客户端信息（见 TClientInfo）
@@ -328,19 +343,28 @@ begin
   // 客户端登录时，服务端要推送足够多的信息
   case Msg.Action of
     atUserLogin: begin
-      Item := FindClientItem(Msg.UserName);
+      Item := FindClientItem(Msg.UserGroup + ':' + Msg.UserName);
       if Assigned(Item) then
         UpdateClientItem(Item, Msg, True)
       else
         AddClientItem(Msg);
     end;
     atUserLogout: begin
-      Item := FindClientItem(Msg.UserName);
+      Item := FindClientItem(Msg.UserGroup + ':' + Msg.UserName);
       if Assigned(Item) then
         UpdateClientItem(Item, Msg, False);
       // 也可以清除端列表，重新查询（最保险，但延迟）
       // lvClientView.Items.Clear;  // 清除客户端列表
       // InCertifyClient1.QueryClients;   // 查询全部已连接的客户端
+    end;
+    atFileList: begin
+      Memo1.Lines.Add('服务端用后台执行，唤醒客户端了，可以在此下载服务端的结果.');
+      with TMessagePack.Create(InConnection1) do
+      begin
+        LocalPath := 'temp';  // 临时的文件存放路径
+        FileName := 'sqlite运行库.txt';  // 下载后台执行的结果文件!
+        Post(atFileDownload);
+      end;
     end;
   end;
   // 加入客户端活动 memo

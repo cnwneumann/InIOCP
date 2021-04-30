@@ -244,7 +244,6 @@ object FormInIOCPFileServer: TFormInIOCPFileServer
     IOCPManagers.ClientManager = InClientManager1
     IOCPManagers.FileManager = InFileManager1
     ServerAddr = '127.0.0.1'
-    StartParams.TimeOut = 0
     ThreadOptions.BusinessThreadCount = 8
     ThreadOptions.PushThreadCount = 4
     ThreadOptions.WorkThreadCount = 4

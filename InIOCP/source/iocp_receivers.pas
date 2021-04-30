@@ -18,38 +18,39 @@ uses
 
 type
 
-
   // ============ 数据接收器 基类 =============
 
   TBaseReceiver = class(TObject)
   protected
     FBuffer: PAnsiChar;         // 输入内存块
     FBufSize: Cardinal;         // 未处理的数据长度
+
     FRecvCount: TFileSize;      // 每消息收到的字节数
     FCancel: Boolean;           // 取消操作（保留给WS）
     FCheckPassed: Boolean;      // 校验成功（保留给WS）
-    FComplete: Boolean;         // 主体或全部接收完毕
+    FCompleted: Boolean;        // 主体或全部接收完毕
     FErrorCode: Integer;        // 异常代码
     procedure IncBufferPos(Offset: Cardinal); {$IFDEF USE_INLINE} inline; {$ENDIF}
-    procedure InterInit(ACancel, AComplete: Boolean); {$IFDEF USE_INLINE} inline; {$ENDIF}
-    procedure SetComplete(const Value: Boolean); 
+    procedure InterInit(ACancel, ACompleted: Boolean); {$IFDEF USE_INLINE} inline; {$ENDIF}
+    procedure SetCompleted(const Value: Boolean); 
   public
     constructor Create;
     procedure Clear; virtual;
     procedure Prepare(const AData: PAnsiChar; const ASize: Cardinal); virtual; abstract;
     procedure Receive(const AData: PAnsiChar; const ASize: Cardinal); virtual; abstract;
-    procedure Reset; virtual;   // 保留给 WS
+    procedure Reset; virtual;   // 保留
   public
-    property CheckPassed: Boolean read FCheckPassed;  
-    property Complete: Boolean read FComplete write SetComplete;
-    property ErrorCode: Integer read FErrorCode;    
+    property CheckPassed: Boolean read FCheckPassed;
+    property Completed: Boolean read FCompleted write SetCompleted;
+    property ErrorCode: Integer read FErrorCode;
+    property RecvCount: TFileSize read FRecvCount;
   end;
 
   // ============ C/S 模式数据接收器 基类 =============
 
   TCSBaseReceiver = class(TBaseReceiver)
   private
-    FOwner: TReceivePack;       // 接收消息包
+    FMsgPack: TReceivePack;     // 当前接收的消息
     FCheckCode: TIOCPHashCode;  // 主体校验码
     FCheckCode2: TIOCPHashCode; // 附件校验码
     FMainLackSize: Cardinal;    // 主体欠缺的内容长度
@@ -76,8 +77,8 @@ type
     procedure OwnerClear;
   public
     property Cancel: Boolean read FCancel;
-    property Owner: TReceivePack read FOwner;
-  end;
+    property MsgPack: TReceivePack read FMsgPack;
+  end;       
 
   // ============ 服务端数据接收器 类 =============
   // 主体或附件数据接收完毕 -> 进入应用层
@@ -89,7 +90,7 @@ type
     procedure CreateAttachment; override;
     procedure GetCheckCodes; override;
   public
-    constructor Create(AOwner: TReceivePack);
+    constructor Create(AMsgPack: TReceivePack);
     procedure Prepare(const AData: PAnsiChar; const ASize: Cardinal); override;
     procedure Receive(const AData: PAnsiChar; const ASize: Cardinal); override;
   end;
@@ -99,23 +100,23 @@ type
   // 数据包混有推送消息时，可能协议头或校验码被折断。
 
   // 协议头空间
-  TMsgHeadBuffers   = array[0..IOCP_SOCKET_SIZE - 1] of AnsiChar;
-
-  // 校验异常事件
-  TCheckErrorEvent  = procedure(Result: TReceivePack) of object;
-
-  // 提交到应用层事件
-  TPostMessageEvent = procedure(Result: TReceivePack) of object;
+  TMsgHeadBuffers = array[0..IOCP_SOCKET_SIZE - 1] of AnsiChar;
 
   // 接收消息事件
-  TReceiveDataEvent = procedure(Result: TReceivePack; DataType: TMessageDataType;
-                                ReceiveCount: TFileSize; AttachFinished: Boolean) of object;
+  TRecvMsgEvent = procedure(Msg: TBasePackObject; Part: TMessagePart;
+                            RecvCount: Cardinal) of object;
+
+  // 提交消息事件
+  TPostMsgEvent = procedure(Msg: TBasePackObject) of object;
+
+  // 新建消息事件
+  TCreateMsgEvent = procedure(Msg: TBasePackObject) of object;
+
+  // 接收异常事件
+  TRecvErrorEvent = procedure(Msg: TBasePackObject; ErrorCode: Integer) of object;
 
   TClientReceiver = class(TCSBaseReceiver)
   private
-    // 接收消息类
-    FOwnerClass: TReceivePackClass;
-    
     // 被折断的协议头
     FHeadBuffers: TMsgHeadBuffers;
     FHeadLackSize: Cardinal;  // 协议的缺少内容长度
@@ -124,9 +125,10 @@ type
     FCodeLackSize: Cardinal;  // 校验码的缺少长度
     FLocalPath: string;       // 附件存放路径
 
-    FOnError: TCheckErrorEvent;    // 校验异常事件
-    FOnPost: TPostMessageEvent;    // 投放消息方法
-    FOnReceive: TReceiveDataEvent; // 消息接收事件
+    FOnError: TRecvErrorEvent;  // 异常事件
+    FOnNewMsg: TCreateMsgEvent; // 建消息对象事件
+    FOnPost: TPostMsgEvent;     // 提交消息事件
+    FOnReceive: TRecvMsgEvent;  // 接收消息事件
 
     procedure ScanRecvBuffers;
     procedure WriteHashCode(ByteCount: Cardinal);
@@ -139,18 +141,19 @@ type
     procedure CreateAttachment; override;
     procedure GetCheckCodes; override;
   public
-    constructor Create(OwnerClass: TReceivePackClass);
+    constructor Create;
     destructor Destroy; override;
     procedure PostMessage;
     procedure Prepare(const AData: PAnsiChar; const ASize: Cardinal); override;
     procedure Receive(const AData: PAnsiChar; const ASize: Cardinal); override;
   public
-    property Complete: Boolean read FComplete;
+    property Completed: Boolean read FCompleted;
     property LocalPath: String read FLocalPath write FLocalPath;
-  public
-    property OnError: TCheckErrorEvent read FOnError write FOnError;
-    property OnPost: TPostMessageEvent read FOnPost write FOnPost;
-    property OnReceive: TReceiveDataEvent read FOnReceive write FOnReceive;
+
+    property OnError: TRecvErrorEvent read FOnError write FOnError;
+    property OnNewMsg: TCreateMsgEvent read FOnNewMsg write FOnNewMsg;
+    property OnPost: TPostMsgEvent read FOnPost write FOnPost;
+    property OnReceive: TRecvMsgEvent read FOnReceive write FOnReceive;
   end;
 
   // ============ WebSocket 数据接收器 =============
@@ -176,8 +179,8 @@ type
 
   TWSBaseReceiver = class(TBaseReceiver)
   private
-    FOwner: TObject;           // 宿主
-    
+    FOwner: TObject;           // 宿主（Socket或连接）
+
     FHeader: TWebSocketFrame;  // 折断的协议头
     FHeadAddr: PAnsiChar;      // 写入 FFrameHeader 的位置
     FLackSize: Cardinal;       // 帧内容不足的长度
@@ -194,7 +197,7 @@ type
     FMaskBit: PByte;           // 掩码指示位置
     FMaskExists: Boolean;      // 有否掩码
 
-    FJSON: TBaseJSON;          // JSON（引用）
+    FJSON: TBaseJSON;          // JSON，客户端为 TJSONResult
     FStream: TMemoryStream;    // 原始/JSON 数据流
 
     function  CheckInIOCPFlag(ABuf: PAnsiChar; ASize: Integer): TWSMsgType; {$IFDEF USE_INLINE} inline; {$ENDIF}
@@ -211,18 +214,19 @@ type
     procedure SaveRemainData; virtual; abstract;
     procedure WriteStream(ASize: Cardinal); virtual;abstract;
   public
-    constructor Create(AOwner: TObject; AJSON: TBaseJSON);
+    constructor Create(AConnection: TObject; AJSON: TBaseJSON);
     destructor Destroy; override;
     procedure Clear; override;
     procedure Prepare(const AData: PAnsiChar; const ASize: Cardinal); override;
   public
+    property JSON: TBaseJSON read FJSON;
     property OpCode: TWSOpCode read FOpCode;
   end;
 
   // ============ WebSocket 服务端数据接收器 =============
 
   // 非扩展的消息不保存到数据流
-  
+
   TWSServerReceiver = class(TWSBaseReceiver)
   private
     procedure UnMarkData(ASize: Cardinal);
@@ -232,29 +236,25 @@ type
     procedure SaveRemainData; override;
     procedure WriteStream(ASize: Cardinal); override;
   public
-    procedure ClearMark(var Data: PAnsiChar; Overlapped: POverlapped);
+    procedure ClearMask(var Data: PAnsiChar; Overlapped: POverlapped);
     procedure Receive(const AData: PAnsiChar; const ASize: Cardinal); override;
   end;
 
   // ============ WebSocket 客户端数据接收器 =============
 
-  TOnReceiveData   = procedure(Result: TBaseJSON; FrameSize, RecvSize: Int64) of object;
-
   // 准备接收附件事件
-  TAttachmentEvent = procedure(Result: TBaseJSON) of object;
-
-  // 提交到应用层事件
-  TPostJSONEvent   = procedure(Result: TBaseJSON; OpCode: TWSOpCode;
-                               MsgType: TWSMsgType; Stream: TMemoryStream) of object;
+  TAttachmentEvent = procedure(Msg: TBaseJSON) of object;
 
   // 保存非扩展的消息到数据流
 
   TWSClientReceiver = class(TWSBaseReceiver)
   private
+    FOnError: TRecvErrorEvent;  // 异常事件
+    FOnNewMsg: TCreateMsgEvent; // 建消息对象事件
+    FOnPost: TPostMsgEvent;     // 提交消息事件
+    FOnReceive: TRecvMsgEvent;  // 接收消息事件
     FOnAttachment: TAttachmentEvent; // 附件事件
-    FOnPost: TPostJSONEvent;         // 提交事件
-    FOnReceive: TOnReceiveData;      // 接收数据事件
-    procedure PostJSON(AMsgType: TWSMsgType);
+    procedure PostJSON(AOpCode: TWSOpCode; AMsgType: TWSMsgType; AStream: TMemoryStream);
   protected
     procedure InitResources(ASize: Cardinal); override;
     procedure InterReceiveData(ASize: Cardinal); override;
@@ -265,20 +265,24 @@ type
     procedure Receive(const AData: PAnsiChar; const ASize: Cardinal); override;
   public
     property OnAttachment: TAttachmentEvent read FOnAttachment write FOnAttachment;
-    property OnPost: TPostJSONEvent read FOnPost write FOnPost;
-    property OnReceive: TOnReceiveData read FOnReceive write FOnReceive;    
+    property OnError: TRecvErrorEvent read FOnError write FOnError;
+    property OnNewMsg: TCreateMsgEvent read FOnNewMsg write FOnNewMsg;
+    property OnPost: TPostMsgEvent read FOnPost write FOnPost;
+    property OnReceive: TRecvMsgEvent read FOnReceive write FOnReceive;
   end;
 
 implementation
 
 uses
-  iocp_zlib, iocp_utils, iocp_sockets, iocp_clients, iocp_wsClients;
+  iocp_zlib, iocp_utils, iocp_sockets,
+  iocp_clientBase, iocp_clients, iocp_wsClients;
 
 type
   TIOCPDocumentRef = class(TIOCPDocument);
   TResultParamsRef = class(TResultParams);
   TServerWebSocket = class(TWebSocket);
-
+  TJSONResultRef   = class(TJSONResult);
+  
 { TBaseReceiver }
 
 procedure TBaseReceiver.Clear;
@@ -290,7 +294,7 @@ constructor TBaseReceiver.Create;
 begin
   inherited;
   FCheckPassed := True;
-  FComplete := True;
+  FCompleted := True;
 end;
 
 procedure TBaseReceiver.IncBufferPos(Offset: Cardinal);
@@ -300,11 +304,11 @@ begin
   Inc(FRecvCount, Offset);  // 总数+
 end;
 
-procedure TBaseReceiver.InterInit(ACancel, AComplete: Boolean);
+procedure TBaseReceiver.InterInit(ACancel, ACompleted: Boolean);
 begin
   FCancel := ACancel;
   FCheckPassed := True;
-  FComplete := AComplete;
+  FCompleted := ACompleted;
   FErrorCode := 0;
 end;
 
@@ -313,7 +317,7 @@ begin
   InterInit(True, True);
 end;
 
-procedure TBaseReceiver.SetComplete(const Value: Boolean);
+procedure TBaseReceiver.SetCompleted(const Value: Boolean);
 begin
   InterInit(False, Value);
 end;
@@ -323,7 +327,7 @@ end;
 procedure TCSBaseReceiver.Clear;
 begin
   inherited;
-  FOwner.Clear;
+  FMsgPack.Clear;
 end;
 
 procedure TCSBaseReceiver.ExtractMessage;
@@ -336,20 +340,20 @@ begin
   // 1. 取协议信息
   if FReadHead then  // 取协议信息
   begin
-    FOwner.SetHeadMsg(PMsgHead(FBuffer + IOCP_SOCKET_FLEN));
+    FMsgPack.SetHeadMsg(PMsgHead(FBuffer + IOCP_SOCKET_FLEN));
     IncBufferPos(IOCP_SOCKET_SIZE);  // 到 Hash 位置
     FReadHead := False;
   end;
 
   // 1.1 取长度，在前
-  FComplete := False;  // 未完成
-  FMainLackSize := FOwner.DataSize;
-  FAttachLackSize := FOwner.AttachSize;
+  FCompleted := False;  // 未完成
+  FMainLackSize := FMsgPack.DataSize;
+  FAttachLackSize := FMsgPack.AttachSize;
 
   if (FBufSize = 0) then  // 只有协议头
     IncRecvCount(0, 1)
   else  // 1.2 取校验码
-    case FOwner.CheckType of
+    case FMsgPack.CheckType of
       ctMurmurHash:
         GetCheckCodes;
       ctMD5:
@@ -361,7 +365,7 @@ begin
     ReceiveMainFinish   // 接收完毕
   else begin
     // 准备空间
-    FOwner.Main.Initialize(FMainLackSize, False);
+    FMsgPack.Main.Initialize(FMainLackSize);
     if (FBufSize > 0) then  // 有数据
       if (FBufSize > FMainLackSize) then // 有多个消息（服务端不会出现）
         WriteMainStream(FMainLackSize)
@@ -383,21 +387,21 @@ end;
 
 procedure TCSBaseReceiver.OwnerClear;
 begin
-  // 清除 FOwner 数据
+  // 清除 FMsgObj 数据
   if (FMainLackSize = 0) and (FAttachLackSize = 0) then
-    FOwner.Clear;
+    FMsgPack.Clear;
 end;
 
 procedure TCSBaseReceiver.ReceiveAttachmentFinish;
 begin
   // 附件数据接收完毕
   // 1. 校验数据
-  if (FOwner.CheckType > ctNone) then
+  if (FMsgPack.CheckType > ctNone) then
     VerifyAttachmentStream
   else  // 不用校验
     FCheckPassed := True;
   // 2. 解压附件流（可能是续传）
-  if FCheckPassed and Assigned(FOwner.Attachment) then
+  if FCheckPassed and Assigned(FMsgPack.Attachment) then
     UZipTreatAttachmentStream;   // 接收完毕
 end;
 
@@ -406,11 +410,11 @@ begin
   // 主体数据接收完毕（可能只有协议头）
   // 1. 校验主体； 2. 解压、解析变量； 3. 继续写附件
 
-  if (FOwner.DataSize = 0) then
+  if (FMsgPack.DataSize = 0) then
     FCheckPassed := True
   else begin
     // 1. 校验数据
-    if (FOwner.CheckType > ctNone) then
+    if (FMsgPack.CheckType > ctNone) then
       VerifyMainStream
     else  // 不用校验
       FCheckPassed := True;
@@ -419,20 +423,20 @@ begin
     if FCheckPassed then
     begin
       UZipPretreatMainStream;  // 解压预处理
-      if (FOwner.VarCount > 0) then  // 解析变量
-        FOwner.Initialize(FOwner.Main);
+      if (FMsgPack.VarCount > 0) then  // 解析变量
+        FMsgPack.Initialize(FMsgPack.Main);
     end;
   end;
 
   // 3. 建附件流，写内容
-  if FCheckPassed and (FOwner.AttachSize > 0) then
+  if FCheckPassed and (FMsgPack.AttachSize > 0) then
   begin
     CreateAttachment;  // 服务端不自动建附件流
-    if (FBufSize > 0) and Assigned(FOwner.Attachment) then // 写剩余内容
-      if (FBufSize <= FOwner.AttachSize) then
+    if (FBufSize > 0) and Assigned(FMsgPack.Attachment) then // 写剩余内容
+      if (FBufSize <= FMsgPack.AttachSize) then
         WriteAttachmentStream(FBufSize)
       else
-        WriteAttachmentStream(FOwner.AttachSize);
+        WriteAttachmentStream(FMsgPack.AttachSize);
   end;
 
 end;
@@ -462,7 +466,7 @@ procedure TCSBaseReceiver.Reset;
 begin
   inherited;
   // 取消，重置接收器
-  FOwner.Cancel;
+  FMsgPack.Cancel;
   FMainLackSize := 0;
   FAttachLackSize := 0;
 end;
@@ -480,33 +484,33 @@ begin
   // TIOCPDocument 文件流被关闭，但不释放，可以使用 TIOCPDocument.FileName
 
   // 如果是续传，但未完全接收完毕，只简单关闭！
-  if (FOwner.Action in FILE_CHUNK_ACTIONS) and
-     (FOwner.OffsetEnd + 1 < FOwner.Attachment.OriginSize) then
+  if (FMsgPack.Action in FILE_CHUNK_ACTIONS) and
+     (FMsgPack.OffsetEnd + 1 < FMsgPack.Attachment.OriginSize) then
   begin
-    FOwner.Attachment.Close; // 只关闭，OriginSize 不变
+    FMsgPack.Attachment.Close; // 只关闭，OriginSize 不变
     Exit;
   end;
 
-  OldFileName := FOwner.Attachment.FileName;
-  RealFileName := ExtractFilePath(OldFileName) + FOwner.FileName;
+  OldFileName := FMsgPack.Attachment.FileName;
+  RealFileName := ExtractFilePath(OldFileName) + FMsgPack.FileName;
 
-  if (FOwner.ZipLevel = zcNone) then
+  if (FMsgPack.ZipLevel = zcNone) then
   begin
     // 直接关闭、改名
-    FOwner.Attachment.Close;
-    TIOCPDocumentRef(FOwner.Attachment).RenameDoc(RealFileName);
+    FMsgPack.Attachment.Close;
+    TIOCPDocumentRef(FMsgPack.Attachment).RenameDoc(RealFileName);
   end else
   begin
     // 先解压流到新文件，再改名
     mStream := TIOCPDocument.Create(OldFileName + '_UNZIP', True);
     try
       try
-        FOwner.Attachment.Position := 0;
-        iocp_zlib.ZDecompressStream(FOwner.Attachment, mStream);
+        FMsgPack.Attachment.Position := 0;
+        iocp_zlib.ZDecompressStream(FMsgPack.Attachment, mStream);
       finally
-        FOwner.Attachment.Close(True); // 关闭，同时删除文件
+        FMsgPack.Attachment.Close(True); // 关闭，同时删除文件
         TIOCPDocumentRef(mStream).RenameDoc(RealFileName);  // 自动关闭, 改名
-        TIOCPDocumentRef(FOwner.Attachment).FFileName := RealFileName; // 直接改名
+        TIOCPDocumentRef(FMsgPack.Attachment).FFileName := RealFileName; // 直接改名
         mStream.Free;  // 释放
       end;
     except
@@ -522,16 +526,16 @@ var
   NewSize: Integer;
 begin
   // 解压、预处理主体流
-  //   内容被解压到 NewBuffers，NewBuffers 挂到 FOwner.Main 下
-  if (FOwner.ZipLevel = zcNone) then
-    FOwner.Main.Position := 0
+  //   内容被解压到 NewBuffers，NewBuffers 挂到 FMsgObj.Main 下
+  if (FMsgPack.ZipLevel = zcNone) then
+    FMsgPack.Main.Position := 0
   else
     try
       try
-        iocp_zlib.ZDecompress(FOwner.Main.Memory, FOwner.DataSize,
-                              NewBuffers, NewSize, FOwner.DataSize);
+        iocp_zlib.ZDecompress(FMsgPack.Main.Memory, FMsgPack.DataSize,
+                              NewBuffers, NewSize, FMsgPack.DataSize);
       finally
-        FOwner.Main.SetMemory(NewBuffers, NewSize);
+        FMsgPack.Main.SetMemory(NewBuffers, NewSize);
       end;
     except
       FErrorCode := GetLastError;
@@ -541,23 +545,23 @@ end;
 procedure TCSBaseReceiver.VerifyAttachmentStream;
 begin
   // 检查附件校验码
-  case FOwner.CheckType of
+  case FMsgPack.CheckType of
     ctMurmurHash:  // MurmurHash
-      if (FOwner.Action in FILE_CHUNK_ACTIONS) then  // 检查一段范围的 Hash
+      if (FMsgPack.Action in FILE_CHUNK_ACTIONS) then  // 检查一段范围的 Hash
         FCheckPassed := (FCheckCode2.MurmurHash =
-                         iocp_mmHash.MurmurHashPart64(FOwner.Attachment.Handle,
-                                                      FOwner.Offset, FOwner.AttachSize))
+                         iocp_mmHash.MurmurHashPart64(FMsgPack.Attachment.Handle,
+                                                      FMsgPack.Offset, FMsgPack.AttachSize))
       else  // 检查整个文件的 Hash
         FCheckPassed := (FCheckCode2.MurmurHash =
-                         iocp_mmHash.MurmurHash64(FOwner.Attachment.Handle));
+                         iocp_mmHash.MurmurHash64(FMsgPack.Attachment.Handle));
     ctMD5:  // MD5
-      if (FOwner.Action in FILE_CHUNK_ACTIONS) then // 检查一段范围的 MD5
+      if (FMsgPack.Action in FILE_CHUNK_ACTIONS) then // 检查一段范围的 MD5
         FCheckPassed := MD5MatchEx(@FCheckCode2.MD5Code,
-                                   iocp_md5.MD5Part(FOwner.Attachment.Handle,
-                                                    FOwner.Offset, FOwner.AttachSize))
+                                   iocp_md5.MD5Part(FMsgPack.Attachment.Handle,
+                                                    FMsgPack.Offset, FMsgPack.AttachSize))
       else  // 检查整个文件的 MD5
         FCheckPassed := MD5MatchEx(@FCheckCode2.MD5Code,
-                                   iocp_md5.MD5File(FOwner.Attachment.Handle));
+                                   iocp_md5.MD5File(FMsgPack.Attachment.Handle));
     else
       FCheckPassed := True;
   end;
@@ -566,13 +570,13 @@ end;
 procedure TCSBaseReceiver.VerifyMainStream;
 begin
   // 检查主体校验码
-  case FOwner.CheckType of
+  case FMsgPack.CheckType of
     ctMurmurHash:  // MurmurHash
       FCheckPassed := (FCheckCode.MurmurHash =
-                         iocp_mmHash.MurmurHash64(FOwner.Main.Memory, FOwner.DataSize));
+                         iocp_mmHash.MurmurHash64(FMsgPack.Main.Memory, FMsgPack.DataSize));
     ctMD5:  // MD5
       FCheckPassed := MD5MatchEx(@FCheckCode.MD5Code,
-                        iocp_md5.MD5Buffer(FOwner.Main.Memory, FOwner.DataSize));
+                        iocp_md5.MD5Buffer(FMsgPack.Main.Memory, FMsgPack.DataSize));
     else
       FCheckPassed := True;
   end;   
@@ -581,11 +585,11 @@ end;
 procedure TCSBaseReceiver.WriteAttachmentStream(ByteCount: Cardinal);
 begin
   // 写数据到附件
-  if Assigned(FOwner.Attachment) then
+  if Assigned(FMsgPack.Attachment) then
   begin
-    FOwner.Attachment.Write(FBuffer^, ByteCount);
+    FMsgPack.Attachment.Write(FBuffer^, ByteCount);
     IncRecvCount(ByteCount, 2); 
-    if FComplete then  // 接收完毕 -> 校验、解压
+    if FCompleted then  // 接收完毕 -> 校验、解压
       ReceiveAttachmentFinish;
   end else
     IncRecvCount(ByteCount, 2);
@@ -594,7 +598,7 @@ end;
 procedure TCSBaseReceiver.WriteMainStream(ByteCount: Cardinal);
 begin
   // 写数据到主体（先写入，后推进）
-  FOwner.Main.Write(FBuffer^, ByteCount);
+  FMsgPack.Main.Write(FBuffer^, ByteCount);
   IncRecvCount(ByteCount, 1);  // 推进
   if (FMainLackSize = 0) then  // 完毕
     ReceiveMainFinish;
@@ -602,10 +606,10 @@ end;
 
 { TServerReceiver }
 
-constructor TServerReceiver.Create(AOwner: TReceivePack);
+constructor TServerReceiver.Create(AMsgPack: TReceivePack);
 begin
   inherited Create;
-  FOwner := AOwner;
+  FMsgPack := AMsgPack;
 end;
 
 procedure TServerReceiver.CreateAttachment;
@@ -618,26 +622,26 @@ begin
   // 取校验码：
   //   格式：IOCP_HEAD_FLAG + TMsgHead + [校验码 + 校验码] + [主体数据]
   //     见：TBaseMessage.GetCheckCode
-  case FOwner.CheckType of
+  case FMsgPack.CheckType of
     ctMurmurHash: begin  // MurmurHash=64位
-      if (FOwner.DataSize > 0) then   // 主体校验码
+      if (FMsgPack.DataSize > 0) then   // 主体校验码
       begin
         FCheckCode.MurmurHash := PMurmurHash(FBuffer)^;
         IncBufferPos(HASH_CODE_SIZE);
       end;
-      if (FOwner.AttachSize > 0) then // 附件校验码
+      if (FMsgPack.AttachSize > 0) then // 附件校验码
       begin
         FCheckCode2.MurmurHash := PMurmurHash(FBuffer)^;
         IncBufferPos(HASH_CODE_SIZE);
       end;
     end;
     ctMD5: begin  // MD5=128位
-      if (FOwner.DataSize > 0) then   // 主体校验码
+      if (FMsgPack.DataSize > 0) then   // 主体校验码
       begin
         FCheckCode.MD5Code := PMD5Digest(FBuffer)^;
         IncBufferPos(HASH_CODE_SIZE * 2);
       end;
-      if (FOwner.AttachSize > 0) then // 附件校验码
+      if (FMsgPack.AttachSize > 0) then // 附件校验码
       begin
         FCheckCode2.MD5Code := PMD5Digest(FBuffer)^;
         IncBufferPos(HASH_CODE_SIZE * 2);
@@ -651,8 +655,8 @@ begin
   inherited;
   // 主体完成 或 附件完成 均进入应用层
   case DataType of
-    1: FComplete := (FMainLackSize = 0);
-    2: FComplete := (FAttachLackSize = 0);
+    1: FCompleted := (FMainLackSize = 0);
+    2: FCompleted := (FAttachLackSize = 0);
   end;
 end;
 
@@ -684,23 +688,22 @@ end;
 
 { TClientReceiver }
 
-constructor TClientReceiver.Create(OwnerClass: TReceivePackClass);
+constructor TClientReceiver.Create;
 begin
-  inherited Create;
-  FOwnerClass := OwnerClass;   // 是 TResultParams
-  FOwner := OwnerClass.Create; // 先建一个
+  inherited;
+  FMsgPack := TResultParams.Create;  // 先建一个
 end;
 
 procedure TClientReceiver.CreateAttachment;
 begin
   // 自动建附件流
-  TResultParamsRef(FOwner).CreateAttachment(FLocalPath);
+  TResultParamsRef(FMsgPack).CreateAttachment(FLocalPath);
 end;
 
 destructor TClientReceiver.Destroy;
 begin
-  if Assigned(FOwner) then
-    FOwner.Free;
+  if Assigned(FMsgPack) then
+    FMsgPack.Free;
   inherited;
 end;
 
@@ -739,17 +742,17 @@ begin
   // 取校验码：
   //   接收自身消息和广播消息，可能校验码被折断
   if (FBufSize > 0) then
-    case FOwner.CheckType of
+    case FMsgPack.CheckType of
       ctMurmurHash: begin  // MurmurHash=64位
-        if (FOwner.DataSize > 0) then    // 主体校验码
+        if (FMsgPack.DataSize > 0) then    // 主体校验码
           WriteMurmurHash(@FCheckCode);
-        if (FBufSize > 0) and (FOwner.AttachSize > 0) then  // 附件校验码
+        if (FBufSize > 0) and (FMsgPack.AttachSize > 0) then  // 附件校验码
           WriteMurmurHash(@FCheckCode2);
       end;
       ctMD5: begin  // MD5=128位
-        if (FOwner.DataSize > 0) then    // 主体校验码
+        if (FMsgPack.DataSize > 0) then    // 主体校验码
           WriteMD5(@FCheckCode);
-        if (FBufSize > 0) and (FOwner.AttachSize > 0) then  // 附件校验码
+        if (FBufSize > 0) and (FMsgPack.AttachSize > 0) then  // 附件校验码
           WriteMD5(@FCheckCode2);
       end;
     end;
@@ -759,21 +762,21 @@ procedure TClientReceiver.IncRecvCount(RecvCount, DataType: Cardinal);
 begin
   inherited;
   // 接收数增加，主体+附件全接收完毕 -> 应用层
-  FComplete := (FMainLackSize = 0) and (FAttachLackSize = 0);
+  FCompleted := (FMainLackSize = 0) and (FAttachLackSize = 0);
 end;
 
 procedure TClientReceiver.PostMessage;
 begin
   // 把消息加入投放线程
   try
-    FOnPost(FOwner);
+    FOnPost(FMsgPack);
   finally
     FReadHead := True;  // 要重新读协议头了
     FRecvCount := 0;    // 接收长度清零
-    FOwner := FOwnerClass.Create; // 建新主体
+    FMsgPack := TResultParams.Create; // 建新主体
+    if Assigned(FOnNewMsg) then
+      FOnNewMsg(FMsgPack);  // 新消息事件
   end;
-{  FOwner.Free;  // debug
-  FOwner := FOwnerClass.Create; // 建新主体  }
 end;
 
 procedure TClientReceiver.Prepare(const AData: PAnsiChar; const ASize: Cardinal);
@@ -806,7 +809,7 @@ begin
       // 内容够长，准备协议头信息
       System.Move(AData^, FHeadBuffers[IOCP_SOCKET_SIZE - FHeadLackSize], FHeadLackSize);
 
-      FOwner.SetHeadMsg(PMsgHead(@FHeadBuffers[IOCP_SOCKET_FLEN]));
+      FMsgPack.SetHeadMsg(PMsgHead(@FHeadBuffers[IOCP_SOCKET_FLEN]));
       IncBufferPos(FHeadLackSize);  // 到 Hash 位置
 
       FReadHead := False;  // 不用再次读协议头
@@ -846,7 +849,10 @@ begin
   inherited;
   try
     if (FCheckPassed = False) and Assigned(FOnError) then
-      FOnError(FOwner); // 校验异常 -> 清空
+      FOnError(FMsgPack, ERR_CHECK_CODE) // 校验异常 -> 清空
+    else
+    if Assigned(FOnReceive) then  // 调用接收事件
+      FOnReceive(FMsgPack, mdtAttachment, 0); // 0 表示结束
   finally
     PostMessage;  // 全部接收完毕，投放
   end;
@@ -858,12 +864,12 @@ begin
   // 接收完主体数据、解释变量后才调用 FOnReceive
   try
     if (FCheckPassed = False) and Assigned(FOnError) then
-      FOnError(FOwner)  // 校验异常 -> 清空
+      FOnError(FMsgPack, ERR_CHECK_CODE)  // 校验异常 -> 清空
     else
     if Assigned(FOnReceive) then  // 调用接收事件
-      FOnReceive(FOwner, mdtEntity, FRecvCount, FAttachLackSize = 0);
+      FOnReceive(FMsgPack, mdtEntity, FRecvCount);
   finally
-    if (FCheckPassed = False) or (FOwner.AttachSize = 0) then
+    if (FCheckPassed = False) or (FMsgPack.AttachSize = 0) then
       PostMessage;  // 当作接收完毕，投放
   end;
 end;
@@ -884,7 +890,7 @@ begin
   begin
     // 剩余长度 < 协议头长度, 被折断！
     // 保存剩余内容到 FHeadBuffers，下次拼接起来
-    FComplete := False;
+    FCompleted := False;
     FHeadLackSize := IOCP_SOCKET_SIZE - FBufSize;  // 缺少字节数
     System.Move(FBuffer^, FHeadBuffers[0], FBufSize);
     IncBufferPos(FBufSize);
@@ -893,9 +899,10 @@ end;
 
 procedure TClientReceiver.WriteAttachmentStream(ByteCount: Cardinal);
 begin
-  inherited; // ByteCount：当前收到字节数
+  // ByteCount：当前收到字节数
   if Assigned(FOnReceive) then  // 调用接收事件
-    FOnReceive(FOwner, mdtAttachment, FRecvCount, FAttachLackSize = 0);
+    FOnReceive(FMsgPack, mdtAttachment, FRecvCount);
+  inherited;  // 可能接收完毕，在这里 POST    
 end;
 
 procedure TClientReceiver.WriteHashCode(ByteCount: Cardinal);
@@ -935,10 +942,10 @@ begin
   inherited;
 end;
 
-constructor TWSBaseReceiver.Create(AOwner: TObject; AJSON: TBaseJSON);
+constructor TWSBaseReceiver.Create(AConnection: TObject; AJSON: TBaseJSON);
 begin
   inherited Create;
-  FOwner := AOwner;
+  FOwner := AConnection;
   FJSON := AJSON;
 end;
 
@@ -980,7 +987,7 @@ begin
 
   // 取操作代码
   iByte := (iByte and $0F);
-  if (iByte in WEBSOCKET_OPCODES) then
+  if (TWSOpCode(iByte) in TWSOpCodeSet) then
     FOpCode := TWSOpCode(iByte)
   else
     FOpCode := ocClose;  // 操作异常，关闭！
@@ -1064,10 +1071,8 @@ end;
 
 procedure TWSBaseReceiver.IncRecvCount(RecvCount: Cardinal);
 begin
-  // 接收长度+
-  Inc(FFrameRecvSize, RecvCount);
-  // 是否接收完毕
-  FComplete := FLastFrame and (FFrameRecvSize = FFrameSize);
+  Inc(FFrameRecvSize, RecvCount);  // 接收长度+
+  FCompleted := FLastFrame and (FFrameRecvSize = FFrameSize);  // 是否接收完毕
 end;
 
 procedure TWSBaseReceiver.Prepare(const AData: PAnsiChar; const ASize: Cardinal);
@@ -1099,7 +1104,7 @@ end;
 
 { TWSServerReceiver }
 
-procedure TWSServerReceiver.ClearMark(var Data: PAnsiChar; Overlapped: POverlapped);
+procedure TWSServerReceiver.ClearMask(var Data: PAnsiChar; Overlapped: POverlapped);
 var
   i: Integer;
   Buf: PAnsiChar;
@@ -1227,7 +1232,7 @@ procedure TWSServerReceiver.WriteStream(ASize: Cardinal);
 begin
   // 保存数据到流
 
-  // 增加接收数
+  // 接收数+
   IncRecvCount(ASize);
 
   // 1. 写数据流
@@ -1242,7 +1247,7 @@ begin
   end;
 
   // 2. 接收完毕
-  if FComplete then
+  if FCompleted then
     case FMsgType of
       mtJSON: begin  // JSON 消息
         FJSON.Initialize(FStream, True);  // 转换 JSON, 同时清除 FStream
@@ -1292,18 +1297,24 @@ begin
   end;
 end;
 
-procedure TWSClientReceiver.PostJSON(AMsgType: TWSMsgType);
+procedure TWSClientReceiver.PostJSON(AOpCode: TWSOpCode;
+  AMsgType: TWSMsgType; AStream: TMemoryStream);
 begin
   // 投放 JSON 消息
+  with TJSONResultRef(FJSON) do
+  begin
+    FOpCode := AOpCode;
+    FMsgType := AMsgType;
+    FStream := AStream;
+  end;
   try
-    if (AMsgType = mtDefault) then  // 投放流
-      FOnPost(FJSON, FOpCode, AMsgType, FStream)
-    else
-      FOnPost(FJSON, FOpCode, AMsgType, nil);
+    FOnPost(FJSON);  // 投放 FJSON
   finally
-    if (AMsgType = mtDefault) then
-      FStream := TMemoryStream.Create;
-    FJSON := TJSONResult.Create(FOwner);
+    FJSON := TJSONResult.Create(FOwner);  // 新建
+    if Assigned(AStream) then  // Stream 已经投放
+      FStream := TMemoryStream.Create;  // 新建
+    if Assigned(FOnNewMsg) then
+      FOnNewMsg(FJSON);  // 新消息事件
   end;
 end;
 
@@ -1381,7 +1392,7 @@ begin
       FHeadAddr := @FHeader[FBufSize]
     else begin  // 帧描述完整，仅取信息
       ExtractFrame(PAnsiChar(@FHeader[0]), FBufSize, False);
-      FComplete := FFrameSize = 0;  // ocClose、ocPing、 ocPong
+      FCompleted := FFrameSize = 0;  // ocClose、ocPing、 ocPong
     end;
   end;
 
@@ -1389,7 +1400,7 @@ begin
   begin
     FFrameSize := 0;
     FFrameRecvSize := 0;
-    FComplete := False;
+    FCompleted := False;
   end;
 
   FBufSize := 0;
@@ -1398,37 +1409,33 @@ end;
 
 procedure TWSClientReceiver.WriteStream(ASize: Cardinal);
 begin
-  // 1. 增加接收数
+  // 1. 接收数+
   IncRecvCount(ASize);
 
   // 2. 保存到流（FMsgType未知）
   if (ASize > 0) then
-    if (FOpCode = ocText) then  // 文本消息（未知、InIOCP-JSON）
-      FStream.Write(FBuffer^, ASize)
-    else
     if Assigned(FJSON.Attachment) then  // 附件
     begin
       FJSON.Attachment.Write(FBuffer^, ASize);
-      FOnReceive(FJSON, FFrameSize, ASize);  // 附件的接收进程
-    end;
+      FOnReceive(FJSON, mdtAttachment, ASize);  // 附件的接收进程
+    end else // 文本消息（未知、InIOCP-JSON）
+      FStream.Write(FBuffer^, ASize);
 
   // 5. 接收完毕
-  if FComplete then
+  if FCompleted then
   begin
-    // 检查数据类型
-    if (FOpCode = ocBiary) then
-      FMsgType := mtAttachment
-    else
-      FMsgType := CheckInIOCPFlag(PAnsiChar(FStream.Memory), FStream.Size);
-
     // 清零
     FFrameSize := 0;
     FFrameRecvSize := 0;
-    
+
+    // 检查数据类型
+    if (FMsgType <> mtAttachment) then    
+      FMsgType := CheckInIOCPFlag(PAnsiChar(FStream.Memory), FStream.Size);
+
     case FMsgType of
       mtDefault:
         if (FOpCode <= ocClose) then
-          PostJSON(mtDefault);  // 同时投放 FStream
+          PostJSON(FOpCode, mtDefault, FStream);  // 同时投放 FStream
 
       mtJSON: begin
         FJSON.Initialize(FStream, True);  // 转换 JSON, 同时清除 FStream
@@ -1436,11 +1443,11 @@ begin
         begin
           FMsgType := mtAttachment;  // 下次为附件流
           if Assigned(FOnAttachment) then
-            FOnAttachment(FJSON); // 在其中判断是否接收文件流
+            FOnAttachment(FJSON);    // 在其中判断是否接收文件流
         end else  // 直接投放
         begin
           FMsgType := mtDefault;  // 下次为 mtDefault
-          PostJSON(mtJSON);
+          PostJSON(FOpCode, mtJSON, nil);
         end;
       end;
 
@@ -1448,7 +1455,7 @@ begin
         FMsgType := mtDefault;   // 下次为 mtDefault
         if Assigned(FJSON.Attachment) then
           FJSON.Attachment.Position := 0;
-        PostJSON(mtAttachment);  // 投放附件
+        PostJSON(FOpCode, mtAttachment, nil);  // 投放附件
       end;
     end;
 

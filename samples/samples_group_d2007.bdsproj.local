@@ -1,10 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <BorlandProject>
-	<Transactions>
-    <Transaction>2017-07-23 20:04:07.953.bdsgroup,D:\My Documents\RAD Studio\Projects\ProjectGroup2.bdsgroup=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\samples_group.bdsproj</Transaction>
-    <Transaction>2017-10-14 19:29:01.343.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\samples_group_d2007.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\samples_group_d2007.bdsproj</Transaction>
-  </Transactions>
 	<Default.Personality>
-		<Projects ActiveProject="InIOCP_all_in_one.exe"/>
+		<Projects ActiveProject="dclInIOCP.bpl"/>
 	</Default.Personality>
 </BorlandProject>

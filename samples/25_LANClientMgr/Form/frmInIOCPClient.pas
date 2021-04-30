@@ -7,7 +7,7 @@ uses
   Graphics, Controls, Forms, Dialogs, StdCtrls, ExtCtrls,
   iocp_base, iocp_msgPacks, iocp_clients;
 
-type
+type                                       
   TFormInIOCPClient = class(TForm)
     InConnection1: TInConnection;
     InMessageClient1: TInMessageClient;
@@ -75,6 +75,7 @@ begin
   else
     with InCertifyClient1 do
     begin
+      Group := 'Group_a';  // 分组
       UserName := 'aaa';
       Password := 'aaa';
       Login;
@@ -89,6 +90,7 @@ begin
   else
     with InCertifyClient1 do
     begin
+      Group := 'Group_a';  // 分组
       UserName := 'bbb';
       Password := 'bbb';
       Login;

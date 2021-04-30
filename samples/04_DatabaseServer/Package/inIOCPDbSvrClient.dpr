@@ -1,7 +1,8 @@
 program inIOCPDbSvrClient;
 
 uses
-  ScaleMM2 in '..\..\..\InIOCP\memMgr\scalemm2\ScaleMM2.pas',
+  FastMM4 in '..\..\..\inIocp\memMgr\FastMM\FastMM4.pas',
+//  ScaleMM2 in '..\..\..\InIOCP\memMgr\scalemm2\ScaleMM2.pas',
   Forms,
   frmInIOCPDbSvrClient in '..\Form\frmInIOCPDbSvrClient.pas' {FormInIOCPDbSvrClient};
 

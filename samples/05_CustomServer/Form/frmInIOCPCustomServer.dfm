@@ -14,7 +14,7 @@ object FormInIOCPCustomServer: TFormInIOCPCustomServer
   Position = poDesktopCenter
   Scaled = False
   OnCreate = FormCreate
-  PixelsPerInch = 96
+  PixelsPerInch = 120
   TextHeight = 12
   object Memo1: TMemo
     Left = 8
@@ -401,9 +401,9 @@ object FormInIOCPCustomServer: TFormInIOCPCustomServer
     Top = 288
   end
   object InCustomManager1: TInCustomManager
+    OnReceive = InCustomManager1Receive
     OnAttachBegin = InCustomManager1AttachBegin
     OnAttachFinish = InCustomManager1AttachFinish
-    OnReceive = InCustomManager1Receive
     Left = 304
     Top = 232
   end

@@ -69,7 +69,7 @@ end;
 
 procedure TFormInIOCPWSChat.InIOCPServer1AfterOpen(Sender: TObject);
 begin
-  Memo1.Lines.Clear;
+//  Memo1.Lines.Clear;
   Memo1.Lines.Add('IP:' + InIOCPServer1.ServerAddr);
   Memo1.Lines.Add('Port:' + IntToStr(InIOCPServer1.ServerPort));  
 end;
@@ -87,33 +87,41 @@ begin
   //  3. mtAttachment: 用 InIOCP-JSON 封装的附件流。
 
   // MsgType 为 mtDefault 时的 Socket 相关属性：
-  // 1、         Data：本次收到的数据内容首位置
+  // 1、       InData：本次收到的数据内容首位置（不是Data，以前版本有误）
   // 2、FrameRecvSize：本次收到的内容长度
   // 3、    FrameSize：当前帧的内容总长度
   // 4、      MsgSize：当前消息累计收到的内容长度（可能含多帧数据）
-  // 5、     Complete：当前消息是否接收完毕，True 时 MsgSize 为消息的实际长度
+  // 5、    Completed：当前消息是否接收完毕，True 时 MsgSize 为消息的实际长度
   // 6、       OpCode：操作，关闭时也触发本事件
 
   // InIOCP-JSON 封装的消息不支持上述第 1-4 的属性，重要属性：
   //        7、  JSON: 收到的 JSON 消息
   //        8、Result: 要反馈的 JSON 消息，用 SendResult 发送。                
  
-  if Socket.Complete then // 消息接收完毕
+  if Socket.Completed then // 消息接收完毕
   begin
     // 双字节的 UTF8To 系列函数的传入参数以 AnsiString 为主
     // 定义 S 为 AnsiString 更方便操作
-    SetString(S, Socket.Data, Socket.FrameRecvSize); // 把消息转为 String
-    Socket.UserName := System.Utf8ToAnsi(S); // XE10 还可以用 UTF8ToString(S)
+    SetString(S, Socket.InData, Socket.FrameRecvSize); // 把消息转为 String
+    S := System.Utf8ToAnsi(S);  // XE10 还可以用 UTF8ToString(S)
+
+    // 注意：UserName 是 string[30]
+    // 新版支持分组 Socket.UserGroup！
+    if Socket.UserName = '' then  // 当作为用户名
+    begin
+      Socket.UserGroup := 'Group_id';
+      Socket.UserName := S;
+    end;
 
     // 显示
-    Memo1.Lines.Add(Socket.UserName);
+    Memo1.Lines.Add(S);
 
     // 返回全部客户端名称列表
     InWebSocketManager1.GetUserList(Socket);
 
     // 告诉全部客户端，UserName 上线了
-    InWebSocketManager1.Broadcast('聊天室广播：' + Socket.UserName + '上线了.');
-    
+    InWebSocketManager1.Broadcast('Group_id', '聊天室广播：' + Socket.UserName + '上线了.');
+
 {    // 1. 反馈消息给客户端
    Socket.SendData('服务器反馈：' + Socket.UserName);
 
@@ -148,7 +156,6 @@ procedure TFormInIOCPWSChat.InWebSocketManager1Upgrade(Sender: TObject;
   const Origin: string; var Accept: Boolean);
 begin
   // Origin: 申请升级 Socket 的来源，如：www.aaa.com
-
   // 在此判断是否允许升级为 WebSocket，默认 Accept=True
 end;
 

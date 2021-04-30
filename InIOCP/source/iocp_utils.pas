@@ -18,18 +18,18 @@ uses
   iocp_lists, http_base, http_utils;
 
 function CreateSocket: TSocket;
-function ConnectSocket(Socket: TSocket; const Server: string; Port: Word): Boolean;
+function ConnectSocket(Socket: TSocket; const Server: AnsiString; Port: Word): Boolean;
 function GetCPUCount: Integer;
 
 function GetSysErrorMessage(ErrorCode: DWORD = 0): String;
 function GetWSAErrorMessage(ErrorCode: DWORD = 0): String;
 
-function AddBackslash(const Path: String): String;
-function DropBackSlash(const Path: String): String;
-function MyCreateDir(const Path: string): Boolean;
+function AddBackslash(const Path: AnsiString): AnsiString;
+function DropBackSlash(const Path: AnsiString): AnsiString;
+function MyCreateDir(const Path: String): Boolean;
 
 function FileTimeToDateTime(AFileTime: TFileTime): TDateTime;
-function CreateNewFileName(const FileName: String): String;
+function CreateNewFileName(const FileName: AnsiString): AnsiString;
 function GetCompressionLevel(const FileName: String): TZipLevel;
 
 function InternalOpenFile(const FileName: String; ReadOnly: Boolean = True): THandle; overload;
@@ -42,6 +42,12 @@ function VariantToStream(Data: Variant; ZipCompress: Boolean = False; const File
 
 // 流转变型
 function StreamToVariant(Stream: TStream; ZipDecompress: Boolean = False): Variant;
+
+// 内存转为变型
+function BufferToVariant(Buffer: PAnsiChar; Size: Integer; ZipDecompress: Boolean = False): Variant;
+
+// 变型转为内存
+function VariantToBuffer(Data: Variant; var OutSize: Integer; ZipCompress: Boolean = False): Pointer;
 
 // 取文件大小
 function GetFileSize64(Handle: THandle): Int64;
@@ -70,7 +76,7 @@ function GetTimeLength(TimeLength: Cardinal): String;
 function GetTimeLengthEx(TimeLength: Cardinal): String;
 
 // 转换数据量到文本
-function GetTransmitSpeed(const Value: LongInt; MaxValue: LongInt = 0): String;
+function GetTransmitSpeed(const Value: Int64; const MaxValue: Int64 = 0): String;
 
 // 取内存使用情况
 function GetProcMemoryUsed: Cardinal;
@@ -112,7 +118,7 @@ begin
                                     nil, 0, WSA_FLAG_OVERLAPPED);
 end;
 
-function ConnectSocket(Socket: TSocket; const Server: string; Port: Word): Boolean;
+function ConnectSocket(Socket: TSocket; const Server: AnsiString; Port: Word): Boolean;
 var
   Addr: TSockAddrIn;
 begin
@@ -148,7 +154,6 @@ begin
     CharInSet(Buffer[Len - 1], [#0..#32, '.']) {$ELSE}
    (Buffer[Len - 1] in [#0..#32, '.']) {$ENDIF} do
     Dec(Len);
-
   SetString(Result, Buffer, Len);
 end;
 
@@ -168,7 +173,7 @@ begin
     Result := GetErrMessage(ErrorCode);
 end;
 
-function AddBackslash(const Path: String): String;
+function AddBackslash(const Path: AnsiString): AnsiString;
 begin
   if (Path <> '') and (Path[Length(Path)] <> '\') then
     Result := Path + '\'
@@ -176,7 +181,7 @@ begin
     Result := Path;
 end;
 
-function DropBackslash(const Path: String): String;
+function DropBackslash(const Path: AnsiString): AnsiString;
 begin
   if (Path <> '') and (Path[Length(Path)] = '\') then
     Result := Copy(Path, 1, Length(Path) - 1)
@@ -266,10 +271,10 @@ begin
         Result := Result + IntToStr(TimeLength) + TIME_RANGES[i].Name;
 end;
 
-function GetTransmitSpeed(const Value: LongInt; MaxValue: LongInt): String;
+function GetTransmitSpeed(const Value, MaxValue: Int64): String;
 var
   gCount: Double;
-  function CalculateValue(const InValue: LongInt): String;
+  function CalculateValue(const InValue: Int64): String;
   begin
     // 计算传输量
     case InValue of
@@ -290,7 +295,7 @@ var
       end;
     end;
   end;
-  function CalculateValue2(const InValue: LongInt): String;
+  function CalculateValue2(const InValue: Int64): String;
   begin
     case InValue of
       0:
@@ -478,7 +483,7 @@ begin
   Result := SystemTimeToDateTime(SysTime);
 end;
 
-function CreateNewFileName(const FileName: String): String;
+function CreateNewFileName(const FileName: AnsiString): AnsiString;
 var
   i: Integer;
 begin
@@ -506,8 +511,7 @@ begin
      (Ext = '.ISO')  or (Ext = '.GHO')  or (Ext = '.UUE')  or
      (Ext = '.ACE')  or (Ext = '.LZH')  or (Ext = '.ARJ')  or
      (Ext = '.EXE')  or (Ext = '.AVI')  or (Ext = '.VDI')  or 
-     (Ext = '.Z')
-//     (Ext = '.SYS') or (Ext = '.DLL') or (Ext = '.OCX')
+     (Ext = '.DAT')  or (Ext = '.Z')
   then
     Result := zcNone
   else
@@ -596,14 +600,12 @@ begin
 end;
 
 function GetFileSize64(Handle: THandle): Int64;
+var
+  Size: ULARGE_INTEGER;
 begin
   // 取文件大小
-  Result := 0;
-  Int64Rec(Result).Lo := SetFilePointer(Handle, Int64Rec(Result).Lo,
-                                        @Int64Rec(Result).Hi, FILE_END);
-  SetFilePointer(Handle, 0, nil, FILE_BEGIN);
-  if (Int64Rec(Result).Lo = $FFFFFFFF) and (GetLastError <> 0) then
-    Int64Rec(Result).Hi := $FFFFFFFF;
+  Size.LowPart := GetFileSize(Handle, @Size.HighPart);
+  Result := Size.QuadPart;
 end;
 
 function VariantToStream(Data: Variant; ZipCompress: Boolean; const FileName: String): TStream;
@@ -633,7 +635,12 @@ begin
     if ZipCompress then  // 直接压缩内容，把压缩后内存挂到 Result 处
     begin
       iocp_zlib.ZCompress(p, iSize, OutBuffer, ZipSize, zcDefault);
-      TInMemStream(Result).SetMemory(OutBuffer, ZipSize);
+      if (FileName = '') then
+        TInMemStream(Result).SetMemory(OutBuffer, ZipSize)
+      else begin
+        Result.WriteBuffer(OutBuffer^, ZipSize);
+        FreeMem(OutBuffer);
+      end;
     end else
       Result.Write(p^, iSize);
 //    TInMemStream(Result).SaveToFile('q.dat');
@@ -649,7 +656,7 @@ var
   iSize: Integer;
   p: Pointer;
 begin
-  // 把主体流转换为 varByte Variant 类型（数据集或 Delta）
+  // 把流转换为 varByte Variant 类型（数据集或 Delta）
   if Assigned(Stream) then
   begin
     iSize := Stream.Size;
@@ -680,6 +687,66 @@ begin
       Result := NULL;
   end else
     Result := NULL;
+end;
+
+function BufferToVariant(Buffer: PAnsiChar; Size: Integer; ZipDecompress: Boolean): Variant;
+var
+  p, Data, OutBuf: Pointer;
+  OutSize: Integer;
+begin
+  // 内存转为 Variant，支持压缩
+  
+  if ZipDecompress then  // 压缩 Buffer
+  begin
+    ZDecompress(Buffer, Size, OutBuf, OutSize, Size * 5);
+    Data := OutBuf;
+    Size := OutSize;
+  end else
+    Data := Buffer;
+
+  // 建 varByte-Variant
+  Result := VarArrayCreate([0, Size - 1], varByte);
+  p := VarArrayLock(Result);
+
+  try
+    System.Move(Data^, p^, Size);  // 写入数据
+  finally
+    VarArrayUnlock(Result);
+    if ZipDecompress then
+      FreeMem(OutBuf, OutSize);
+  end;
+      
+end;
+
+function VariantToBuffer(Data: Variant; var OutSize: Integer; ZipCompress: Boolean): Pointer;
+var
+  p: Pointer;
+  iSize: Integer;
+begin
+  // 把变长类型数据转到内存快，支持压缩
+  //   Data 不要传入 String 等其他类型数据!
+
+  if VarIsNull(Data) then
+  begin
+    Result := nil;
+    Exit;
+  end;
+
+  iSize := VarArrayHighBound(Data, 1) - VarArrayLowBound(Data, 1) + 1;
+  p := VarArrayLock(Data);
+
+  try
+    if ZipCompress then  // 压缩内容到 Result
+      ZCompress(p, iSize, Result, OutSize, zcDefault)
+    else begin
+      OutSize := iSize;
+      GetMem(Result, OutSize);
+      System.Move(p^, Result^, OutSize);
+    end;
+  finally
+    VarArrayUnlock(Data);
+  end;
+  
 end;
 
 function EncryptString(const S: AnsiString): AnsiString;
@@ -725,7 +792,7 @@ begin
   Result := True;
 end;
 
-procedure InterDataSetToJSON(DataSet: TDataSet; Headers: THttpResponeHeaders;
+procedure InterDataSetToJSON(DataSet: TDataSet; Headers: THttpResponseHeaders;
                              List: TInStringList; CharSet: THttpCharSet);
   function CharSetText(const S: AnsiString): AnsiString;
   begin
@@ -734,7 +801,7 @@ procedure InterDataSetToJSON(DataSet: TDataSet; Headers: THttpResponeHeaders;
       hcsUTF8:
         Result := System.UTF8Encode(S); // 浏览器的 JSON Object 未必正常显示，要转换
       hcsURLEncode:
-        Result := http_utils.URLEncode(S); // 浏览器 AJAX 要转换正常
+        Result := http_utils.InURLEncode(S); // 浏览器 AJAX 要转换正常
       else
         Result := S;
     end;
@@ -775,7 +842,7 @@ begin
       end else
         Desc := '","' + CharSetText(LowerCase(Field.FieldName)) + '":"';
       Names[i] := Desc;
-      Inc(n, Length(Desc) + Field.Size);
+      Inc(n, Length(Desc) + Field.Size + 10);
     end;
 
     // 2. 每条记录转为 JSON，缓存满时发送 或 加入列表
@@ -794,9 +861,9 @@ begin
 
     while not Dataset.Eof do
     begin
-      SetLength(JSON, n);    // 预设记录空间
+      SetLength(JSON, n);  // 预设记录空间
       p := PAnsiChar(JSON);
-      Idx := 0;              // 内容的实际长度
+      Idx := 0;  // 内容的实际长度
 
       for i := 0 to k - 1 do
       begin
@@ -806,9 +873,18 @@ begin
         else
           Desc := Names[i] + CharSetText(Field.Text);
         m := Length(Desc);
+
+        if (Idx + m > n) then  // 调整记录空间
+        begin
+          n := Idx + m + 50;
+          SetLength(JSON, n);
+          p := PAnsiChar(JSON) + Idx;
+        end;
+
         System.Move(Desc[1], p^, m);
-        Inc(p, m);
-        Inc(Idx, m);
+
+        Inc(p, m);  // 指针+
+        Inc(Idx, m);  // 累计+
       end;
 
       Dataset.Next;   // 下一条
@@ -820,7 +896,7 @@ begin
       end else
       begin
         Inc(Idx);  // 要增加记录后紧跟符号 , 或 ]
-        Delete(JSON, Idx + 1, n - Idx);   // 删除多余内容
+        Delete(JSON, Idx + 1, n - Idx);   // 删除多余内容（最后预留分隔符空间）
 
         if (Headers.Size + Idx > BufLength) then  // 超过分块最大长度，先发送
         begin
@@ -879,17 +955,17 @@ end;
 procedure LargeDataSetToJSON(DataSet: TDataSet; Headers: TObject; CharSet: THttpCharSet);
 begin
   // 用分块方法发送大数据集 JSON
-  InterDataSetToJSON(DataSet, THttpResponeHeaders(Headers), nil, CharSet);
+  InterDataSetToJSON(DataSet, THttpResponseHeaders(Headers), nil, CharSet);
 end;
 
 function GetUTCTickCount: Int64;
 var
   UtcFt: _FILETIME;
 begin
-  // 精确到千万分之一秒
+  // 精确到 100ns = 千万分之一秒
   //   返回与 GetTickCount 一样的毫秒
   GetSystemTimeAsFileTime(UtcFt);
-  Result := (Int64(UtcFt) shr 4);
+  Result := (Int64(UtcFt) div 10000); // 1,000,000,0
 end;
 
 function GetUTCTickCountEh(Seed: Pointer): UInt64;

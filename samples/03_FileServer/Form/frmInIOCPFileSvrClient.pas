@@ -6,7 +6,8 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, iocp_base, iocp_clients, iocp_msgPacks, StdCtrls, ExtCtrls, ComCtrls;
+  Dialogs, iocp_base, iocp_clients, iocp_msgPacks, StdCtrls, ExtCtrls, ComCtrls,
+  iocp_clientBase;
 
 type
   TFormInIOCPFileSvrClient = class(TForm)
@@ -283,8 +284,8 @@ begin
   CLientMd5 := MD5Print(MD5File(Edit1.Text));
   ServerMd5 := MD5Print(MD5File(Edit2.Text));
 
-  Memo1.Lines.Add('Client: ' + CLientMd5);
-  Memo1.Lines.Add('Server: ' + ServerMd5);
+  Memo1.Lines.Add(Edit1.Text + CLientMd5);
+  Memo1.Lines.Add(Edit2.Text + ServerMd5);
 
   if (CLientMd5 = ServerMd5) then
     Memo1.Lines.Add('MD5=')
@@ -310,9 +311,7 @@ end;
 
 procedure TFormInIOCPFileSvrClient.FormCreate(Sender: TObject);
 begin
-  iocp_utils.IniDateTimeFormat;        // 设置日期时间格式
-  
-  // 复制自身为 upload_me.exe                    
+  // 复制自身为 upload_me.exe                     
   CopyFile(PChar(Application.ExeName), PChar('upload_me.exe'), False);
 
   MyCreateDir(InConnection1.LocalPath); // 下载文件存放路径

@@ -46,7 +46,7 @@ object FrameIOCPSvrInfo: TFrameIOCPSvrInfo
     Width = 54
     Height = 12
     Alignment = taRightJustify
-    Caption = #36229#26102#26816#26597':'
+    Caption = #20248#21270#26816#26597':'
   end
   object lblAcceptExCount: TLabel
     Left = 37

@@ -104,6 +104,7 @@ procedure TFormInIOCPShortConnection.btnLoginClick(Sender: TObject);
 begin
   // 重用 Session：
   //   InConnection1.ReuseSession := True;
+  InCertifyClient1.Group := 'aaa';
   InCertifyClient1.UserName := EditUserName.Text;
   InCertifyClient1.Password := 'AAABBB';
   InCertifyClient1.Login;
@@ -176,7 +177,6 @@ begin
   
   // 准备工作路径
   FAppDir := ExtractFilePath(Application.ExeName);
-  iocp_utils.IniDateTimeFormat;    // 设置日期时间格式
 
   // 客户端数据存放路径（2.0改名称）
   iocp_Varis.gUserDataPath := FAppDir + 'client_data\';
@@ -225,10 +225,12 @@ begin
   //  Client^.Socket = 0 的为短连接客户端
   if Client^.Socket = 0 then
     memo1.Lines.Add(IntToStr(No) + '/' + IntToStr(Count) + ', ' +
-             Client^.Name + '  ->  ' + IntToStr(Cardinal(Client^.Socket)) + '(短连接)')
+             Client^.Group + ':' + Client^.Name + '  ->  ' +
+             IntToStr(Cardinal(Client^.Socket)) + '(短连接)')
   else
     memo1.Lines.Add(IntToStr(No) + '/' + IntToStr(Count) + ', ' +
-             Client^.Name + '  ->  ' + IntToStr(Cardinal(Client^.Socket)));
+             Client^.Group + ':' + Client^.Name + '  ->  ' +
+             IntToStr(Cardinal(Client^.Socket)));
 end;
 
 procedure TFormInIOCPShortConnection.InClientManager1Login(Sender: TObject;

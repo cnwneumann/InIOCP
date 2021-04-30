@@ -37,6 +37,7 @@ procedure TFormInIOCPLogin.btnLoginClick(Sender: TObject);
 begin
   FConnection.ServerAddr := ledtHost.Text;
   FConnection.ServerPort := StrToInt(ledtPort.Text);
+  FCertifyClient.Group := 'Group_a';  // 分组
   FCertifyClient.UserName := ledtUser.Text;  // 服务端的 SQL 为 [USER_LOGIN]
   FCertifyClient.Password := ledtPassword.Text;
   FCertifyClient.Login;

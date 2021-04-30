@@ -1,8 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <BorlandProject>
 	<Transactions>
-    <Transaction>1899-12-30 00:00:00.000.dfm,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\HttpServer\Form\frmInIOCPHttpServer.dfm=D:\Administrator\Documents\RAD Studio\Projects\Unit3.dfm</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.bdsproj,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\HttpServer\Package\InIOCPHttpServer.bdsproj=D:\Administrator\Documents\RAD Studio\Projects\Project1.bdsproj</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\HttpServer\Form\frmInIOCPHttpServer.pas=D:\Administrator\Documents\RAD Studio\Projects\Unit3.pas</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.dfm,D:\Administrator\Documents\RAD Studio\Projects\Unit3.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\HttpServer\Form\frmInIOCPHttpServer.dfm</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.bdsproj,D:\Administrator\Documents\RAD Studio\Projects\Project1.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\HttpServer\Package\InIOCPHttpServer.bdsproj</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.pas,D:\Administrator\Documents\RAD Studio\Projects\Unit3.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\HttpServer\Form\frmInIOCPHttpServer.pas</Transaction>
   </Transactions>
 </BorlandProject>

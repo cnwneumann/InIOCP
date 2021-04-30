@@ -14,9 +14,10 @@ type
   // - caches some memory (blocks + threadmem) for fast reuse
   // - also keeps allocated memory in case an old thread allocated some memory
   // for another thread
+  PGlobalMemManager = ^TGlobalMemManager;
   TGlobalMemManager = object
   private {locks}
-    FBlockLock: NativeUInt;
+    //FBlockLock_old: NativeUInt;
     FFreeBlockCount: NativeUInt;
     FThreadLock: NativeUInt;
     FThreadLockRecursion: NativeUInt;
@@ -26,6 +27,9 @@ type
     /// freed/used thread memory managers
     // - used to cache the per-thread managers in case of multiple threads creation
     FFirstFreedThreadMemory: PThreadMemManager;
+    FFirstThreadMemory: PThreadMemManager;
+  private
+    FSmallInterThreadMemCount: NativeUInt;
   private {small}
     /// global thread manager (owner of all global mem)
     FGlobalThreadMemory: PThreadMemManager;
@@ -34,36 +38,55 @@ type
   protected
     procedure FreeSmallBlocksFromThreadMemory(aThreadMem: PSmallMemThreadManager);
     procedure FreeMediumBlocksFromThreadMemory(aThreadMem: PMediumThreadManager);
-
-    procedure ProcessFreedMemoryFromOtherThreads;
-
-    procedure ThreadLock;
-    procedure ThreadUnLock;
   public
     procedure Init;
 
+    function  TryThreadLock: boolean;
+    procedure ThreadLock;
+    procedure ThreadUnLock;
+
     function  GetNewThreadManager: PThreadMemManager;
     //procedure AddNewThreadManagerToList(aThreadMem: PThreadMemManager);
+    function  GetFirstThreadMemory: PThreadMemManager;
     procedure FreeThreadManager(aThreadMem: PThreadMemManager);
     procedure FreeAllMemory;
 
     procedure FreeMediumBlockMemory(aBlockMem: PMediumBlockMemory);
-    function  GetMediumBlockMemory(aNewOwner: PMediumThreadManager): PMediumBlockMemory;
+    function  GetMediumBlockMemory(aNewOwner: PMediumThreadManager; aMinResultSize: NativeUInt): PMediumBlockMemory;
 
     //procedure FreeSmallBlockMemory(aBlockMem: PSmallMemBlock);
     function  GetSmallBlockMemory(aItemSize: NativeUInt): PSmallMemBlock;
+    procedure IncSmallInterthreadMem;
 
     procedure CheckSmallMem;
+    procedure ProcessFreedMemoryFromOtherThreads;
   end;
 //{$A+}?
 
+  TScaleMMBackGroundThread = class
+  protected
+    FHandle: THandle;
+    FTerminated : Boolean;
+    FFinished : Boolean;
+    procedure Execute;
+  public
+    constructor Create;
+    destructor Destroy; override;
+
+    class function GarbageCollectionActive: boolean;
+  end;
+
 var
-  GlobalManager: TGlobalMemManager;
+  GlobalManager: PGlobalMemManager;         
+  OwnedGlobalManager: TGlobalMemManager;    //needed for ShareMM
 
 implementation
 
 uses
   smmFunctions;
+
+var
+  BGThread : TScaleMMBackGroundThread;
 
 { TGlobalManager }
 
@@ -130,14 +153,14 @@ begin
   while oldthreadmem <> nil do
   begin
     tempthreadmem := oldthreadmem;
-    oldthreadmem  := oldthreadmem.FNextThreadManager;
+    oldthreadmem  := oldthreadmem.FNextFreeThreadManager;
 
+    tempthreadmem.FSmallMemManager.FreeThreadFreedMem;
     //get all pending memory and add it to our global manager
     FreeSmallBlocksFromThreadMemory(@tempthreadmem.FSmallMemManager);
     FreeMediumBlocksFromThreadMemory(@tempthreadmem.FMediumMemManager);
     //process all interthread memory (because our global manager is the owner now, it is just forwarded to this global manager)
-    tempthreadmem.ProcessFreedMemFromOtherThreads;
-    tempthreadmem.FSmallMemManager.FreeThreadFreedMem;
+    tempthreadmem.ProcessFreedMemFromOtherThreads(false);
     //clear
     tempthreadmem.Reset;
   end;
@@ -192,7 +215,7 @@ begin
   while oldthreadmem <> nil do
   begin
     tempthreadmem := oldthreadmem;
-    oldthreadmem  := oldthreadmem.FNextThreadManager;
+    oldthreadmem  := oldthreadmem.FNextFreeThreadManager;
     VirtualFree(tempthreadmem, 0, MEM_RELEASE);
   end;
 end;
@@ -201,18 +224,27 @@ procedure TGlobalMemManager.FreeMediumBlockMemory(
   aBlockMem: PMediumBlockMemory);
 var
   firstmem: PMediumHeader;
+  blocked: boolean;
+//  freeheader: PMediumHeaderExt;
 begin
+  blocked := TryThreadlock;
+
   //keep max 10 blocks in buffer
-  if FFreeBlockCount >= 10 then
+  if (FFreeBlockCount >= 10) or not blocked then
   begin
     firstmem := PMediumHeader( NativeUInt(aBlockMem) + SizeOf(TMediumBlockMemory));
     //is free mem?
     //if NativeUInt(firstmem.NextMem) > NativeUInt(1 shl 31) then
-    if firstmem.Size and 1 <> 0 then
+    if (firstmem.Size and 1 <> 0) or
+       //check if fully free, if so, it will be released
+       (aBlockMem.GetMaxFreeSizeInBlock = C_MAX_MEDIUMMEM_SIZE) then
     begin
       //fully free mem? we can only release fully free mem (duh...)
       if PMediumHeaderExt(firstmem).ArrayPosition = 16 then
       begin
+        if blocked then
+          ThreadUnLock;
+
         //RELEASE TO WINDOWS
         VirtualFree(aBlockMem, 0 {all}, MEM_RELEASE);
         //exit!
@@ -222,11 +254,12 @@ begin
     //(False);
   end;
 
-  Threadlock;
+  if not blocked then ThreadLock;
   try
-    //ProcessFreedMemoryFromOtherThreads;
+    ProcessFreedMemoryFromOtherThreads;
 
     //LOCK
+    {
     while not CAS32(0, 1, @FBlockLock) do
     begin
       //small wait: try to swith to other pending thread (if any) else direct continue
@@ -238,6 +271,7 @@ begin
       //wait some longer: force swith to any other thread
       sleep(1);
     end;
+    }
 
     aBlockMem.ChangeOwnerThread(@Self.FGlobalThreadMemory.FMediumMemManager);
 
@@ -247,13 +281,12 @@ begin
     aBlockMem.NextBlock         := FFirstBlock;
     aBlockMem.PreviousBlock     := nil;
     FFirstBlock                 := aBlockMem;
-
     inc(FFreeBlockCount);
   finally
     //UNLOCK
     //if not CAS32(1, 0, @FBlockLock) then
     //  Assert(False);
-    FBlockLock := 0;
+    //FBlockLock := 0;
     ThreadUnlock;
   end;
 end;
@@ -301,15 +334,20 @@ begin
 
   //LOCK: no threads may be proceseed now (e.g. FreeInterThreadMemory)
   ThreadLock;
+    // clear mem (partial: add to reuse list, free = free)
+    FreeSmallBlocksFromThreadMemory(@aThreadMem.FSmallMemManager);
+    //collect all pending threadfreed memory
+    Self.FGlobalThreadMemory.FSmallMemManager.CollectAllThreadFreedMem;
+  //UNLOCK
+  ThreadUnLock;
 
-  // clear mem (partial: add to reuse list, free = free)
-  FreeSmallBlocksFromThreadMemory(@aThreadMem.FSmallMemManager);
   FreeMediumBlocksFromThreadMemory(@aThreadMem.FMediumMemManager);
   aThreadMem.Reset;
 
+  ThreadLock;
   { TODO : keep max nr of threads. Remember to lock "FreeInterThreadMemory" then }
   // add to available list
-  aThreadMem.FNextThreadManager := FFirstFreedThreadMemory;
+  aThreadMem.FNextFreeThreadManager := FFirstFreedThreadMemory;
   FFirstFreedThreadMemory := aThreadMem;
 
   //process mem from other threads
@@ -341,6 +379,7 @@ begin
     //in the mean time some inuse memory can be freed in an other thread
     ProcessFreedMemoryFromOtherThreads;
 
+    (*
     //LOCK
     while not CAS32(0, 1, @FBlockLock) do
     begin
@@ -353,47 +392,85 @@ begin
       //wait some longer: force swith to any other thread
       sleep(1);
     end;
+    *)
 
+    bl := Self.FGlobalThreadMemory.FSmallMemManager.GetBlockListOfSize(aItemSize - 1);
     // get freed mem from list from front (replace first item)
     if bl.FFirstFreedMemBlock <> nil then
     begin
       Result                 := bl.FFirstFreedMemBlock;
       bl.FFirstFreedMemBlock := Result.FNextFreedMemBlock;
+      // remove from linked list
+      if Result.FPreviousMemBlock <> nil then
+        Result.FPreviousMemBlock.FNextMemBlock := Result.FNextMemBlock;
+      if Result.FNextMemBlock <> nil then
+        Result.FNextMemBlock.FPreviousMemBlock := Result.FPreviousMemBlock;
+      Assert(Result.FPreviousFreedMemBlock = nil);
+//      if Result.FPreviousFreedMemBlock <> nil then
+//        Result.FPreviousFreedMemBlock.FNextFreedMemBlock := Result.FNextFreedMemBlock;
+//      if Result.FNextFreedMemBlock <> nil then
+//        Result.FNextFreedMemBlock.FPreviousFreedMemBlock := Result.FPreviousFreedMemBlock;
+      if bl.FFirstFreedMemBlock <> nil then
+        bl.FFirstFreedMemBlock.FPreviousFreedMemBlock := nil;
+      {
+        if tempmem.FPreviousFreedMemBlock <> nil then
+          tempmem.FPreviousFreedMemBlock.FNextFreedMemBlock := tempmem.FNextFreedMemBlock;
+      }
+      if Result = bl.FFirstMemBlock then
+      begin
+        bl.FFirstMemBlock := Result.FNextMemBlock;
+        if bl.FFirstMemBlock <> nil then
+          bl.FFirstMemBlock.FPreviousMemBlock := nil;
+      end;
+
+      {$IFDEF SCALEMM_DEBUG}
+      if bl.FFirstMemBlock <> nil then
+        bl.FFirstMemBlock.CheckMem(sdBoth);
+      if bl.FFirstFreedMemBlock <> nil then
+        bl.FFirstFreedMemBlock.CheckMem(sdBoth);
+      {$endif}
+    end;
+
+    if Result <> nil then
+    begin
+      {$IFDEF SCALEMM_DEBUG}
+      //Result.Lock;
+      Result.OwnerThreadId := 2;
+      Result.OwnerList     := Pointer(1);
+      Result.OwnerManager  := Pointer(2);
+      //Result.UnLock;
+      {$ENDIF}
+      Result.FNextFreedMemBlock      := nil;
+      Result.FNextMemBlock           := nil;
+      Result.FPreviousMemBlock       := nil;
+      Result.FPreviousFreedMemBlock  := nil;
     end;
   finally
     //UNLOCK
     //if not CAS32(1, 0, @FBlockLock) then
     //  Assert(False);
-    FBlockLock := 0;
     ThreadUnlock;
-  end;
-
-  if Result <> nil then
-  begin
-    {$IFDEF SCALEMM_DEBUG}
-    Result.OwnerThreadId := 2;
-    //Result.Lock;
-    Result.OwnerList     := Pointer(1);
-    Result.OwnerManager  := Pointer(2);
-    //Result.UnLock;
-    {$ENDIF}
-    Result.FNextFreedMemBlock      := nil;
-    Result.FNextMemBlock           := nil;
-    Result.FPreviousMemBlock       := nil;
-    Result.FPreviousFreedMemBlock  := nil;
   end;
 end;
 
-function TGlobalMemManager.GetMediumBlockMemory(aNewOwner: PMediumThreadManager): PMediumBlockMemory;
+function TGlobalMemManager.GetFirstThreadMemory: PThreadMemManager;
+begin
+  Result := FFirstThreadMemory;
+end;
+
+function TGlobalMemManager.GetMediumBlockMemory(aNewOwner: PMediumThreadManager; aMinResultSize: NativeUInt): PMediumBlockMemory;
 begin
   Result := nil;
   if FFirstBlock = nil then Exit;
 
-  Threadlock;
+  //if not TryThreadlock then    this can give OoM in case of high load!
+  //  Exit;
+  ThreadLock;    //always lock, is a bit slower but otherwise OoM possible
   try
     ProcessFreedMemoryFromOtherThreads;
 
     //LOCK
+    {
     while not CAS32(0, 1, @FBlockLock) do
     begin
       //small wait: try to swith to other pending thread (if any) else direct continue
@@ -405,17 +482,36 @@ begin
       //wait some longer: force swith to any other thread
       sleep(1);
     end;
+    }
 
     //get block
     Result := FFirstBlock;
     //got a block?
-    if Result <> nil then
+    while Result <> nil do
     begin
+      //has enough free mem?
+      if FGlobalThreadMemory.FMediumMemManager.ScanBlockForFreeItems(Result, aMinResultSize, True {only check size}) = nil then
+      begin
+        //no, try next block
+        Result := Result.NextBlock;
+        Continue;
+      end;
+
+      //unlink
+      if Result.PreviousBlock <> nil then
+        Result.PreviousBlock.NextBlock := Result.NextBlock;
+      if Result.NextBlock <> nil then
+        Result.NextBlock.PreviousBlock := Result.PreviousBlock;
       //rearrange linked list (replace first item)
-      FFirstBlock := Result.NextBlock;
-      if FFirstBlock <> nil then
-        FFirstBlock.PreviousBlock := nil;
+      if Self.FFirstBlock = Result then
+      begin
+        Self.FFirstBlock := Result.NextBlock;
+        if FFirstBlock <> nil then
+          FFirstBlock.PreviousBlock := nil;
+      end;
+
       dec(FFreeBlockCount);
+      Break;
     end;
 
     //got a block?
@@ -430,7 +526,7 @@ begin
     //UNLOCK
     //if not CAS32(1, 0, @FBlockLock) then
     //  Assert(False);
-    FBlockLock := 0;
+    //FBlockLock := 0;
     ThreadUnlock;
   end;
 end;
@@ -439,6 +535,7 @@ function TGlobalMemManager.GetNewThreadManager: PThreadMemManager;
 begin
   Result := nil;
 
+  //reuse?
   if FFirstFreedThreadMemory <> nil then
   begin
     ThreadLock;
@@ -446,12 +543,39 @@ begin
     Result := FFirstFreedThreadMemory;
     if Result <> nil then
     begin
-      FFirstFreedThreadMemory   := Result.FNextThreadManager;
-      Result.FNextThreadManager := nil;
+      FFirstFreedThreadMemory       := Result.FNextFreeThreadManager;
+      Result.FNextFreeThreadManager := nil;
+      Result.Reset;
     end;
 
     ThreadUnLock;
   end;
+
+  //create new one
+  if Result = nil then
+  begin
+    Result := VirtualAlloc( nil,
+                            //64 * 1024,
+                            SizeOf(TThreadMemManager),
+                            MEM_COMMIT {$ifdef AlwaysAllocateTopDown} or MEM_TOP_DOWN{$endif},
+                            PAGE_READWRITE);
+    Result.Init;
+
+    ThreadLock;
+    if FFirstThreadMemory = nil then
+      FFirstThreadMemory := Result
+    else
+    begin
+      Result.FNextThreadManager := FFirstThreadMemory;
+      FFirstThreadMemory := Result;
+    end;
+    ThreadUnLock;
+  end;
+end;
+
+procedure TGlobalMemManager.IncSmallInterthreadMem;
+begin
+  Inc(FSmallInterThreadMemCount);
 end;
 
 procedure TGlobalMemManager.Init;
@@ -462,18 +586,64 @@ begin
                           PAGE_READWRITE);
   FGlobalThreadMemory.Init;
   FGlobalThreadMemory.FThreadId := 1;
+
+  BGThread := TScaleMMBackGroundThread.Create;
 end;
 
 procedure TGlobalMemManager.ProcessFreedMemoryFromOtherThreads;
+var
+  tm1: PThreadMemManager;
+//  mm, nextmm: PMediumBlockMemory;
 begin
   //Exit;
-  if not FGlobalThreadMemory.IsMemoryFromOtherThreadsPresent then Exit;
+  if not FGlobalThreadMemory.IsMemoryFromOtherThreadsPresent and
+     not (FSmallInterThreadMemCount > 0) then Exit;
 
   //LOCK: no threads may be removed/freed now
   ThreadLock;
   try
     //in the mean time some inuse memory can be freed in an other thread
-    FGlobalThreadMemory.ProcessFreedMemFromOtherThreads;
+    FGlobalThreadMemory.ProcessFreedMemFromOtherThreads(False);
+
+    if FSmallInterThreadMemCount > 0 then
+    begin
+      FSmallInterThreadMemCount := 0;
+
+      tm1 := FFirstFreedThreadMemory;
+      while tm1 <> nil do
+      begin
+        if tm1.IsMemoryFromOtherThreadsPresent then
+          tm1.ProcessFreedMemFromOtherThreads(False);
+        tm1 := tm1.FNextFreeThreadManager;
+      end;
+    end;
+
+    (*  too much overhead to do this everytime!
+    FGlobalThreadMemory.FMediumMemManager.ReleaseAllFreeMem;
+
+    mm := Self.FFirstBlock;
+    while mm <> nil do
+    begin
+      nextmm := mm.NextBlock;
+      if mm.GetMaxFreeSizeInBlock = C_MAX_MEDIUMMEM_SIZE then
+      begin
+        if mm.PreviousBlock <> nil then
+          mm.PreviousBlock.NextBlock := mm.NextBlock;
+        if mm.NextBlock <> nil then
+          mm.NextBlock.PreviousBlock := mm.PreviousBlock;
+
+        if Self.FFirstBlock = mm then
+        begin
+          Self.FFirstBlock := nextmm;
+          if nextmm <> nil then
+            nextmm.PreviousBlock := nil;
+        end;
+        //RELEASE TO WINDOWS
+        VirtualFree(mm, 0 {all}, MEM_RELEASE);
+      end;
+      mm := nextmm;
+    end;
+    *)
   finally
     //UNLOCK
     ThreadUnLock;
@@ -525,4 +695,168 @@ begin
   end;
 end;
 
+function TGlobalMemManager.TryThreadLock: boolean;
+var
+  iCurrentThreadId: NativeUInt;
+begin
+  iCurrentThreadId := GetCurrentThreadId;
+  if (FThreadLock = iCurrentThreadId) and
+     (FThreadLockRecursion > 0) then
+  begin
+    Assert( CAS32(iCurrentThreadId, iCurrentThreadId, @FThreadLock) );
+    inc(FThreadLockRecursion);
+    Result := True;
+    Exit;
+  end;
+
+  //LOCK: no threads may be removed/freed now
+  Result := CAS32(0, iCurrentThreadId, @FThreadLock);
+  if Result then
+    inc(FThreadLockRecursion);
+end;
+
+{ TScaleMMBackGroundThread }
+
+function ThreadProc(const aThread: TScaleMMBackGroundThread): Integer;
+begin
+  aThread.Execute;
+  Result := 0;
+  EndThread(Result);
+end;
+
+constructor TScaleMMBackGroundThread.Create;
+//const
+//  CREATE_SUSPENDED                = $00000004;
+var
+  iThreadID: Cardinal;
+begin
+  FHandle := BeginThread(nil, 0, @ThreadProc, Pointer(Self), 0 {direct start}, iThreadID);
+end;
+
+destructor TScaleMMBackGroundThread.Destroy;
+begin
+  if FHandle <> 0 then
+  begin
+    FTerminated := TRUE;
+    while not FFinished do
+      WaitForSingleObject(FHandle, 1 * 1000);
+      //Sleep(1);
+  end;
+  inherited;
+end;
+
+threadvar
+  _GarbageCollectionActive: boolean;
+
+procedure TScaleMMBackGroundThread.Execute;
+var
+  threadmm: PThreadMemManager;
+  //iOldThreadId: Cardinal;
+  i: Integer;
+begin
+  repeat
+    //wait 5s
+    for i := 1 to 50 do
+    begin
+      if FTerminated then
+        Break;
+      Sleep(100);
+      //Sleep(5000);
+    end;
+
+    if not FTerminated then
+    begin
+      GlobalManager.ThreadLock;
+      _GarbageCollectionActive := True;
+      try
+        threadmm := GlobalManager.GetFirstThreadMemory;
+        while threadmm <> nil do
+        begin
+          //thread is terminated or killed? at least our ScaleMM2.NewEndThread function is not called! (note: is disabled because of this function :) )
+          if WaitForSingleObject(threadmm.FThreadHandle, 0) = WAIT_OBJECT_0 then
+          begin
+            CloseHandle(threadmm.FThreadHandle);
+            threadmm.FThreadHandle := 0;
+            threadmm.FThreadId     := 0;
+            threadmm.ProcessFreedMemFromOtherThreads(False {everything});
+            GlobalManager.FreeThreadManager(threadmm);
+          end;
+
+          //interthread mem but not busy?
+          if threadmm.IsMemoryFromOtherThreadsPresent and
+             not threadmm.IsBusyLocked and
+             (threadmm.FThreadHandle <> Self.FHandle) then     //do NOT suspend ourselves!
+          begin
+            //suspend thread
+            if (threadmm.FThreadHandle <> 0) and (Integer(SuspendThread(threadmm.FThreadHandle)) >= 0) then
+            //  Error(reAssertionFailed);   no error, can cause deadlocks  //error
+            try
+              //not busy in the meantime?
+              if not threadmm.IsBusyLocked then
+              begin
+                threadmm.FastBusyLock;
+                try
+                  //iOldThreadId := threadmm.FThreadId;
+                  //threadmm.FThreadId := 1;
+                  threadmm.ProcessFreedMemFromOtherThreads(False {everything});
+                finally
+                  //threadmm.FThreadId := iOldThreadId;
+                  threadmm.BusyUnLock;
+                end;
+              end;
+            finally
+              //resume
+              ResumeThread(threadmm.FThreadHandle);
+            end;
+          end;
+
+          threadmm := threadmm.FNextThreadManager;
+        end;
+      finally
+        _GarbageCollectionActive := False;
+        GlobalManager.ThreadUnLock;
+      end;
+    end;
+
+  until FTerminated;
+  FFinished := TRUE;
+end;
+
+class function TScaleMMBackGroundThread.GarbageCollectionActive: boolean;
+begin
+  Result := _GarbageCollectionActive;
+end;
+
+var
+  OldDLLProc : TDLLProc;
+
+procedure SMDLLMain(dwReason: Integer);
+begin
+  if Assigned(OldDLLProc) then
+    OldDLLProc(dwReason);
+
+  //free background thread if (main) dll is unloaded
+  if dwReason = 0 then //DLL_PROCESS_DETACH
+  begin
+    if BGThread <> nil then
+    begin
+      BGThread.Free;
+      BGThread := nil;
+    end;
+  end;
+end;
+
+initialization
+  OldDLLProc := DLLProc;
+  DLLProc := @SMDLLMain;
+
+finalization
+  DLLProc := OldDLLProc;
+  if BGThread <> nil then
+  begin
+    BGThread.Free;
+    BGThread := nil;
+  end;
+
 end.
+

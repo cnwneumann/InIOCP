@@ -49,7 +49,6 @@ procedure TFormInIOCPProxySvr.Button1Click(Sender: TObject);
 begin
   // 开启日志
   iocp_log.TLogThread.InitLog(FAppDir + 'log');
-  iocp_utils.IniDateTimeFormat;   // 设置时间格式
 
   // InIOCPBroker1 的 ProxyType = ptDefault 且 ReverseProxy.ServerAddr 为空时
   // 是普通代理，要部署于用户能直接访问得到的地方。

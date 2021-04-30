@@ -60,9 +60,9 @@ type
 
   PTCPKeepAlive = ^TTCPKeepAlive;
   TTCPKeepAlive = record
-    OnOff: Integer;
-    KeepAliveTime: Integer;
-    KeepAliveInterVal: Integer;
+    OnOff: Integer;              // 是否启用
+    KeepAliveTime: Integer;      // 心跳周期
+    KeepAliveInterVal: Integer;  // 多长时间无心跳即探测
   end;
 
   TAcceptEx = function(sListenSocket, sAcceptSocket: TSocket;
@@ -127,7 +127,9 @@ begin
               ByteCount, nil, nil) = SOCKET_ERROR) then
   begin
     @gAcceptEx := nil;
+    {$IFDEF DEBUG_MODE}
     iocp_log.WriteLog('GetWSExtFuncs->AcceptEx Error.');
+    {$ENDIF}
     Exit;
   end;
 
@@ -137,7 +139,9 @@ begin
                ByteCount, nil, nil) = SOCKET_ERROR) then
   begin
     @gGetAcceptExSockAddrs := nil;
+    {$IFDEF DEBUG_MODE}
     iocp_log.WriteLog('GetWSExtFuncs->GetAcceptExSockAddrs Error.');
+    {$ENDIF}
     Exit;
   end;
 
@@ -147,8 +151,10 @@ begin
                ByteCount, nil, nil) = SOCKET_ERROR) then
   begin
     @gConnectEx := nil;
+    {$IFDEF DEBUG_MODE}
     iocp_log.WriteLog('GetWSExtFuncs->ConnectEx Error.');
-    Exit;
+    {$ENDIF}
+    Exit;                                                  
   end;
 
   if (WSAIoctl(Socket, SIO_GET_EXTENSION_FUNCTION_POINTER,
@@ -157,7 +163,9 @@ begin
                ByteCount, nil, nil) = SOCKET_ERROR) then
   begin
     @gDisconnectEx := nil;
+    {$IFDEF DEBUG_MODE}
     iocp_log.WriteLog('GetWSExtFuncs->DisconnectEx Error.');
+    {$ENDIF}
     Exit;
   end;
 
@@ -167,7 +175,9 @@ begin
                ByteCount, nil, nil) = SOCKET_ERROR) then
   begin
     @gTransmitFile := nil;
+    {$IFDEF DEBUG_MODE}  
     iocp_log.WriteLog('GetWSExtFuncs->TransmitFile Error.');
+    {$ENDIF}
     Exit;
   end;
 end;
@@ -185,9 +195,12 @@ begin
                                @Opt, SizeOf(Integer)) <> SOCKET_ERROR) then
   begin
     KeepAliveIn.OnOff := 1;
-    KeepAliveIn.KeepAliveTime := InterValue;
-    KeepAliveIn.KeepAliveInterVal := 1;
-    
+    KeepAliveIn.KeepAliveTime := InterValue;  // 心跳周期
+    if (InterValue <= 8000) then
+      KeepAliveIn.KeepAliveInterVal := 10000  // 10 秒无心跳即探测
+    else
+      KeepAliveIn.KeepAliveInterVal := InterValue + 2000;   // 超2秒无心跳即探测
+
     InSize := SizeOf(TTCPKeepAlive);
     OutSize := SizeOf(TTCPKeepAlive);
 

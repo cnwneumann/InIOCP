@@ -152,7 +152,6 @@ procedure TFormInIOCPCustomServer.btnStartClick(Sender: TObject);
 begin
   Memo1.Lines.Clear;
   iocp_log.TLogThread.InitLog;              // 开启日志
-  iocp_utils.IniDateTimeFormat;               // 日期时间格式
   InIOCPServer1.Active := True;               // 开启服务
   FrameIOCPSvrInfo1.Start(InIOCPServer1);     // 开始统计
 end;
@@ -168,7 +167,6 @@ procedure TFormInIOCPCustomServer.FormCreate(Sender: TObject);
 begin
   // 准备工作路径
   FAppDir := ExtractFilePath(Application.ExeName);
-  iocp_utils.IniDateTimeFormat;    // 设置日期时间格式
 
   // 客户端数据存放路径（2.0改名称）
   iocp_Varis.gUserDataPath := FAppDir + 'client_data\';

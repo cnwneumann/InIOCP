@@ -2,26 +2,26 @@ object FormDblServer: TFormDblServer
   Left = 0
   Top = 0
   Caption = 'InIOCP - '#21452#26381#21153#22120
-  ClientHeight = 194
-  ClientWidth = 491
+  ClientHeight = 247
+  ClientWidth = 625
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
-  Font.Height = -11
+  Font.Height = -14
   Font.Name = #23435#20307
   Font.Style = []
   OldCreateOrder = False
-  PixelsPerInch = 96
-  TextHeight = 11
+  PixelsPerInch = 120
+  TextHeight = 14
   object btn1: TButton
-    Left = 24
-    Top = 16
-    Width = 75
-    Height = 25
+    Left = 31
+    Top = 20
+    Width = 95
+    Height = 32
     Caption = #21551#21160'A'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
-    Font.Height = -12
+    Font.Height = -15
     Font.Name = #23435#20307
     Font.Style = []
     ParentFont = False
@@ -29,14 +29,14 @@ object FormDblServer: TFormDblServer
     OnClick = btn1Click
   end
   object Button2: TButton
-    Left = 248
-    Top = 16
-    Width = 75
-    Height = 25
+    Left = 316
+    Top = 20
+    Width = 95
+    Height = 32
     Caption = #21551#21160'B'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
-    Font.Height = -12
+    Font.Height = -15
     Font.Name = #23435#20307
     Font.Style = []
     ParentFont = False
@@ -44,13 +44,13 @@ object FormDblServer: TFormDblServer
     OnClick = Button2Click
   end
   object Memo1: TMemo
-    Left = 9
-    Top = 64
-    Width = 473
-    Height = 113
+    Left = 11
+    Top = 81
+    Width = 602
+    Height = 144
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
-    Font.Height = -17
+    Font.Height = -22
     Font.Name = #40657#20307
     Font.Style = []
     ImeName = #35895#27468#25340#38899#36755#20837#27861' 2'
@@ -66,7 +66,6 @@ object FormDblServer: TFormDblServer
   object InIOCPServer1: TInIOCPServer
     HttpDataProvider = InHttpDataProvider1
     ServerPort = 850
-    StartParams.TimeOut = 0
     ThreadOptions.BusinessThreadCount = 8
     ThreadOptions.PushThreadCount = 4
     ThreadOptions.WorkThreadCount = 4
@@ -78,7 +77,6 @@ object FormDblServer: TFormDblServer
   object InIOCPServer2: TInIOCPServer
     HttpDataProvider = InHttpDataProvider2
     ServerPort = 860
-    StartParams.TimeOut = 0
     ThreadOptions.BusinessThreadCount = 8
     ThreadOptions.PushThreadCount = 4
     ThreadOptions.WorkThreadCount = 4

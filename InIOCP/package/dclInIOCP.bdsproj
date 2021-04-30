@@ -129,7 +129,7 @@
 		</Linker>
 		<Directories>
 			<Directories Name="OutputDir"></Directories>
-			<Directories Name="UnitOutputDir">..\..\bin</Directories>
+			<Directories Name="UnitOutputDir">..\..\dcu</Directories>
 			<Directories Name="PackageDLLOutputDir">..\..\bin</Directories>
 			<Directories Name="PackageDCPOutputDir"></Directories>
 			<Directories Name="SearchPath">..\Source;..\source\module;..\source\Frame;..\source\zlib;..\source\editor</Directories>
@@ -157,28 +157,35 @@
 			<VersionInfo Name="MajorVer">2</VersionInfo>
 			<VersionInfo Name="MinorVer">6</VersionInfo>
 			<VersionInfo Name="Release">41</VersionInfo>
-			<VersionInfo Name="Build">1314</VersionInfo>
+			<VersionInfo Name="Build">1302</VersionInfo>
 			<VersionInfo Name="Debug">False</VersionInfo>
 			<VersionInfo Name="PreRelease">False</VersionInfo>
 			<VersionInfo Name="Special">False</VersionInfo>
 			<VersionInfo Name="Private">False</VersionInfo>
 			<VersionInfo Name="DLL">False</VersionInfo>
-			<VersionInfo Name="Locale">1033</VersionInfo>
-			<VersionInfo Name="CodePage">1252</VersionInfo>
+			<VersionInfo Name="Locale">2052</VersionInfo>
+			<VersionInfo Name="CodePage">936</VersionInfo>
 		</VersionInfo>
 		<VersionInfoKeys>
-			<VersionInfoKeys Name="CompanyName"></VersionInfoKeys>
-			<VersionInfoKeys Name="FileDescription">dclInIOCP</VersionInfoKeys>
-			<VersionInfoKeys Name="FileVersion">2.6.41.1314</VersionInfoKeys>
-			<VersionInfoKeys Name="InternalName"></VersionInfoKeys>
+			<VersionInfoKeys Name="CompanyName">智行软件开发组</VersionInfoKeys>
+			<VersionInfoKeys Name="FileDescription">InIOCP小旋风服务套件</VersionInfoKeys>
+			<VersionInfoKeys Name="FileVersion">2.6.41.1302</VersionInfoKeys>
+			<VersionInfoKeys Name="InternalName">InIOCP Service Suite</VersionInfoKeys>
 			<VersionInfoKeys Name="LegalCopyright"></VersionInfoKeys>
 			<VersionInfoKeys Name="LegalTrademarks"></VersionInfoKeys>
-			<VersionInfoKeys Name="OriginalFilename"></VersionInfoKeys>
-			<VersionInfoKeys Name="ProductName">dclInIOCP</VersionInfoKeys>
+			<VersionInfoKeys Name="OriginalFilename">dclInIOCP.bpl</VersionInfoKeys>
+			<VersionInfoKeys Name="ProductName">InIOCP小旋风服务套件</VersionInfoKeys>
 			<VersionInfoKeys Name="ProductVersion">2.6</VersionInfoKeys>
 			<VersionInfoKeys Name="Comments"></VersionInfoKeys>
-			<VersionInfoKeys Name="ProgramID"></VersionInfoKeys>
+			<VersionInfoKeys Name="ProgramID">com.embarcadero.dclInIOCP</VersionInfoKeys>
 		</VersionInfoKeys>
 		<buildevents/>
+		<Excluded_Packages>
+      <Excluded_Packages Name="D:\Administrator\Documents\RAD Studio\Projects\Bpl\IntelStart.bpl">IntelStart（智多星消息框架）</Excluded_Packages>
+      <Excluded_Packages Name="$(BDS)\bin\dclbde100.bpl">File d:\program files\codegear\rad studio\5.0\bin\dclbde100.bpl not found</Excluded_Packages>
+      <Excluded_Packages Name="$(BDS)\Bin\dclib100.bpl">File d:\program files\codegear\rad studio\5.0\Bin\dclib100.bpl not found</Excluded_Packages>
+      <Excluded_Packages Name="$(BDS)\bin\dcloffice2k100.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
+      <Excluded_Packages Name="$(BDS)\bin\dclofficexp100.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
+    </Excluded_Packages>
 	</Delphi.Personality>
 </BorlandProject>

@@ -1,6 +1,7 @@
 
 {$DEFINE DEBUG_MODE}     // 调试模式（写调试日志）
 {$DEFINE TRANSMIT_FILE}  // 服务端用 TransmitFile 发送数据（对中大文件传输有优势）
+{. $DEFINE MOBILE_MODE}   // 移动模式
 
 {$IF CompilerVersion >= 32}   
     {$DEFINE DELPHI_XE7UP}

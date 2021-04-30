@@ -36,10 +36,12 @@
       <Projects Name="InIOCPOutProxyServer.exe">24_ReverseProxy\package\InIOCPOutProxyServer.bdsproj</Projects>
       <Projects Name="InIOCPDoubleServer.exe">12_DoubleServer\Package\InIOCPDoubleServer.bdsproj</Projects>
       <Projects Name="InIOCPInLog.exe">13_InLog\Package\InIOCPInLog.bdsproj</Projects>
+      <Projects Name="InIOCPDBServerBackground.exe">14_Background\Package\InIOCPDBServerBackground.bdsproj</Projects>
+      <Projects Name="inIOCPDbSvrClientBackground.exe">14_Background\Package\inIOCPDbSvrClientBackground.bdsproj</Projects>
       <Projects Name="InIOCP_LAN_MgrServer.exe">25_LANClientMgr\Package\InIOCP_LAN_MgrServer.bdsproj</Projects>
       <Projects Name="InIOCP_LAN_Admin.exe">25_LANClientMgr\Package\InIOCP_LAN_Admin.bdsproj</Projects>
       <Projects Name="InIOCP_LAN_Client.exe">25_LANClientMgr\Package\InIOCP_LAN_Client.bdsproj</Projects>
-      <Projects Name="Targets">dclInIOCP.bpl InIOCP_all_in_one.exe InIOCPCertifyServer.exe InIOCPMessageServer.exe InIOCPPushMessage.exe InIOCPFileServer.exe inIOCPFileSvrClient.exe InIOCPDBServer.exe inIOCPDbSvrClient.exe InIOCPCustomServer.exe InIOCPStreamServer.exe InIOCPStreamClient.exe InIOCPShortConnection.exe InIOCPNewFeatures.exe InIOCPHttpServer.exe InIOCPHTTPService.exe InIOCPWebQueryScores.exe InIOCPWebSocketChat.exe InIOCPWebSocketJSON.exe InIOCPWebSocketDBClient.exe InIOCPWebSocketMsgServer.exe InIOCPWebSocketMsgClient.exe InIOCPProxyServer.exe InIOCPReverseProxy.exe InIOCPOutProxyServer.exe InIOCPDoubleServer.exe InIOCPInLog.exe InIOCP_LAN_MgrServer.exe InIOCP_LAN_Admin.exe InIOCP_LAN_Client.exe</Projects>
+      <Projects Name="Targets">dclInIOCP.bpl InIOCP_all_in_one.exe InIOCPCertifyServer.exe InIOCPMessageServer.exe InIOCPPushMessage.exe InIOCPFileServer.exe inIOCPFileSvrClient.exe InIOCPDBServer.exe inIOCPDbSvrClient.exe InIOCPCustomServer.exe InIOCPStreamServer.exe InIOCPStreamClient.exe InIOCPShortConnection.exe InIOCPNewFeatures.exe InIOCPHttpServer.exe InIOCPHTTPService.exe InIOCPWebQueryScores.exe InIOCPWebSocketChat.exe InIOCPWebSocketJSON.exe InIOCPWebSocketDBClient.exe InIOCPWebSocketMsgServer.exe InIOCPWebSocketMsgClient.exe InIOCPProxyServer.exe InIOCPReverseProxy.exe InIOCPOutProxyServer.exe InIOCPDoubleServer.exe InIOCPInLog.exe InIOCPDBServerBackground.exe inIOCPDbSvrClientBackground.exe InIOCP_LAN_MgrServer.exe InIOCP_LAN_Admin.exe InIOCP_LAN_Client.exe</Projects>
     </Projects>
     <Dependencies/>
   </Default.Personality>

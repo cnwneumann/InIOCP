@@ -1,2 +1,60 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<BorlandProject/>
+<BorlandProject>
+	<ProjectSortOrder AutoSort="0" SortType="0">
+    <File Path="..\..\InIOCP"/>
+    <File Path="..\source"/>
+    <File Path="..\source\editor"/>
+    <File Path="..\source\editor\frmInSQLMgrEditor.pas"/>
+    <File Path="..\source\frame"/>
+    <File Path="..\source\frame\fmIOCPSvrInfo.pas"/>
+    <File Path="..\source\module"/>
+    <File Path="..\source\module\iocp_baseModule.pas"/>
+    <File Path="..\source\zlib"/>
+    <File Path="..\source\zlib\ZLibEx.pas"/>
+    <File Path="..\source\zlib\ZLibExApi.pas"/>
+    <File Path="..\source\zlib\ZLibExGZ.pas"/>
+    <File Path="..\source\http_base.pas"/>
+    <File Path="..\source\http_objects.pas"/>
+    <File Path="..\source\http_utils.pas"/>
+    <File Path="..\source\iocp_api.pas"/>
+    <File Path="..\source\iocp_base.pas"/>
+    <File Path="..\source\iocp_baseObjs.pas"/>
+    <File Path="..\source\iocp_clientBase.pas"/>
+    <File Path="..\source\iocp_clients.pas"/>
+    <File Path="..\source\iocp_lists.pas"/>
+    <File Path="..\source\iocp_log.pas"/>
+    <File Path="..\source\iocp_managers.pas"/>
+    <File Path="..\source\iocp_md5.pas"/>
+    <File Path="..\source\iocp_mmHash.pas"/>
+    <File Path="..\source\iocp_msgPacks.pas"/>
+    <File Path="..\source\iocp_objPools.pas"/>
+    <File Path="..\source\iocp_Qos.pas"/>
+    <File Path="..\source\iocp_receivers.pas"/>
+    <File Path="..\source\iocp_reg.pas"/>
+    <File Path="..\source\iocp_senders.pas"/>
+    <File Path="..\source\iocp_server.pas"/>
+    <File Path="..\source\iocp_SHA1.pas"/>
+    <File Path="..\source\iocp_sockets.pas"/>
+    <File Path="..\source\iocp_sqlMgr.pas"/>
+    <File Path="..\source\iocp_threads.pas"/>
+    <File Path="..\source\iocp_utils.pas"/>
+    <File Path="..\source\iocp_varis.pas"/>
+    <File Path="..\source\iocp_Winsock2.pas"/>
+    <File Path="..\source\iocp_WsClients.pas"/>
+    <File Path="..\source\iocp_wsExt.pas"/>
+    <File Path="..\source\iocp_WsJSON.pas"/>
+    <File Path="..\source\iocp_zlib.pas"/>
+    <File Path="dclInIOCP.dcr"/>
+    <File Path="adortl.dcp"/>
+    <File Path="dbrtl.dcp"/>
+    <File Path="DesignIDE.dcp"/>
+    <File Path="dsnap.dcp"/>
+    <File Path="inet.dcp"/>
+    <File Path="rtl.dcp"/>
+    <File Path="vcl.dcp"/>
+    <File Path="vclactnband.dcp"/>
+    <File Path="vcldb.dcp"/>
+    <File Path="vclx.dcp"/>
+    <File Path="xmlrtl.dcp"/>
+  </ProjectSortOrder>
+</BorlandProject>

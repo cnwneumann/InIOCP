@@ -75,6 +75,7 @@ contains
   iocp_baseModule in '..\source\module\iocp_baseModule.pas',
   ZLibEx in '..\source\zlib\ZLibEx.pas',
   ZLibExApi in '..\source\zlib\ZLibExApi.pas',
-  ZLibExGZ in '..\source\zlib\ZLibExGZ.pas';
+  ZLibExGZ in '..\source\zlib\ZLibExGZ.pas',
+  iocp_clientBase in '..\source\iocp_clientBase.pas';
 
 end.

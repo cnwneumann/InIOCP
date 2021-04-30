@@ -5,7 +5,7 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, StdCtrls, fmIOCPSvrInfo, iocp_base, iocp_clients, iocp_server,
-  iocp_managers, iocp_sockets;
+  iocp_managers, iocp_sockets, ExtCtrls;
 
 type
   TFormInIOCPCertifyServer = class(TForm)
@@ -29,6 +29,8 @@ type
     btnQueryClient: TButton;
     btnCheckState: TButton;
     FrameIOCPSvrInfo1: TFrameIOCPSvrInfo;
+    LabeledEdit1: TLabeledEdit;
+    LabeledEdit2: TLabeledEdit;
     procedure btnStartClick(Sender: TObject);
     procedure btnStopClick(Sender: TObject);
     procedure btnConnectClick(Sender: TObject);
@@ -111,6 +113,7 @@ end;
 
 procedure TFormInIOCPCertifyServer.btnLogin2Click(Sender: TObject);
 begin
+  InCertifyClient2.Group := LabeledEdit2.Text;
   InCertifyClient2.Login;
 end;
 
@@ -118,6 +121,7 @@ procedure TFormInIOCPCertifyServer.btnLoginClick(Sender: TObject);
 begin
   // 注意：一个 InConnection 对应一个客户端！
   // 用户：USER_TEST、PASS-AAA
+  InCertifyClient1.Group := LabeledEdit1.Text;
   InCertifyClient1.Login; // 登录，在 InCertifyClient1Certify 处返回结果
 
 {  with TMessagePack.Create(InConnection1) do
@@ -166,7 +170,6 @@ procedure TFormInIOCPCertifyServer.FormCreate(Sender: TObject);
 begin
   // 准备工作路径
   FAppDir := ExtractFilePath(Application.ExeName);
-  iocp_utils.IniDateTimeFormat;    // 设置日期时间格式
 
   // 客户端数据存放路径（2.0改名称）
   iocp_Varis.gUserDataPath := FAppDir + 'client_data\';
@@ -197,15 +200,15 @@ begin
   case Action of
     atUserLogin: begin      // 登录
       if ActResult then
-        Memo1.Lines.Add(TInCertifyClient(Sender).UserName + ': 登录成功')
+        Memo1.Lines.Add(TInCertifyClient(Sender).UserName + ': 登录成功，客户端')
       else
-        Memo1.Lines.Add(TInCertifyClient(Sender).UserName + ': 登录失败');
+        Memo1.Lines.Add(TInCertifyClient(Sender).UserName + ': 登录失败，客户端');
     end;
     atUserLogout: begin     // 登出
       if ActResult then
-        Memo1.Lines.Add(TInCertifyClient(Sender).UserName + ': 登出成功')
+        Memo1.Lines.Add(TInCertifyClient(Sender).UserName + ': 登出成功，客户端')
       else
-        Memo1.Lines.Add(TInCertifyClient(Sender).UserName + ': 登出失败');
+        Memo1.Lines.Add(TInCertifyClient(Sender).UserName + ': 登出失败，客户端');
     end;
   end;
 end;
@@ -219,9 +222,9 @@ begin
   //      No: 当前编号
   //  Client：客户端信息 PClientInfo
   //  见：iocp_base.TClientInfo，TInFileClient.HandleFeedback，
-  //      TInBaseClient.ListReturnFiles 
-  memo1.Lines.Add(IntToStr(No) + '/' + IntToStr(Count) + ', ' + Client^.Name + '  ->  ' +
-             IntToStr(Cardinal(Client^.Socket)) { 服务端的 Socket } + ', ' +
+  //      TInBaseClient.ListReturnFiles
+  memo1.Lines.Add(IntToStr(No) + '/' + IntToStr(Count) + ', ' + Client^.Group + ', ' +
+             Client^.Name + '  ->  ' + IntToStr(Cardinal(Client^.Socket)) { 服务端的 Socket } + ', ' +
              Client^.PeerIPPort + ', ' + DateTimeToStr(Client^.LoginTime) + ', ' +
              DateTimeToStr(Client^.LogoutTime));
 end;

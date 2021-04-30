@@ -13,7 +13,7 @@ object dmInIOCPTest: TdmInIOCPTest
   Height = 229
   Width = 531
   object DataSetProvider1: TDataSetProvider
-    Left = 168
+    Left = 192
     Top = 24
   end
   object InSQLManager1: TInSQLManager

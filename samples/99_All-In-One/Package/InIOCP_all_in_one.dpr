@@ -6,7 +6,8 @@ program InIOCP_all_in_one;
 }
 
 uses
-  ScaleMM2 in '..\..\..\inIocp\memMgr\scalemm2\ScaleMM2.pas',
+  FastMM4 in '..\..\..\inIocp\memMgr\FastMM\FastMM4.pas',
+//  ScaleMM2 in '..\..\..\inIocp\memMgr\scalemm2\ScaleMM2.pas',
   Forms,
   frmTestIOCPServer in '..\Form\frmTestIOCPServer.pas' {FormTestIOCPServer},
   ZLibExApi in '..\..\..\InIOCP\source\zlib\ZLibExApi.pas',

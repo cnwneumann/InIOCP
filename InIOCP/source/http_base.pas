@@ -33,14 +33,6 @@ type
     hctMultiPart       // multipart/form-data; boundary=...
   );
 
-  // 解码方法
-
-  THttpEncodeType = (
-    etNone,            // 原码
-    etHexBytes,        // 16进展双字节
-    etUTF8             // UTF-8
-  );
-
   // 字符集（格式）
 
   THttpCharSet = (
@@ -73,7 +65,7 @@ type
   );
 
   // 响应头分类
-  TResponeHeaderType = (
+  TResponseHeaderType = (
     rshUnknown, rshAcceptRanges, rshAge, rshAllow, rshCacheControl, // 0..4
     rshConnection, rshContentEncoding, rshContentLang, rshContentLength, // 5..8
     rshContentLocation, rshContentMD5, rshContentRange, rshContentType, // 9..12
@@ -98,7 +90,7 @@ type
   TStrCRLF2 = array[0..3] of AnsiChar;
   PStrCRLF2 = ^TStrCRLF2;
 
-  // Http 分块发送时的长度空间
+  // Http 分块发送时的长度描述空间
   TChunkSize = array[0..5] of AnsiChar;
   PChunkSize = ^TChunkSize;
 
@@ -118,18 +110,17 @@ const
   HTTP_VER1 = AnsiString('HTTP/1.0');     // http 版本     
 
   {$IFDEF TRANSMIT_FILE}
-  HTTP_SERVER_NAME     = AnsiString('InIOCP/2.5t');
+  HTTP_SERVER_NAME     = AnsiString('InIOCP/2.8t');
   {$ELSE}
-  HTTP_SERVER_NAME     = AnsiString('InIOCP/2.5');
+  HTTP_SERVER_NAME     = AnsiString('InIOCP/2.8');
   {$ENDIF}
 
   HTTP_SESSION_ID      = AnsiString('InIOCP_SID');
   HTTP_INVALID_SESSION = AnsiString('INVALID_SESSION');
-  HTTP_SESSION_ID_LEN  = 32;
 
   // http/1.1 代理响应
-  HTTP_PROXY_RESPONE = 'HTTP/1.1 200 Connection Established'#13#10'' +
-                       'Proxy-agent: ' + HTTP_SERVER_NAME + #13#10#13#10;
+  HTTP_PROXY_RESPONSE = 'HTTP/1.1 200 Connection Established'#13#10'' +
+                        'Proxy-agent: ' + HTTP_SERVER_NAME + #13#10#13#10;
 
   // 实体长度限制 20m
   MAX_CONTENT_LENGTH  = 20480000;
@@ -163,8 +154,8 @@ const
     'ORIGIN' // WebSocket Protocol
    );
 
-  // 响应头名称（与 TResponeHeaderType 对应，用于返回给客户端）
-  RESPONE_HEADERS: array[TResponeHeaderType] of AnsiString = (
+  // 响应头名称（与 TResponseHeaderType 对应，用于返回给客户端）
+  RESPONSE_HEADERS: array[TResponseHeaderType] of AnsiString = (
     'None', 'Accept-Ranges', 'Age', 'Allow', 'Cache-Control',
     'Connection', 'Content-Encoding', 'Content-Language', 'Content-Length',
     'Content-Location', 'Content-MD5', 'Content-Range', 'Content-Type',

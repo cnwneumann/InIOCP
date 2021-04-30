@@ -32,18 +32,18 @@ object FormInIOCPCertifyServer: TFormInIOCPCertifyServer
   end
   object btnStart: TButton
     Left = 574
-    Top = 65
-    Width = 75
-    Height = 25
+    Top = 35
+    Width = 80
+    Height = 28
     Caption = #21551#21160
     TabOrder = 1
     OnClick = btnStartClick
   end
   object btnStop: TButton
     Left = 574
-    Top = 96
-    Width = 75
-    Height = 25
+    Top = 81
+    Width = 80
+    Height = 28
     Caption = #20572#27490
     Enabled = False
     TabOrder = 2
@@ -51,90 +51,90 @@ object FormInIOCPCertifyServer: TFormInIOCPCertifyServer
   end
   object btnConnect: TButton
     Left = 574
-    Top = 232
-    Width = 75
-    Height = 25
+    Top = 220
+    Width = 78
+    Height = 28
     Caption = #36830#25509
     TabOrder = 3
     OnClick = btnConnectClick
   end
   object btnDisconnect: TButton
     Left = 574
-    Top = 261
-    Width = 75
-    Height = 25
+    Top = 249
+    Width = 78
+    Height = 28
     Caption = #26029#24320
     TabOrder = 4
     OnClick = btnDisconnectClick
   end
   object btnLogin: TButton
     Left = 574
-    Top = 299
-    Width = 75
-    Height = 25
+    Top = 287
+    Width = 78
+    Height = 28
     Caption = #30331#24405
     TabOrder = 5
     OnClick = btnLoginClick
   end
   object btnLogout: TButton
     Left = 574
-    Top = 329
-    Width = 75
-    Height = 25
+    Top = 317
+    Width = 78
+    Height = 28
     Caption = #30331#20986
     TabOrder = 6
     OnClick = btnLogoutClick
   end
   object btnConnect2: TButton
     Left = 674
-    Top = 231
-    Width = 75
-    Height = 25
+    Top = 219
+    Width = 78
+    Height = 28
     Caption = #36830#25509'2'
     TabOrder = 7
     OnClick = btnConnect2Click
   end
   object btnDisconnect2: TButton
     Left = 674
-    Top = 260
-    Width = 75
-    Height = 25
+    Top = 248
+    Width = 78
+    Height = 28
     Caption = #26029#24320'2'
     TabOrder = 8
     OnClick = btnDisconnect2Click
   end
   object btnLogin2: TButton
     Left = 674
-    Top = 298
-    Width = 75
-    Height = 25
+    Top = 286
+    Width = 78
+    Height = 28
     Caption = #30331#24405'2'
     TabOrder = 9
     OnClick = btnLogin2Click
   end
   object btnLogout2: TButton
     Left = 674
-    Top = 328
-    Width = 75
-    Height = 25
+    Top = 316
+    Width = 78
+    Height = 28
     Caption = #30331#20986'2'
     TabOrder = 10
     OnClick = btnLogout2Click
   end
   object btnQueryClient: TButton
     Left = 574
-    Top = 373
-    Width = 75
-    Height = 25
+    Top = 361
+    Width = 78
+    Height = 28
     Caption = #26597#35810#29992#25143
     TabOrder = 11
     OnClick = btnQueryClientClick
   end
   object btnCheckState: TButton
     Left = 574
-    Top = 405
-    Width = 75
-    Height = 25
+    Top = 393
+    Width = 78
+    Height = 28
     Caption = #26597#35810#29366#24577
     TabOrder = 12
     OnClick = btnCheckStateClick
@@ -154,6 +154,28 @@ object FormInIOCPCertifyServer: TFormInIOCPCertifyServer
     ExplicitLeft = 8
     ExplicitTop = 16
     ExplicitWidth = 547
+  end
+  object LabeledEdit1: TLabeledEdit
+    Left = 574
+    Top = 188
+    Width = 78
+    Height = 22
+    EditLabel.Width = 36
+    EditLabel.Height = 14
+    EditLabel.Caption = #20998#32452#65306
+    ImeName = #35895#27468#25340#38899#36755#20837#27861' 2'
+    TabOrder = 14
+  end
+  object LabeledEdit2: TLabeledEdit
+    Left = 674
+    Top = 187
+    Width = 78
+    Height = 22
+    EditLabel.Width = 36
+    EditLabel.Height = 14
+    EditLabel.Caption = #20998#32452#65306
+    ImeName = #35895#27468#25340#38899#36755#20837#27861' 2'
+    TabOrder = 15
   end
   object InIOCPServer1: TInIOCPServer
     IOCPManagers.ClientManager = InClientManager1
@@ -180,6 +202,7 @@ object FormInIOCPCertifyServer: TFormInIOCPCertifyServer
   object InCertifyClient1: TInCertifyClient
     OnReturnResult = InCertifyClient1ReturnResult
     Connection = InConnection1
+    Group = 'GROUP_AA'
     UserName = 'USER_A'
     Password = 'PASS-AA'
     OnCertify = InCertifyClient1Certify
@@ -207,6 +230,7 @@ object FormInIOCPCertifyServer: TFormInIOCPCertifyServer
   end
   object InCertifyClient2: TInCertifyClient
     Connection = InConnection2
+    Group = 'Group_2'
     UserName = 'USER_B'
     Password = 'PASS-BB'
     OnCertify = InCertifyClient1Certify

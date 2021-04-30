@@ -16,7 +16,7 @@ object FormTestIOCPServer: TFormTestIOCPServer
   OnClose = FormClose
   OnCreate = FormCreate
   OnDestroy = FormDestroy
-  PixelsPerInch = 120
+  PixelsPerInch = 96
   TextHeight = 12
   object bvl2: TBevel
     Left = 719
@@ -319,7 +319,7 @@ object FormTestIOCPServer: TFormTestIOCPServer
     Height = 20
     ImeName = #35895#27468#25340#38899#36755#20837#27861' 2'
     TabOrder = 27
-    Text = '800'
+    Text = '80'
     OnDblClick = edtHostDblClick
   end
   object btnCancel: TButton
@@ -756,6 +756,15 @@ object FormTestIOCPServer: TFormTestIOCPServer
     TabOrder = 36
     OnClick = btnWSListFilesClick
   end
+  object Button2: TButton
+    Left = 856
+    Top = 209
+    Width = 98
+    Height = 31
+    Caption = 'Test'
+    TabOrder = 37
+    OnClick = Button2Click
+  end
   object InIOCPServer1: TInIOCPServer
     HttpDataProvider = InHttpDataProvider1
     IOCPManagers.ClientManager = InClientManager1
@@ -764,7 +773,6 @@ object FormTestIOCPServer: TFormTestIOCPServer
     IOCPManagers.FileManager = InFileManager1
     IOCPManagers.MessageManager = InMessageManager1
     ServerAddr = 'localhost'
-    StartParams.TimeOut = 0
     ThreadOptions.BusinessThreadCount = 8
     ThreadOptions.PushThreadCount = 4
     ThreadOptions.WorkThreadCount = 4
@@ -804,24 +812,25 @@ object FormTestIOCPServer: TFormTestIOCPServer
     Top = 240
   end
   object InConnection1: TInConnection
-    OnReturnResult = InConnection1ReturnResult
     AutoConnected = True
     LocalPath = 'temp\'
-    ReuseSessionId = True
     ServerAddr = 'localhost'
     ServerPort = 0
     AfterConnect = InConnection1AfterConnect
     AfterDisconnect = InConnection1AfterConnect
-    OnReceiveMsg = InConnection1ReceiveMsg
     OnDataReceive = InConnection1DataReceive
     OnDataSend = InConnection1DataSend
     OnError = InConnection1Error
+    ReuseSessionId = True
+    OnReceiveMsg = InConnection1ReceiveMsg
+    OnReturnResult = InConnection1ReturnResult
     Left = 40
     Top = 296
   end
   object InCertifyClient1: TInCertifyClient
     OnReturnResult = InCertifyClient1ReturnResult
     Connection = InConnection1
+    Group = 'AAA'
     UserName = 'USER_A'
     Password = 'pppp'
     OnCertify = InCertifyClient1Certify
@@ -837,20 +846,21 @@ object FormTestIOCPServer: TFormTestIOCPServer
     Top = 297
   end
   object InConnection2: TInConnection
-    OnReturnResult = InConnection2ReturnResult
     AutoConnected = True
     LocalPath = 'temp\'
     ServerAddr = 'localhost'
     ServerPort = 0
     AfterConnect = InConnection2AfterConnect
     AfterDisconnect = InConnection2AfterConnect
-    OnReceiveMsg = InConnection2ReceiveMsg
     OnError = InConnection1Error
+    OnReceiveMsg = InConnection2ReceiveMsg
+    OnReturnResult = InConnection2ReturnResult
     Left = 40
     Top = 336
   end
   object InCertifyClient2: TInCertifyClient
     Connection = InConnection2
+    Group = 'AAA'
     UserName = 'USER_B'
     Password = 'BBBB'
     OnCertify = InCertifyClient1Certify
@@ -876,9 +886,9 @@ object FormTestIOCPServer: TFormTestIOCPServer
     Top = 424
   end
   object InCustomManager1: TInCustomManager
+    OnReceive = InCustomManager1Receive
     OnAttachBegin = InCustomManager1AttachBegin
     OnAttachFinish = InCustomManager1AttachFinish
-    OnReceive = InCustomManager1Receive
     Left = 272
     Top = 240
   end
@@ -919,6 +929,7 @@ object FormTestIOCPServer: TFormTestIOCPServer
   object InDBQueryClient1: TInDBQueryClient
     OnReturnResult = InDBQueryClient1ReturnResult
     DBConnection = InDBConnection1
+    AfterLoadData = InDBQueryClient1AfterLoadData
     ClientDataSet = ClientDataSet1
     Left = 408
     Top = 336
@@ -931,7 +942,6 @@ object FormTestIOCPServer: TFormTestIOCPServer
   object InHttpDataProvider1: TInHttpDataProvider
     OnAccept = InHttpDataProvider1Accept
     OnGet = InHttpDataProvider1Get
-    OnInvalidSession = InHttpDataProvider1InvalidSession
     OnPost = InHttpDataProvider1Post
     OnReceiveFile = InHttpDataProvider1ReceiveFile
     RootDirectory = 'web_site'
@@ -961,11 +971,12 @@ object FormTestIOCPServer: TFormTestIOCPServer
     Top = 240
   end
   object InWSConnection1: TInWSConnection
-    Masking = True
     ServerAddr = 'localhost'
     ServerPort = 80
     AfterConnect = InWSConnection1AfterConnect
     AfterDisconnect = InWSConnection1AfterConnect
+    Masking = True
+    URL = '/'
     OnReceiveData = InWSConnection1ReceiveData
     OnReceiveMsg = InWSConnection1ReceiveMsg
     OnReturnResult = InWSConnection1ReturnResult

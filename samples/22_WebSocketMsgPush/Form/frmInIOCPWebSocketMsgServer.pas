@@ -22,9 +22,9 @@ type
     procedure InIOCPServer1AfterOpen(Sender: TObject);
     procedure InHttpDataProvider1Accept(Sender: TObject; Request: THttpRequest;
       var Accept: Boolean);
+    procedure InWebSocketManager1Receive(Sender: TObject; Socket: TWebSocket);
     procedure InWebSocketManager1Upgrade(Sender: TObject; const Origin: string;
       var Accept: Boolean);
-    procedure InWebSocketManager1Receive(Sender: TObject; Socket: TWebSocket);
   private
     { Private declarations }
   public
@@ -81,23 +81,32 @@ procedure TFormInIOCPWsJSONMsgServer.InWebSocketManager1Receive(Sender: TObject;
 begin
   // 演示消息推送
   //   1. 浏览器的消息推送
-  //   2. InIOCP-JSON 消息的推送（带附件时推送的是 JSON 描述，附近流不推送）
-
-  // Socket 带用户名才能接收推送消息
-  if (Socket.UserName = '') then
-    Socket.UserName := 'User_' + IntToStr(Socket.JSON.MsgId);
+  //   2. InIOCP-JSON 消息的推送（带附件时推送的是 JSON 描述，不推送附件流）
 
   // 不要推送 ocClose!
   if Socket.OpCode in [ocText, ocBiary] then
     case Socket.MsgType of
-      mtDefault:  // 可能是浏览器发来的消息
+      mtDefault: begin // 可能是浏览器发来的消息
+        if (Socket.UserName = '') then
+        begin
+          Socket.UserGroup := 'XXX';  // 允许
+          Socket.UserName := 'Web_' + IntToStr(Integer(Socket));
+          Socket.Role := crAdmin;  // 必须有权限！
+        end;
         InWebSocketManager1.Broadcast(Socket);
+      end;
       mtJSON: begin
+        if (Socket.UserName = '') then  // Socket 带用户名才能接收推送消息
+        begin
+          Socket.UserGroup := Socket.JSON.S['group'];
+          Socket.UserName := Socket.JSON.S['user'];
+          Socket.Role := crAdmin;  // 必须有权限！
+        end;
   {      // 可以同时接收附件
         if Socket.JSON.HasAttachment then
           Socket.JSON.Attachment := TFileStream.Create('doc\???', fmOpenRead); }
         InWebSocketManager1.Broadcast(Socket);
-  //      Memo1.Lines.Add(Socket.JSON.S['msg']);
+//        Memo1.Lines.Add(Socket.JSON.S['msg']);
       end;
       mtAttachment: begin
         // 接收附件时 Socket.JSON.Attachment <> nil
@@ -110,7 +119,8 @@ procedure TFormInIOCPWsJSONMsgServer.InWebSocketManager1Upgrade(Sender: TObject;
   const Origin: string; var Accept: Boolean);
 begin
   // Origin: 申请升级 Socket 的来源，如：www.aaa.com
-  // 在此判断是否允许升级为 WebSocket，默认 Accept=True
+  // 在此判断是否允许升级为 WebSocket，默认 Accept=True 
 end;
 
 end.
+

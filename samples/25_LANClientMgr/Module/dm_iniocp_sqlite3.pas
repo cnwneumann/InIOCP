@@ -26,22 +26,14 @@ type
     InSQLManager1: TInSQLManager;
     procedure InIOCPDataModuleCreate(Sender: TObject);
     procedure InIOCPDataModuleDestroy(Sender: TObject);
-    procedure InIOCPDataModuleApplyUpdates(Params: TReceiveParams;
-      out ErrorCount: Integer; AResult: TReturnResult);
+    procedure InIOCPDataModuleApplyUpdates(AParams: TReceiveParams;
+      AResult: TReturnResult; out ErrorCount: Integer);
     procedure InIOCPDataModuleExecQuery(AParams: TReceiveParams;
       AResult: TReturnResult);
     procedure InIOCPDataModuleExecSQL(AParams: TReceiveParams;
       AResult: TReturnResult);
     procedure InIOCPDataModuleExecStoredProcedure(AParams: TReceiveParams;
       AResult: TReturnResult);
-    procedure InIOCPDataModuleHttpExecQuery(Sender: TObject;
-      Request: THttpRequest; Respone: THttpRespone);
-    procedure InIOCPDataModuleHttpExecSQL(Sender: TObject;
-      Request: THttpRequest; Respone: THttpRespone);
-    procedure InIOCPDataModuleWebSocketQuery(Sender: TObject; JSON: TBaseJSON;
-      Result: TResultJSON);
-    procedure InIOCPDataModuleWebSocketUpdates(Sender: TObject; JSON: TBaseJSON;
-      Result: TResultJSON);
   private
     { Private declarations }
     FConnection: TZConnection;
@@ -199,8 +191,8 @@ begin
   FConnection.Free;
 end;
 
-procedure TdmInIOCPSQLite3.InIOCPDataModuleApplyUpdates(Params: TReceiveParams;
-  out ErrorCount: Integer; AResult: TReturnResult);
+procedure TdmInIOCPSQLite3.InIOCPDataModuleApplyUpdates(AParams: TReceiveParams;
+      AResult: TReturnResult; out ErrorCount: Integer);
 begin
   // 用 DataSetPrivoder.Delta 更新
   FSQLite3Lock.Acquire;
@@ -219,7 +211,7 @@ begin
 
       // 执行父类的更新方法
       // 用一组 TDataSetProvider 更新，本例子只有一个
-      InterApplyUpdates([DataSetProvider1], Params, ErrorCount);
+      InterApplyUpdates([DataSetProvider1], AParams, ErrorCount);
     except
       RollbackTrans;
       Raise;    // 基类有异常处理，要 Raise
@@ -271,13 +263,13 @@ begin
 
   InterExecQuery(FQuery);
 
-  // 新版改进：
-  //   把一组数据集转换为流，返回给客户端，执行结果为 arOK
-  // AResult.LoadFromVariant([数据集a, 数据集b, 数据集c], ['数据表a', '数据表b', '数据表c']);
-  //   数据表n 是 数据集n 对应的数据表名称，用于更新
-  // 如果有多个数据集，第一个为主表
-  
-  AResult.LoadFromVariant([DataSetProvider1], ['tbl_xzqh']);
+  // LoadFromVariant 改进：
+  //  参数：[数据集a, 数据集b, 数据集c], ['数据表a', '数据表b', '数据表c'])
+  //  1. 数据表n 是 数据集n 对应的数据表名称
+  //  2. 不更新数据表时第 2 参数可设为 [] 或表名称为空
+  //  3. 如果有多个数据集，第一个为主表
+
+  AResult.LoadFromVariant([DataSetProvider1], ['tbl_xzqh']);  // [] 或 [''] 则为只读
   AResult.ActResult := arOK;
 
   FQuery.Active := False;   // 关闭
@@ -335,118 +327,6 @@ begin
       AResult.ActResult := arOK;
   except
     Raise;    // 基类有异常处理，要 Raise
-  end;
-end;
-
-procedure TdmInIOCPSQLite3.InIOCPDataModuleHttpExecQuery(Sender: TObject;
-  Request: THttpRequest; Respone: THttpRespone);
-var
-  i: Integer;
-  SQLName: String;
-begin
-  // Http 服务：在这里执行 SQL 查询，用 Respone 返回结果
-  try
-    try
-
-      // 用 SQL 名称查找对应的 SQL 文本
-      // Http 的 Request.Params 没有预设 sql, sqlName 属性
-
-      SQLName := Request.Params.AsString['SQL'];
-
-      if (FCurrentSQLName <> SQLName) then   // 名称改变，重设 SQL
-      begin
-        FQuery.SQL.Clear;
-        FQuery.SQL.Add(InSQLManager1.GetSQL(SQLName));
-        FCurrentSQLName := SQLName;
-      end;
-
-      // 用 Request.ConectionState 或 Respone.ConectionState
-      // 检查连接状态是否正常, 不正常无需再查询发送
-      if Request.SocketState then  // 旧版：ConnectionState
-      begin
-        // 通用一点的赋值方法：
-        //   Select xxx from ttt where code=:code and no=:no and datetime=:datetime
-        with FQuery do
-          for i := 0 to Params.Count - 1 do
-            Params.Items[i].Value := Request.Params.AsString[Params.Items[i].Name];
-      end;
-
-      InterExecQuery(FQuery);
-      
-      // 转换全部记录为 JSON，用 Respone 返回
-      //   小数据集可用：
-      //      Respone.CharSet := hcsUTF8;  // 指定字符集
-      //      Respone.SendJSON(iocp_utils.DataSetToJSON(FQuery, Respone.CharSet))
-      //   推荐用 Respone.SendJSON(FQuery)，分块发送
-      // 见：iocp_utils 单元 DataSetToJSON、LargeDataSetToJSON、InterDataSetToJSON
-      if Request.SocketState then
-      begin
-        Respone.SendJSON(FQuery);  // 用默认字符集 gb2312
-//        Respone.SendJSON(FQuery, hcsUTF8);  // 转为 UTF-8 字符集
-      end;
-
-    finally
-      FQuery.Active := False;
-    end;
-  except
-    Raise;
-  end;
-end;
-
-procedure TdmInIOCPSQLite3.InIOCPDataModuleHttpExecSQL(Sender: TObject;
-  Request: THttpRequest; Respone: THttpRespone);
-begin
-  // Http 服务：在这里执行 SQL 命令，用 Respone 返回结果
-end;
-
-procedure TdmInIOCPSQLite3.InIOCPDataModuleWebSocketQuery(Sender: TObject; JSON: TBaseJSON; Result: TResultJSON);
-begin
-  // 执行 WebSocket 的操作
-  FQuery.SQL.Text := 'SELECT * FROM tbl_xzqh';
-
-  InterExecQuery(FQuery);
-
-  // A. 把数据集当作变量发送给客户端
-  //    自动压缩，客户端自动解压
-  Result.V['_data'] := DataSetProvider1.Data;
-  Result.S['_table'] := 'tbl_xzqh';  
-  FQuery.Active := False;  // FQuery 要关闭，返回待更新数据表给客户端
-
-  // 可以继续加入明细表
-//  Result.V['_detail'] := DataSetProvider2.Data;
-//  Result.S['_table2'] := 'tbl_details';
-
-  // B. 如果用 FireDAC，可以把数据集保存到 JSON，
-  //    用 Attachment 返回给客户端，如：
-  // FQuery.SaveToFile('e:\aaa.json', sfJSON);
-  // Result.Attachment := TFileStream.Create('e:\aaa.json', fmOpenRead);
-  // Result.S['attach'] := 'query.dat';  //附件名称
-
-  // C. 用以下方法返回不带字段描述信息的 JSON 给客户端：
-  // Result.DataSet := FQuery;  // 发送完毕会自动关闭 FQuery
-  
-end;
-
-procedure TdmInIOCPSQLite3.InIOCPDataModuleWebSocketUpdates(Sender: TObject;
-  JSON: TBaseJSON; Result: TResultJSON);
-var
-  ErrorCount: Integer;
-begin
-  FSQLite3Lock.Acquire;
-  try
-    try
-      // _delta 是客户端传过来的变更数据
-      DataSetProvider1.ApplyUpdates(JSON.V['_delta'], 0, ErrorCount);
-    except
-      RollbackTrans;
-      Raise;    // 基类有异常处理，要 Raise
-    end;
-  finally
-    if ErrorCount = 0 then
-      CommitTrans
-    else
-      RollbackTrans;
-    FSQLite3Lock.Release;
   end;
 end;
 

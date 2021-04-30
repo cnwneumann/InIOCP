@@ -15,7 +15,7 @@ object FormInIOCPProxySvr: TFormInIOCPProxySvr
   Scaled = False
   OnClose = FormClose
   OnCreate = FormCreate
-  PixelsPerInch = 120
+  PixelsPerInch = 96
   TextHeight = 15
   object Label1: TLabel
     Left = 167
@@ -374,7 +374,6 @@ object FormInIOCPProxySvr: TFormInIOCPProxySvr
     IOCPBroker = InIOCPBroker1
     ServerAddr = '127.0.0.1'
     ServerPort = 800
-    StartParams.TimeOut = 0
     ThreadOptions.BusinessThreadCount = 8
     ThreadOptions.PushThreadCount = 4
     ThreadOptions.WorkThreadCount = 4

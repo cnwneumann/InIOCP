@@ -12,7 +12,6 @@ object InIOCP_HTTP_Service: TInIOCP_HTTP_Service
     HttpDataProvider = InHttpDataProvider1
     ServerAddr = 'localhost'
     ServerPort = 80
-    StartParams.TimeOut = 0
     ThreadOptions.BusinessThreadCount = 8
     ThreadOptions.PushThreadCount = 4
     ThreadOptions.WorkThreadCount = 4
@@ -21,7 +20,6 @@ object InIOCP_HTTP_Service: TInIOCP_HTTP_Service
   end
   object InHttpDataProvider1: TInHttpDataProvider
     OnGet = InHttpDataProvider1Get
-    OnInvalidSession = InHttpDataProvider1InvalidSession
     OnPost = InHttpDataProvider1Post
     RootDirectory = 'web_site'
     Left = 192

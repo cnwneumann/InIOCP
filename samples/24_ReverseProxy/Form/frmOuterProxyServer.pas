@@ -48,7 +48,6 @@ begin
   
   // 开启日志
   iocp_log.TLogThread.InitLog(FAppDir + 'log');
-  iocp_utils.IniDateTimeFormat;   // 设置时间格式
 
   InIOCPServer1.ServerAddr := Edit1.Text;
   InIOCPServer1.ServerPort := StrToInt(EditPort.Text);
