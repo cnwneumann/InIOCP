@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+  <PersonalityInfo>
+    <Option>
+      <Option Name="Personality">Default.Personality</Option>
+      <Option Name="ProjectType"></Option>
+      <Option Name="Version">1.0</Option>
+      <Option Name="GUID">{6CBA6C56-5146-4FA2-A77E-AD85A9FAF35B}</Option>
+    </Option>
+  </PersonalityInfo>
+  <Default.Personality>
+    
+    <Projects>
+      <Projects Name="InIOCPDLLForm.exe">InIOCPDLLForm.bdsproj</Projects>
+      <Projects Name="InIOCPDLLCaller.dll">InIOCPDLLCaller.bdsproj</Projects>
+      <Projects Name="Targets">InIOCPDLLForm.exe InIOCPDLLCaller.dll</Projects>
+    </Projects>
+    <Dependencies/>
+  </Default.Personality>
+</BorlandProject>

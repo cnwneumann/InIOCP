@@ -1,0 +1,14 @@
+procedure TFormNoneCertifyServer.Button3Click(Sender: TObject);
+begin
+  // 下载 S_DownloadFile
+  // 方法一，参数少
+  InFileClient1.Upload('DownloadFile.7z');
+
+  // 方法二，可以加入更多参数，服务端方便操作
+{  with TMessagePack.Create(InFileClient1) do
+  begin
+    AsString['path'] := 'none_certify';
+    FileName := 'S_DownloadFile.7z';
+    Post(atFileUpload);
+  end; }
+end;

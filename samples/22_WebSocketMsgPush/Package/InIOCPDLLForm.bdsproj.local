@@ -1,0 +1,8 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2020-10-27 17:37:34.878.pas,D:\Users\Documents\RAD Studio\Projects\Unit1.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\22_WebSocketMsgPush\Form\frmInIOCPDLLFormCaller.pas</Transaction>
+    <Transaction>2020-10-27 17:37:34.878.dfm,D:\Users\Documents\RAD Studio\Projects\Unit1.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\22_WebSocketMsgPush\Form\frmInIOCPDLLFormCaller.dfm</Transaction>
+    <Transaction>2020-10-27 17:38:11.883.bdsproj,D:\Users\Documents\RAD Studio\Projects\Project1.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\22_WebSocketMsgPush\Package\InIOCPDLLForm.bdsproj</Transaction>
+  </Transactions>
+</BorlandProject>

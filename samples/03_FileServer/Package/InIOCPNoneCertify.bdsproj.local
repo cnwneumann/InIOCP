@@ -1,0 +1,8 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2020-04-27 09:16:22.472.pas,D:\Administrator\Documents\RAD Studio\Projects\Unit4.pas=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\03_FileServer\Form\frmNoneCertifyServer.pas</Transaction>
+    <Transaction>2020-04-27 09:16:22.472.dfm,D:\Administrator\Documents\RAD Studio\Projects\Unit4.dfm=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\03_FileServer\Form\frmNoneCertifyServer.dfm</Transaction>
+    <Transaction>2020-04-27 09:17:16.333.bdsproj,D:\Administrator\Documents\RAD Studio\Projects\Project2.bdsproj=E:\ProgCodes\Delphi\InIOCP\InIOCP\samples\03_FileServer\Package\InIOCPNoneCertify.bdsproj</Transaction>
+  </Transactions>
+</BorlandProject>
