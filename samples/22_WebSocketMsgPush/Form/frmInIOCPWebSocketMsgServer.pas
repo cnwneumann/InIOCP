@@ -58,8 +58,6 @@ end;
 
 procedure TFormInIOCPWsJSONMsgServer.FormCreate(Sender: TObject);
 begin
-  InIOCPServer1.ServerAddr := 'localhost'; // '1962.168.1.196';
-  InIOCPServer1.ServerPort := 80; // '12302';
   iocp_varis.gAppPath := ExtractFilePath(Application.ExeName);  // 程序路径
   iocp_utils.MyCreateDir(iocp_varis.gAppPath + 'log');  // 建日志目录
 end;

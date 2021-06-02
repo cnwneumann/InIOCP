@@ -184,7 +184,8 @@
     <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\v1.0\Package\Unit1.pas=E:\ProgCodes\Delphi\InIOCP\v1.0\Unit\http_utils.pas</Transaction>
     <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\v1.0\Package\Unit1.pas=E:\ProgCodes\Delphi\InIOCP\v1.0\Unit\http_consts.pas</Transaction>
     <Transaction>1899-12-30 00:00:00.000.pas,E:\ProgCodes\Delphi\InIOCP\v1.0\Package\Unit1.pas=E:\ProgCodes\Delphi\InIOCP\v1.0\Unit\http_types.pas</Transaction>
-  </Transactions>  <ProjectSortOrder AutoSort="0" SortType="0">
+  </Transactions>
+	<ProjectSortOrder AutoSort="0" SortType="0">
     <File Path="..\..\99_All-In-One"/>
     <File Path="..\Form"/>
     <File Path="..\Form\frmTestIOCPServer.pas"/>

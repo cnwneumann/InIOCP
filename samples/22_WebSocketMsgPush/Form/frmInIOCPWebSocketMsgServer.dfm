@@ -14,7 +14,7 @@ object FormInIOCPWsJSONMsgServer: TFormInIOCPWsJSONMsgServer
   Position = poDesktopCenter
   Scaled = False
   OnCreate = FormCreate
-  PixelsPerInch = 120
+  PixelsPerInch = 96
   TextHeight = 15
   object Button1: TButton
     Left = 600
@@ -270,8 +270,8 @@ object FormInIOCPWsJSONMsgServer: TFormInIOCPWsJSONMsgServer
   end
   object InIOCPServer1: TInIOCPServer
     HttpDataProvider = InHttpDataProvider1
-    ServerPort = 80
-    StartParams.TimeOut = 0
+    ServerAddr = 'localhost'
+    ServerPort = 8090
     ThreadOptions.BusinessThreadCount = 4
     ThreadOptions.PushThreadCount = 4
     ThreadOptions.WorkThreadCount = 2

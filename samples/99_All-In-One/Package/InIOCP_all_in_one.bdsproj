@@ -157,7 +157,7 @@
 			<VersionInfo Name="MajorVer">1</VersionInfo>
 			<VersionInfo Name="MinorVer">0</VersionInfo>
 			<VersionInfo Name="Release">7094</VersionInfo>
-			<VersionInfo Name="Build">35534</VersionInfo>
+			<VersionInfo Name="Build">35536</VersionInfo>
 			<VersionInfo Name="Debug">False</VersionInfo>
 			<VersionInfo Name="PreRelease">False</VersionInfo>
 			<VersionInfo Name="Special">False</VersionInfo>
@@ -169,7 +169,7 @@
 		<VersionInfoKeys>
 			<VersionInfoKeys Name="CompanyName"></VersionInfoKeys>
 			<VersionInfoKeys Name="FileDescription">InIOCP_all_in_one</VersionInfoKeys>
-			<VersionInfoKeys Name="FileVersion">1.0.7094.35534</VersionInfoKeys>
+			<VersionInfoKeys Name="FileVersion">1.0.7094.35536</VersionInfoKeys>
 			<VersionInfoKeys Name="InternalName"></VersionInfoKeys>
 			<VersionInfoKeys Name="LegalCopyright"></VersionInfoKeys>
 			<VersionInfoKeys Name="LegalTrademarks"></VersionInfoKeys>
@@ -180,10 +180,6 @@
 			<VersionInfoKeys Name="ProgramID">com.embarcadero.InIOCP_all_in_one</VersionInfoKeys>
 		</VersionInfoKeys>
 		<Excluded_Packages>
-      
-      
-      
-      
       <Excluded_Packages Name="$(BDS)\bin\dcloffice2k100.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
       <Excluded_Packages Name="$(BDS)\bin\dclofficexp100.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
     </Excluded_Packages>

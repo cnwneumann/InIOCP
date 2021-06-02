@@ -14,7 +14,7 @@ object FormInIOCPShortConnection: TFormInIOCPShortConnection
   Position = poDesktopCenter
   Scaled = False
   OnCreate = FormCreate
-  PixelsPerInch = 120
+  PixelsPerInch = 96
   TextHeight = 12
   object lbl1: TLabel
     Left = 591
@@ -347,7 +347,6 @@ object FormInIOCPShortConnection: TFormInIOCPShortConnection
     IOCPManagers.ClientManager = InClientManager1
     IOCPManagers.MessageManager = InMessageManager1
     ServerAddr = '127.0.0.1'
-    StartParams.TimeOut = 0
     ThreadOptions.BusinessThreadCount = 8
     ThreadOptions.PushThreadCount = 4
     ThreadOptions.WorkThreadCount = 4
@@ -358,10 +357,10 @@ object FormInIOCPShortConnection: TFormInIOCPShortConnection
   end
   object InConnection1: TInConnection
     LocalPath = 'temp'
-    ReuseSessionId = True
     ServerAddr = '127.0.0.1'
-    OnReceiveMsg = InConnection1ReceiveMsg
     OnError = InConnection1Error
+    ReuseSessionId = True
+    OnReceiveMsg = InConnection1ReceiveMsg
     Left = 160
     Top = 344
   end

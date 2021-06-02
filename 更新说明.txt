@@ -1,7 +1,7 @@
 // ============================================================ //
 //
 //               InIOCP（小旋风服务套件）
-//            （开源，正式版：2.8.69.1367）
+//            （开源，正式版：2.8.71.1370）
 //
 //        适用于：Delphi 7、Delphi 2007、
 //                Delphi XE、Delphi XE5-XE10
@@ -10,9 +10,17 @@
 //
 //        下载途径：csdn.net、2ccc.com 的 ftp 资源
 //
-//        github：https://github.com/cnwneumann/InIOCP
+//        git网址：https://github.com/cnwneumann/InIOCP
 //
 // ============================================================ //
+
+2021-06-02，正式版：2.8.71.1370
+    本次升级不涉及小旋风代码，仅调整了内存管理工具 ScaleMM2 的代码，解决以下情形的问题：
+    1. EXE调用 DLL，如果 DLL 使用 ScaleMM2，终止 EXE 时 DLL 中一直等待背景线程停止，无法退出循环；
+    2. Windows 10 环境，停止 Delphi 7 编译的 EXE（使用 ScaleMM2）时提示异常：runtime error。
+
+2021-05-03，正式版：2.8.70.1368
+  调整代码，客户端收到0字节数据时不作任何操作。
 
 2021-02-12，正式版：2.8.69.1367
   1.调整 TInWSConnection 客户端，可以接收标准 WebSocket 的 Binary 数据流；
@@ -27,8 +35,7 @@
 可以先用它把结果保存到文件后再发送，此时速度比 TReturnResult.LoadFromVariant() 稍慢。
 用法见例子 all_in_one 的数模单元 dm_iniocp_test.pas：
     iocp_msgPacks.SaveToMessageFile('temp\aaa.dat', [DataSetProvider1], ['tbl_xzqh']);
-    AResult.LoadFromFile('temp\aaa.dat');  /2021-01-01，正式版：2.8.67.1365/ dat 文件不会被压缩，要手动释放
-
+    AResult.LoadFromFile('temp\aaa.dat');  // dat 文件不会被压缩，要手动释放
 
 2020-12-03，正式版：2.8.66.1364
     增加属性 TInWSConnection.URL，允许 WebSocket 连接时指定 URL。

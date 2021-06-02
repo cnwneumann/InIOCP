@@ -425,7 +425,7 @@ var
 begin
   // PerIOData 内包含了 Owner 信息，忽略 CompletionKey
   Result := iocp_api.GetQueuedCompletionStatus(FHandle, ByteCount,
-                     CompletionKey, POverlapped(PerIOData), INFINITE);
+                     CompletionKey, POverlapped(PerIOData), 100); // INFINITE
 end;
 
 procedure TIOCPEngine.StopIoCompletionPort;

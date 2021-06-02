@@ -51,6 +51,9 @@ type
     procedure FreeThreadManager(aThreadMem: PThreadMemManager);
     procedure FreeAllMemory;
 
+    procedure StopBackGroundThread;  // 高凉新农+
+    procedure FreeBackGroundThread;  // 高凉新农+
+    
     procedure FreeMediumBlockMemory(aBlockMem: PMediumBlockMemory);
     function  GetMediumBlockMemory(aNewOwner: PMediumThreadManager; aMinResultSize: NativeUInt): PMediumBlockMemory;
 
@@ -72,7 +75,7 @@ type
   public
     constructor Create;
     destructor Destroy; override;
-
+    procedure StopThread;
     class function GarbageCollectionActive: boolean;
   end;
 
@@ -86,9 +89,9 @@ uses
   smmFunctions;
 
 var
-  BGThread : TScaleMMBackGroundThread;
+  BGThread: TScaleMMBackGroundThread;
 
-{ TGlobalManager }
+{ TGlobalMemManager }
 
 (*
 procedure TGlobalMemManager.AddNewThreadManagerToList(aThreadMem: PThreadMemManager);
@@ -650,6 +653,23 @@ begin
   end;
 end;
 
+procedure TGlobalMemManager.FreeBackGroundThread;
+begin
+  // 高凉新农+
+  if Assigned(BGThread) then
+  begin
+    BGThread.Free;
+    BGThread := nil;
+  end;
+end;
+
+procedure TGlobalMemManager.StopBackGroundThread;
+begin
+  // 高凉新农+
+  if Assigned(BGThread) then
+    BGThread.StopThread;
+end;
+
 procedure TGlobalMemManager.ThreadLock;
 var
   iCurrentThreadId: NativeUInt;
@@ -717,6 +737,12 @@ end;
 
 { TScaleMMBackGroundThread }
 
+threadvar
+  _GarbageCollectionActive: boolean;
+
+var
+  OldDLLProc: TDLLProc;
+
 function ThreadProc(const aThread: TScaleMMBackGroundThread): Integer;
 begin
   aThread.Execute;
@@ -726,7 +752,7 @@ end;
 
 constructor TScaleMMBackGroundThread.Create;
 //const
-//  CREATE_SUSPENDED                = $00000004;
+//  CREATE_SUSPENDED  = $00000004;
 var
   iThreadID: Cardinal;
 begin
@@ -735,18 +761,11 @@ end;
 
 destructor TScaleMMBackGroundThread.Destroy;
 begin
-  if FHandle <> 0 then
-  begin
-    FTerminated := TRUE;
-    while not FFinished do
-      WaitForSingleObject(FHandle, 1 * 1000);
-      //Sleep(1);
-  end;
+  // 高凉新农改
   inherited;
+  if not FFinished then  // FFinished 一直为 False
+    ExitThread(FHandle);
 end;
-
-threadvar
-  _GarbageCollectionActive: boolean;
 
 procedure TScaleMMBackGroundThread.Execute;
 var
@@ -820,6 +839,7 @@ begin
 
   until FTerminated;
   FFinished := TRUE;
+  FHandle := 0;  
 end;
 
 class function TScaleMMBackGroundThread.GarbageCollectionActive: boolean;
@@ -827,23 +847,29 @@ begin
   Result := _GarbageCollectionActive;
 end;
 
+procedure TScaleMMBackGroundThread.StopThread;
 var
-  OldDLLProc : TDLLProc;
+  i: Integer;
+begin
+  // 当 Exe 调用 DLL 时，如果 DLL 使用 ScaleMM
+  // 此时线程无反应（可能停了，Delphi 有 Bug？），最多尝试 3 次
+  if FHandle <> 0 then
+  begin
+    i := 0;
+    FTerminated := TRUE;
+    while not FFinished and (i < 3) do
+    begin
+      WaitForSingleObject(FHandle, 1 * 1000);
+      Inc(i);
+    end;
+  end;
+end;
 
 procedure SMDLLMain(dwReason: Integer);
 begin
+  // 高凉新农改
   if Assigned(OldDLLProc) then
     OldDLLProc(dwReason);
-
-  //free background thread if (main) dll is unloaded
-  if dwReason = 0 then //DLL_PROCESS_DETACH
-  begin
-    if BGThread <> nil then
-    begin
-      BGThread.Free;
-      BGThread := nil;
-    end;
-  end;
 end;
 
 initialization
@@ -852,11 +878,11 @@ initialization
 
 finalization
   DLLProc := OldDLLProc;
-  if BGThread <> nil then
+{  if BGThread <> nil then   // 高凉新农-
   begin
     BGThread.Free;
     BGThread := nil;
-  end;
+  end;        }
 
 end.
 

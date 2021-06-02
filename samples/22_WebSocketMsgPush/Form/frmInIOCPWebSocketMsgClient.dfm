@@ -29,9 +29,6 @@ object FormInIOCPWsJSONMsgClient: TFormInIOCPWsJSONMsgClient
       'http://www.blue-zero.com/WebSocket/')
     ScrollBars = ssBoth
     TabOrder = 0
-    ExplicitTop = 33
-    ExplicitWidth = 595
-    ExplicitHeight = 192
   end
   object Panel1: TPanel
     Left = 0
@@ -90,6 +87,8 @@ object FormInIOCPWsJSONMsgClient: TFormInIOCPWsJSONMsgClient
     Top = 96
   end
   object InWSConnection1: TInWSConnection
+    ServerAddr = 'localhost'
+    ServerPort = 8090
     AfterConnect = InWSConnection1AfterConnect
     URL = '/ws'
     OnReceiveData = InWSConnection1ReceiveData

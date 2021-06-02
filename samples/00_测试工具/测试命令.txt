@@ -1,5 +1,7 @@
 // ≤‚ ‘ HTTP –≠“È£¨∑µªÿ"helloworld"£¨¿˝£∫99_All-In-One
 
+ab -n 10000 -c 1000 -k -r http://127.0.0.1/
+
 ab -n 10000 -c 1000 -k -r http://127.0.0.1:8000/hello
 ab -n 10000 -c 1000 -k -r http://127.0.0.1:800/hello
 ab -n 10000 -c 1000 -k -r http://127.0.0.1/hello

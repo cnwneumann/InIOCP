@@ -5,7 +5,7 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, StdCtrls, fmIOCPSvrInfo, iocp_base, iocp_clients, iocp_server,
-  iocp_sockets, iocp_managers;
+  iocp_sockets, iocp_managers, iocp_clientBase;
 
 type
   TFormInIOCPShortConnection = class(TForm)
@@ -255,7 +255,7 @@ procedure TFormInIOCPShortConnection.InConnection1ReceiveMsg(Sender: TObject;
   Msg: TResultParams);
 begin
   // 收到其他客户发来的消息（被动接收）
-  Memo1.Lines.Add(InConnection1.UserName + ' 收到 ' + IntToStr(Msg.Owner) + ' 的消息：' + Msg.Msg);
+  Memo1.Lines.Add(InConnection1.UserName + ' 收到 ' + IntToStr(Integer(Msg.Owner)) + ' 的消息：' + Msg.Msg);
 end;
 
 procedure TFormInIOCPShortConnection.InEchoClient1ReturnResult(Sender: TObject;

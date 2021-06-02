@@ -1298,16 +1298,20 @@ var
   _PrevExitProcessProc: procedure;
 procedure ScaleMMExitProcessProc;
 begin
-  //first call previous attached procedure
-  if Assigned(_PrevExitProcessProc) then
-    _PrevExitProcessProc();
-  ScaleMMUninstall;
+  if ScaleMMIsInstalled then  // 高凉新农+
+  begin
+    //first call previous attached procedure
+    if Assigned(_PrevExitProcessProc) then
+      _PrevExitProcessProc();
+    ScaleMMUninstall;
+  end;
 end;
 {$ifend}
 
 procedure ScaleMMInstall;
 begin
-  if ScaleMMIsInstalled then Exit;
+  if ScaleMMIsInstalled then
+    Exit;
 
   if IsMemoryManagerSet then
     Error(reAssertionFailed);  //ScaleMM2 is NOT the FIRST unit in dpr!?
@@ -1358,7 +1362,8 @@ end;
 
 procedure ScaleMMUninstall;
 begin
-  if not ScaleMMIsInstalled then Exit;
+  if not ScaleMMIsInstalled then
+    Exit;
 
   GlobalManager.ThreadLock;
 
@@ -1377,6 +1382,10 @@ begin
     { TODO : check for memory leaks }
     //GlobalManager.FreeAllMemory;
   end;
+
+  // 高凉新农+
+  if IsMemoryManagerOwner then  
+    GlobalManager.FreeBackGroundThread;
 
   SetMemoryManager(OldMM);
   {Memory manager has been uninstalled}
@@ -1399,10 +1408,14 @@ initialization
   {$ENDIF}
 
 finalization
+  if IsMemoryManagerOwner then  // 高凉新农+
+    GlobalManager.StopBackGroundThread;
   {$if CompilerVersion < 23}
   // issue 6: Delphi XE2 has annoying bug when using SetLocaleOverride -> AV in finalization of System.pas due to freemem(PreferredLanguagesOverride)
   // So in case of Delphi XE and lower, we use the normal method
   ScaleMMUninstall;
+  {$else}
+  ScaleMMExitProcessProc;
   {$ifend}
 
 end.

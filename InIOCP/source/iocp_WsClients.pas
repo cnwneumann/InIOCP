@@ -146,9 +146,13 @@ end;
 
 function TInWSConnection.GetJSON: TJSONMessage;
 begin
-  if (FJSON = nil) then
-    FJSON := TJSONMessage.Create(Self);
-  Result := FJSON;
+  if FActive then
+  begin
+    if (FJSON = nil) then
+      FJSON := TJSONMessage.Create(Self);
+    Result := FJSON;
+  end else
+    Result := nil;
 end;
 
 procedure TInWSConnection.HandlePushedData(Stream: TMemoryStream);
@@ -334,7 +338,7 @@ end;
 procedure TRecvThread.CheckUpgradeState(Buf: PAnsiChar; Len: Integer);
 begin
   // 检查升级结果（简化，不检查 AcceptKey，可能出现拒绝服务的反馈）
-  if not MatchSocketType(Buf, HTTP_VER + HTTP_STATES_100[1]) then
+  if not MatchSocketType(Buf, 'HTTP/1.1 101') then  // google 服务不同，HTTP_VER + HTTP_STATES_100[1]
   begin
     TInWSConnection(FConnection).FActive := False;  // 直接赋值
     TInWSConnection(FConnection).FTimer.Enabled := True;

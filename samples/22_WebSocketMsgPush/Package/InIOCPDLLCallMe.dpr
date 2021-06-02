@@ -10,7 +10,13 @@ library InIOCPDLLCallMe;
   with your DLL. To avoid using BORLNDMM.DLL, pass string information
   using PChar or ShortString parameters. }
 
+{ FastMM4 in '..\..\..\inIocp\memMgr\FastMM\FastMM4.pas',
+  FastMM4Messages in '..\..\..\inIocp\memMgr\FastMM\FastMM4Messages.pas',
+  ScaleMM2 in '..\..\..\inIocp\memMgr\scalemm2\ScaleMM2.pas',
+}
+
 uses
+  ScaleMM2 in '..\..\..\inIocp\memMgr\scalemm2\ScaleMM2.pas',
   SysUtils,
   Classes,
   Forms,

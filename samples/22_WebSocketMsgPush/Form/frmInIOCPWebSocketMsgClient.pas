@@ -40,7 +40,7 @@ implementation
 procedure TFormInIOCPWsJSONMsgClient.Button1Click(Sender: TObject);
 begin
   InWSConnection1.ServerAddr := '127.0.0.1'; // 'localhost';
-  InWSConnection1.ServerPort := 80; // '12302';
+  InWSConnection1.ServerPort := 8090; // '12302';
   InWSConnection1.Active := not InWSConnection1.Active;
   Timer1.Enabled := not Timer1.Enabled;
 end;
@@ -49,7 +49,7 @@ procedure TFormInIOCPWsJSONMsgClient.Button2Click(Sender: TObject);
 begin
   // 测试智多星 WebSocket 协议
   InWSConnection1.ServerAddr := '127.0.0.1'; // 'localhost';
-  InWSConnection1.ServerPort := 80; // '12302';
+  InWSConnection1.ServerPort := 8090; // '12302';
   InWSConnection1.Active := not InWSConnection1.Active;
 end;
 
@@ -87,18 +87,22 @@ procedure TFormInIOCPWsJSONMsgClient.Timer1Timer(Sender: TObject);
 const
   TEXT_MSG = 'AFSFSFLSLFSLFLLLSSLDKDFKDFDSLFKDSKFSLFDKSFLKSLFSLFLSFDSFSLFS';
 begin
-//  Timer1.Enabled := False;
-  Inc(FCount);
-  if (FCount > Length(TEXT_MSG)) then
-    FCount := 1;
-  with InWSConnection1.JSON do
-  begin
-    Action := 33;  // 如果连接 InIOCPWebSocketJSON，可以同时测试广播 和 数据库查询
-    S['group'] := lbEditGroup.Text;  // 分组（群）
-    S['user'] := 'user_' + IntToHex(Integer(InWSConnection1), 4);
-    S['msg'] := '广播消息,"分组:+"' + Copy(Text_msg, 1, FCount);
-    Memo1.Lines.Add(Text);  // 新版的 Text 属性为读写
-    Post;
+  Timer1.Enabled := False;
+  try
+    Inc(FCount);
+    if (FCount > Length(TEXT_MSG)) then
+      FCount := 1;
+    with InWSConnection1.JSON do
+    begin
+      Action := 33;  // 如果连接 InIOCPWebSocketJSON，可以同时测试广播 和 数据库查询
+      S['group'] := lbEditGroup.Text;  // 分组（群）
+      S['user'] := 'user_' + IntToHex(Integer(InWSConnection1), 4);
+      S['msg'] := '广播消息,"分组:+"' + Copy(Text_msg, 1, FCount);
+      Memo1.Lines.Add(Text);  // 新版的 Text 属性为读写
+      Post;
+    end;
+  finally
+    Timer1.Enabled := True;
   end;
 end;
 

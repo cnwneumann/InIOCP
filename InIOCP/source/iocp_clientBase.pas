@@ -891,38 +891,37 @@ begin
   // 不是主线程 ！
   // 传入的 lpOverlapped^.hEvent = TRecvThread
 
-  if (dwError <> 0) then  // 出现异常
-    Exit;
-
-  if (cbTransferred = 0) then  // 服务端关闭 或 客户端断开
+  if (dwError <> 0) then       // 出现异常，如关闭、断开
+    lpOverlapped^.hEvent := 0  // 设为无效 -> 连接即将断开
+  else
+  if (cbTransferred > 0) then
   begin
-    lpOverlapped^.hEvent := 0; // 设为无效 -> 连接要断开
-    Exit;
-  end;
+    // 有数据
+    // HTTP.SYS-WebSocket会无数据
+    Thread := TBaseRecvThread(lpOverlapped^.hEvent);
+    Connection := Thread.FConnection;
 
-  Thread := TBaseRecvThread(lpOverlapped^.hEvent);
-  Connection := Thread.FConnection;
+    try
+      // 处理一个数据包
+      Thread.HandleDataPacket;
+    finally
+      // 继续执行 WSARecv，等待数据
+      FillChar(lpOverlapped^, SizeOf(TOverlapped), 0);
+      lpOverlapped^.hEvent := DWORD(Thread);  // 传递自己
 
-  try
-    // 处理一个数据包
-    Thread.HandleDataPacket;
-  finally
-    // 继续执行 WSARecv，等待数据
-    FillChar(lpOverlapped^, SizeOf(TOverlapped), 0);
-    lpOverlapped^.hEvent := DWORD(Thread);  // 传递自己
+      ByteCount := 0;
+      Flags := 0;
 
-    ByteCount := 0;
-    Flags := 0;
-
-    // 收到数据时执行 WorkerRoutine
-    if (iocp_Winsock2.WSARecv(Connection.FSocket, @Thread.FRecvBuf, 1,
-        ByteCount, Flags, LPWSAOVERLAPPED(lpOverlapped), @WorkerRoutine) = SOCKET_ERROR) then
-    begin
-      ErrorCode := WSAGetLastError;
-      if (ErrorCode <> WSA_IO_PENDING) then
+      // 收到数据时执行 WorkerRoutine
+      if (iocp_Winsock2.WSARecv(Connection.FSocket, @Thread.FRecvBuf, 1,
+          ByteCount, Flags, LPWSAOVERLAPPED(lpOverlapped), @WorkerRoutine) = SOCKET_ERROR) then
       begin
-        Connection.FErrorcode := ErrorCode;
-        Thread.Synchronize(Connection.DoClientError); // 线程同步
+        ErrorCode := WSAGetLastError;
+        if (ErrorCode <> WSA_IO_PENDING) then
+        begin
+          Connection.FErrorcode := ErrorCode;
+          Thread.Synchronize(Connection.DoClientError); // 线程同步
+        end;
       end;
     end;
   end;
@@ -960,10 +959,10 @@ begin
     while not Terminated and (FOverlapped.hEvent > 0) do
       if (SleepEx(80, True) = WAIT_IO_COMPLETION) then  // 不能用其他等待模式
         { Empty } ;
-  finally  // 释放资源
+  finally
     if FConnection.FActive and (FOverlapped.hEvent = 0) then
-      Synchronize(FConnection.Disconnect);
-    FreeMem(FRecvBuf.buf);
+      Synchronize(FConnection.Disconnect);  // 断开
+    FreeMem(FRecvBuf.buf);  // 释放资源
     FreeAndNil(FReceiver);
   end;
 end;
